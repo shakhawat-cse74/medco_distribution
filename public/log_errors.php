@@ -1,0 +1,1 @@
+<?php file_put_contents('val_errors.txt', print_r(session('errors'), true));

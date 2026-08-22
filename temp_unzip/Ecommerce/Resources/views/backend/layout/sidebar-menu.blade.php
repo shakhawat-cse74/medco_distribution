@@ -1,0 +1,14 @@
+<li><a href="{{route('slider.index')}}">{{__('db.Sliders')}}</a></li>
+<li><a href="{{route('menu.index')}}">{{__('db.Menu')}}</a></li>
+<li><a href="{{route('collection.index')}}">{{__('db.Collections')}}</a></li>
+<li><a href="{{route('page.index')}}">{{__('db.Pages')}}</a></li>
+<li><a href="{{route('widget.index')}}">{{__('db.Widgets')}}</a></li>
+<li><a href="{{route('faq.category.index')}}">{{__('db.Faq Category')}}</a></li>
+<li><a href="{{route('faq.index')}}">{{__('db.Faqs')}}</a></li>
+<li><a href="{{route('social.links')}}">{{__('db.Social Links')}}</a></li>
+<li><a href="{{route('blog.post')}}">{{__('db.Blog')}}</a></li>
+<li><a href="{{route('setting.gateway')}}">{{__('db.Payment Gateways')}}</a></li>
+<li><a href="{{route('setting.ecommerce')}}">{{__('db.settings')}}</a></li>
+<li><a href="{{route('reviews.index')}}">{{__('db.Product Review')}}</a></li>
+<li><a href="{{route('newsletter.index')}}">{{__('db.newsletter')}}</a></li>
+<li><a href="{{route('delivery.area.index')}}">{{__('db.Delivery Areas')}}</a></li>

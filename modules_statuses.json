@@ -1,0 +1,11 @@
+{
+    "Woocommerce": true,
+    "Ecommerce": true,
+    "Middleware": true,
+    "Manufacturing": true,
+    "Restaurant": true,
+    "Project": true,
+    "Gym": true,
+    "Repair": true,
+    "AIAssistant": true
+}

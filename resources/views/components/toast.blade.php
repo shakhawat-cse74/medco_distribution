@@ -1,0 +1,1 @@
+{{-- Toast component handled globally by toaster system --}}

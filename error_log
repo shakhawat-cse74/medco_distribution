@@ -1,0 +1,96 @@
+[17-Aug-2026 05:43:31 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[17-Aug-2026 07:00:27 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[17-Aug-2026 07:00:27 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[17-Aug-2026 09:07:19 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[17-Aug-2026 09:07:19 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[17-Aug-2026 09:14:16 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[17-Aug-2026 13:06:54 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[17-Aug-2026 21:47:15 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[18-Aug-2026 07:57:10 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[18-Aug-2026 08:30:57 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[18-Aug-2026 08:30:58 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
+[18-Aug-2026 10:43:20 UTC] PHP Fatal error:  Uncaught RuntimeException: Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.3.0". You are running 8.2.32. in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php:26
+Stack trace:
+#0 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/autoload_real.php(25): require()
+#1 /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/autoload.php(22): ComposerAutoloaderInitaaa2a09a02923b80207a89ae32d1da51::getLoader()
+#2 /home/nayeemneedbox/medco.nayeemneedbox.com/public/index.php(35): require('/home/nayeemnee...')
+#3 /home/nayeemneedbox/medco.nayeemneedbox.com/server.php(39): require_once('/home/nayeemnee...')
+#4 {main}
+  thrown in /home/nayeemneedbox/medco.nayeemneedbox.com/vendor/composer/platform_check.php on line 26
