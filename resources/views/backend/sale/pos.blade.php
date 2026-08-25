@@ -1575,11 +1575,11 @@
                                         @can('change_sale_date')
                                             <input type="text" name="created_at" class="form-control date"
                                                 placeholder="{{ __('db.Choose date') }}"
-                                                value="{{date(gen_setting()->date_format, strtotime('now'))}}" />
+                                                value="{{date(gen_setting()->date_format ?? 'd-m-Y', strtotime('now'))}}" />
                                         @else
                                             <input type="text" name="created_at" class="form-control date"
                                                 placeholder="{{ __('db.Choose date') }}"
-                                                value="{{date(gen_setting()->date_format, strtotime('now'))}}" readonly />
+                                                value="{{date(gen_setting()->date_format ?? 'd-m-Y', strtotime('now'))}}" readonly />
                                         @endcan
                                     </div>
                                 </div>
@@ -3317,7 +3317,7 @@
                                     <label>{{ __('Date') }}</label>
                                     <input type="text" name="created_at" class="form-control date"
                                         placeholder="{{__('db.Choose date')}}"
-                                        value="{{date(gen_setting()->date_format, strtotime('now'))}}" />
+                                        value="{{date(gen_setting()->date_format ?? 'd-m-Y', strtotime('now'))}}" />
                                 </div>
                                 <div class="col-md-6 form-group">
                                     <label>{{ __('Expense Category') }} *</label>
@@ -5235,23 +5235,24 @@
             var month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
             var year = date.getFullYear();
 
-            if ('{{gen_setting()->date_format}}' == 'd-m-Y') {
+            var df = '{{ gen_setting()->date_format ?? 'd-m-Y' }}';
+            if (df == 'd-m-Y') {
                 return day + '-' + month + '-' + year;
-            } else if ('{{gen_setting()->date_format}}' == 'd/m/Y') {
+            } else if (df == 'd/m/Y') {
                 return day + '/' + month + '/' + year;
-            } else if ('{{gen_setting()->date_format}}' == 'd.m.Y') {
+            } else if (df == 'd.m.Y') {
                 return day + '.' + month + '.' + year;
-            } else if ('{{gen_setting()->date_format}}' == 'm-d-Y') {
+            } else if (df == 'm-d-Y') {
                 return month + '-' + day + '-' + year;
-            } else if ('{{gen_setting()->date_format}}' == 'm/d/Y') {
+            } else if (df == 'm/d/Y') {
                 return month + '/' + day + '/' + year;
-            } else if ('{{gen_setting()->date_format}}' == 'm.d.Y') {
+            } else if (df == 'm.d.Y') {
                 return month + '.' + day + '.' + year;
-            } else if ('{{gen_setting()->date_format}}' == 'Y-m-d') {
+            } else if (df == 'Y-m-d') {
                 return year + '-' + month + '-' + day;
-            } else if ('{{gen_setting()->date_format}}' == 'Y/m/d') {
+            } else if (df == 'Y/m/d') {
                 return year + '/' + month + '/' + day;
-            } else if ('{{gen_setting()->date_format}}' == 'Y.m.d') {
+            } else if (df == 'Y.m.d') {
                 return year + '.' + month + '.' + day;
             }
 
@@ -6016,10 +6017,10 @@
         $("#draft-btn").on("click", function () {
             playSound();
             $('input[name="sale_status"]').val(3);
-            $('input[name="paying_amount"]').prop('required', false);
-            $('input[name="paid_amount"]').prop('required', false);
-            var rownumber = $('table.order-list tbody tr:last').index();
-            if (rownumber < 0) {
+            $('input[name="paying_amount[]"], .paying_amount').prop('required', false);
+            $('input[name="paid_amount[]"], .paid_amount').prop('required', false);
+            var rownumber = $('table.order-list tbody tr:not(#empty-cart-row)').length;
+            if (rownumber <= 0) {
                 alert("Please insert product to order table!");
             }
             else
@@ -7307,7 +7308,7 @@
         });
 
         function change(paying_amount, paid_amount) {
-            $("#change").text(parseFloat(paying_amount - paid_amount).toFixed({{gen_setting()->decimal}}));
+            $(".change").text(parseFloat((parseFloat(paying_amount) || 0) - (parseFloat(paid_amount) || 0)).toFixed({{gen_setting()->decimal}}));
         }
 
         // Event listener for changes to paid_amount
@@ -7459,19 +7460,23 @@
         });
 
         $(document).on('click', '.qc-btn', function (e) {
-            if ($(this).data('amount')) {
-                if ($('.qc').data('initial')) {
-                    $('input[name="paying_amount"]').val($(this).data('amount').toFixed({{ gen_setting()->decimal }}));
-        $('.qc').data('initial', 0);
-                    }else {
-            $('input[name="paying_amount"]').val((parseFloat($('input[name="paying_amount"]').val()) + $(this).data('amount')).toFixed({{gen_setting()->decimal}}));
-                    }
+            let $paying = $('.paying_amount:first');
+            let amount = parseFloat($(this).data('amount')) || 0;
+            let currentVal = parseFloat($paying.val()) || 0;
 
+            if (amount > 0) {
+                if ($('.qc').data('initial')) {
+                    $paying.val(amount.toFixed({{ gen_setting()->decimal }}));
+                    $('.qc').data('initial', 0);
+                } else {
+                    $paying.val((currentVal + amount).toFixed({{ gen_setting()->decimal }}));
                 }
-                else
-        $('input[name="paying_amount"]').val('{{number_format(0, gen_setting()->decimal, '.', '')}}');
-        change($('input[name="paying_amount"]').val(), $('input[name="paid_amount"]').val());
-            });
+            } else {
+                $paying.val('{{ number_format(0, gen_setting()->decimal, '.', '') }}');
+            }
+            $paying.trigger('input');
+            updateChange();
+        });
 
         function populatePriceOption() {
             var product_price = parseFloat($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.product_price').val()).toFixed({{gen_setting()->decimal}});
@@ -7923,8 +7928,10 @@
             coupon_discount = {{number_format(0, gen_setting()->decimal, '.', '')}};
         grand_total -= coupon_discount;
 
-        $('#item').text(item);
-        $('input[name="item"]').val($('table.order-list tbody tr:last').index() + 1);
+        var productRowCount = $('table.order-list tbody tr:not(#empty-cart-row)').length;
+        var itemDisplay = productRowCount + '(' + total_qty + ')';
+        $('#item').text(itemDisplay);
+        $('input[name="item"]').val(productRowCount);
         $('#subtotal').text(subtotal.toFixed({{gen_setting()->decimal}}));
         $('#tax').text(order_tax.toFixed({{gen_setting()->decimal}}));
         $('input[name="order_tax"]').val(order_tax.toFixed({{gen_setting()->decimal}}));
@@ -7942,23 +7949,42 @@
 
 
         function cancel(rownumber) {
-            while (rownumber >= 0) {
-                product_price.pop();
-                wholesale_price.pop();
-                product_discount.pop();
-                tax_rate.pop();
-                tax_name.pop();
-                tax_method.pop();
-                unit_name.pop();
-                unit_operator.pop();
-                unit_operation_value.pop();
-                $('table.order-list tbody tr:last').remove();
-                rownumber--;
-            }
+            product_price = [];
+            wholesale_price = [];
+            product_discount = [];
+            tax_rate = [];
+            tax_name = [];
+            tax_method = [];
+            unit_name = [];
+            unit_operator = [];
+            unit_operation_value = [];
+            is_variant = [];
+            is_imei = [];
+            cost = [];
+            cost_lowest = [];
+            cost_avg = [];
+            cost_highest = [];
+
+            $('table.order-list tbody tr').remove();
             $('input[name="shipping_cost"]').val('');
             $('input[name="order_discount_value"]').val('');
             $('select[name="order_tax_rate_select"]').val(0);
             calculateTotal();
+
+            if ($('#tbody-id tr').length < 1) {
+                $('.payment-btn').attr('disabled', true);
+                $('#installmentPlanBtn').attr('disabled', true);
+                $('#tbody-id').html(`
+                    <tr id="empty-cart-row">
+                        <td class="text-center py-5" style="color:#9ca3af; width: 100%;" colspan="6">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 48px; height: 48px; margin: 0 auto; display: block; opacity: 0.5;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                            </svg>
+                            <p class="mt-2 mb-0">{{__('db.No_items_added_yet')}} {{__('db.Scan_or_click_a_product')}}</p>
+                        </td>
+                    </tr>
+                `);
+            }
         }
 
         function confirmCancel() {
@@ -7989,8 +8015,8 @@
             });
             if (hasEmptyQty) { alert('One of products has no quantity!'); return; }
 
-            var rownumber = $('table.order-list tbody tr:last').index();
-            if (rownumber < 0) {
+            var rownumber = $('table.order-list tbody tr:not(#empty-cart-row)').length;
+            if (rownumber <= 0) {
                 alert("Please insert product to order table!")
             }
             else if (parseFloat($('input[name="total_qty"]').val()) <= 0) {
@@ -8001,7 +8027,7 @@
                     $("#submit-btn").prop('disabled', true).html('<span class="spinner-border text-light" role="status"></span>');
                 }
 
-                $('input[name="paid_by_id"]').val($('select[name="paid_by_id_select"]').val());
+                $('input[name="paid_by_id"]').val($('select[name="paid_by_id_select"]').val() || $('select[name="paid_by_id_select[]"]:first').val());
                 $('select[name="paid_by_id_select[]"]').each(function (index) {
                     $('input[name="paid_by_id[]"]').eq(index).val($(this).val());
                 });
@@ -8121,7 +8147,26 @@
 
                         },
                         error: function(xhr) {
-                            console.log('Form submission failed.');
+                            let errorMsg = 'Sale submission failed.';
+                            if (xhr.responseJSON) {
+                                if (xhr.responseJSON.error) {
+                                    errorMsg = xhr.responseJSON.error;
+                                } else if (xhr.responseJSON.message) {
+                                    errorMsg = xhr.responseJSON.message;
+                                }
+                                if (xhr.responseJSON.errors) {
+                                    let fieldErrors = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                                    if (fieldErrors) {
+                                        errorMsg = fieldErrors;
+                                    }
+                                }
+                            } else if (xhr.responseText) {
+                                try {
+                                    let parsed = JSON.parse(xhr.responseText);
+                                    errorMsg = parsed.message || parsed.error || errorMsg;
+                                } catch(e) {}
+                            }
+                            alert(errorMsg);
                             $("#submit-btn").prop('disabled', false).html("{{__('db.submit')}}");
                         }
                     });
@@ -8829,7 +8874,7 @@
             /* Moved up to fix event registration order (C9) */
             function saveOffline($form) {
                 /* Set paid_by_id values (mirrors existing logic) */
-                $('input[name="paid_by_id"]').val($('select[name="paid_by_id_select"]').val());
+                $('input[name="paid_by_id"]').val($('select[name="paid_by_id_select"]').val() || $('select[name="paid_by_id_select[]"]:first').val());
                 $('select[name="paid_by_id_select[]"]').each(function (i) {
                     $('input[name="paid_by_id[]"]').eq(i).val($(this).val());
                 });

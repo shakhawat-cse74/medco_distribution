@@ -56,6 +56,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet">
     @endif
 
+    <link rel="stylesheet" href="{{ asset($asset_prefix . 'css/responsive-custom.css') }}?v={{ time() }}" id="responsive-stylesheet" type="text/css">
+
     @stack('css')
 
     <!-- Custom CSS from general settings -->

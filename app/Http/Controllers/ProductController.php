@@ -2019,65 +2019,154 @@ class ProductController extends Controller
             'productname'           => 'name',
             'product_name'          => 'name',
             'name'                  => 'name',
+            'producttitle'          => 'name',
+            'title'                 => 'name',
+
             'code'                  => 'code',
             'productcode'           => 'code',
             'product_code'          => 'code',
             'barcode'               => 'code',
+            'sku'                   => 'code',
+            'itemcode'              => 'code',
+            'item_code'             => 'code',
+
+            'parentcategory'        => 'parent_category',
+            'parent_category'       => 'parent_category',
+            'parent'                => 'parent_category',
+            'maincategory'          => 'parent_category',
+            'main_category'         => 'parent_category',
+            'parentcategoryname'    => 'parent_category',
+            'parent_category_name'  => 'parent_category',
+
+            'category'              => 'category',
+            'categoryname'          => 'category',
+            'category_name'         => 'category',
+            'subcategory'           => 'category',
+            'sub_category'          => 'category',
+            'subcategoryname'       => 'category',
+            'sub_category_name'     => 'category',
+
+            'brand'                 => 'brand',
+            'brandname'             => 'brand',
+            'brand_name'            => 'brand',
+            'model'                 => 'brand',
+            'brandmodel'            => 'brand',
+            'brand_model'           => 'brand',
+
+            'unit'                  => 'unit_code',
+            'unitcode'              => 'unit_code',
+            'unit_code'             => 'unit_code',
+            'productunit'           => 'unit_code',
+            'product_unit'          => 'unit_code',
+            'uom'                   => 'unit_code',
+
+            'cost'                  => 'cost',
+            'productcost'           => 'cost',
+            'product_cost'          => 'cost',
+            'purchaseprice'         => 'cost',
+            'purchase_price'        => 'cost',
+            'buyingprice'           => 'cost',
+            'buying_price'          => 'cost',
+
+            'profitmargintype'      => 'profit_margin_type',
+            'profit_margin_type'    => 'profit_margin_type',
+            'margintype'            => 'profit_margin_type',
+            'margin_type'           => 'profit_margin_type',
+
+            'profitmargin'          => 'profitmargin',
+            'profit_margin'         => 'profitmargin',
+            'margin'                => 'profitmargin',
+
+            'price'                 => 'price',
+            'productprice'          => 'price',
+            'product_price'         => 'price',
+            'sellingprice'          => 'price',
+            'selling_price'         => 'price',
+            'mrp'                   => 'price',
+            'saleprice'             => 'price',
+            'sale_price'            => 'price',
+
+            'producttax'            => 'tax',
+            'product_tax'           => 'tax',
+            'tax'                   => 'tax',
+            'taxname'               => 'tax',
+            'tax_name'              => 'tax',
+            'vat'                   => 'tax',
+
+            'taxmethod'             => 'tax_method',
+            'tax_method'            => 'tax_method',
+
+            'variantoption'         => 'variant_option',
+            'variant_option'        => 'variant_option',
+            'option'                => 'variant_option',
+            'options'               => 'variant_option',
+
+            'variantvalue'          => 'variant_value',
+            'variant_value'         => 'variant_value',
+            'value'                 => 'variant_value',
+            'values'                => 'variant_value',
+            'variant'               => 'variant_value',
+            'variants'              => 'variant_value',
+            'variantname'           => 'variant_value',
+            'variant_name'          => 'variant_value',
+            'variantsize'           => 'variant_value',
+            'variant_size'          => 'variant_value',
+            'size'                  => 'variant_value',
+            'sizes'                 => 'variant_value',
+            'size_variant'          => 'variant_value',
+
+            'alertquantity'         => 'alert_quantity',
+            'alert_quantity'        => 'alert_quantity',
+            'alertqty'              => 'alert_quantity',
+            'alert_qty'             => 'alert_quantity',
+            'min_qty'               => 'alert_quantity',
+            'minqty'                => 'alert_quantity',
+
+            'dailysaleobjective'    => 'daily_sale_objective',
+            'daily_sale_objective'  => 'daily_sale_objective',
+            'dailysalesobjective'   => 'daily_sale_objective',
+            'daily_sales_objective' => 'daily_sale_objective',
+
+            'warranty'              => 'warranty',
+            'warrantytype'          => 'warranty_type',
+            'warranty_type'         => 'warranty_type',
+            'warrantyperiod'        => 'warranty',
+            'warranty_period'       => 'warranty',
+
+            'guarantee'             => 'guarantee',
+            'guaranteetype'         => 'guarantee_type',
+            'guarantee_type'        => 'guarantee_type',
+            'guaranteeperiod'       => 'guarantee',
+            'guarantee_period'      => 'guarantee',
+
             'details'               => 'productdetails',
             'productdetails'        => 'productdetails',
             'product_details'       => 'productdetails',
             'description'           => 'productdetails',
-            'cost'                  => 'cost',
-            'productcost'           => 'cost',
-            'product_cost'          => 'cost',
-            'purchase_price'        => 'cost',
-            'profitmargintype'      => 'profit_margin_type',
-            'profit_margin_type'    => 'profit_margin_type',
-            'margintype'            => 'profit_margin_type',
-            'profitmargin'          => 'profitmargin',
-            'profit_margin'         => 'profitmargin',
-            'margin'                => 'profitmargin',
-            'price'                 => 'price',
-            'productprice'          => 'price',
-            'product_price'         => 'price',
-            'selling_price'         => 'price',
-            'lowestprice'           => 'product_lowest_price',
-            'lowestprize'           => 'product_lowest_price',
-            'lowest_price'          => 'product_lowest_price',
-            'productlowestprice'    => 'product_lowest_price',
-            'product_lowest_price'  => 'product_lowest_price',
-            'averageprice'          => 'product_average_price',
-            'avarrageprice'         => 'product_average_price',
-            'average_price'         => 'product_average_price',
-            'productaverageprice'   => 'product_average_price',
-            'product_average_price' => 'product_average_price',
-            'highestprice'          => 'product_highest_price',
-            'heightprice'           => 'product_highest_price',
-            'highest_price'         => 'product_highest_price',
-            'height_price'          => 'product_highest_price',
-            'producthighestprice'   => 'product_highest_price',
-            'product_highest_price' => 'product_highest_price',
-            'producttax'            => 'tax',
-            'product_tax'           => 'tax',
-            'tax'                   => 'tax',
-            'unit'                  => 'unit_code',
-            'unitcode'              => 'unit_code',
-            'unit_code'             => 'unit_code',
+            'productdescription'    => 'productdetails',
+            'product_description'   => 'productdetails',
+
             'image'                 => 'image',
             'productimage'          => 'image',
             'product_image'         => 'image',
-            'category'              => 'category',
-            'categoryname'          => 'category',
-            'brand'                 => 'brand',
-            'brandname'             => 'brand',
+            'images'                => 'image',
+
+            'type'                  => 'type',
+            'producttype'           => 'type',
+            'product_type'          => 'type',
+
+            // Backward compatibility
+            'lowestprice'           => 'product_lowest_price',
+            'lowest_price'          => 'product_lowest_price',
+            'averageprice'          => 'product_average_price',
+            'average_price'         => 'product_average_price',
+            'highestprice'          => 'product_highest_price',
+            'highest_price'         => 'product_highest_price',
             'wholesale_price'       => 'wholesale_price',
             'wholesaleprice'        => 'wholesale_price',
-            'type'                  => 'type',
-            'variantname'           => 'variantname',
-            'variant_name'          => 'variantname',
         ];
 
-        // --- PASS 1: STREAM METRICS, CATEGORIES, BRANDS & VARIANTS FOR CACHE WARM-UP (Memory Flatline) ---
+        // --- PASS 1: STREAM METRICS, CATEGORIES, BRANDS & VARIANTS FOR CACHE WARM-UP ---
         if (($file = fopen($filePath, 'r')) === false) {
             if ($tempGeneratedCsv && file_exists($tempGeneratedCsv)) @unlink($tempGeneratedCsv);
             return back()->with('message', __('db.Unable to open the uploaded file'));
@@ -2104,9 +2193,69 @@ class ProductController extends Controller
             }
         }
 
+        $parseVariants = function ($vOptionStr, $vValueStr) {
+            $vOptionStr = trim($vOptionStr ?? '');
+            $vValueStr = trim($vValueStr ?? '');
+
+            if ($vValueStr === '') {
+                return ['options' => [], 'values' => [], 'combinations' => []];
+            }
+
+            if (str_contains($vOptionStr, '|')) {
+                $optList = array_map('trim', explode('|', $vOptionStr));
+                $valGroups = array_map('trim', explode('|', $vValueStr));
+            } elseif (str_contains($vOptionStr, ',') && str_contains($vValueStr, '|')) {
+                $optList = array_map('trim', explode(',', $vOptionStr));
+                $valGroups = array_map('trim', explode('|', $vValueStr));
+            } elseif (str_contains($vValueStr, '|')) {
+                $valGroups = array_map('trim', explode('|', $vValueStr));
+                $optList = [];
+            } else {
+                $optList = [$vOptionStr ?: 'Option'];
+                $valGroups = [$vValueStr];
+            }
+
+            $optionArrays = [];
+            $variantOptionToSave = [];
+            $variantValueToSave = [];
+
+            foreach ($valGroups as $idx => $valGroupStr) {
+                $vals = array_values(array_filter(array_map('trim', explode(',', $valGroupStr))));
+                if (!empty($vals)) {
+                    $optName = !empty($optList[$idx]) ? $optList[$idx] : ('Option ' . ($idx + 1));
+                    $variantOptionToSave[] = $optName;
+                    $variantValueToSave[] = implode(',', $vals);
+                    $optionArrays[] = $vals;
+                }
+            }
+
+            $combinations = [];
+            if (!empty($optionArrays)) {
+                $combinations = $optionArrays[0];
+                for ($i = 1; $i < count($optionArrays); $i++) {
+                    $nextCombinations = [];
+                    foreach ($combinations as $comb) {
+                        foreach ($optionArrays[$i] as $nxtVal) {
+                            $nextCombinations[] = $comb . '/' . $nxtVal;
+                        }
+                    }
+                    $combinations = $nextCombinations;
+                }
+            }
+
+            return [
+                'options'      => $variantOptionToSave,
+                'values'       => $variantValueToSave,
+                'combinations' => $combinations
+            ];
+        };
+
         $allCodes = [];
+        $allParentCategories = [];
+        $allCategoryPairs = [];
         $allCategories = [];
         $allBrands = [];
+        $allUnits = [];
         $allVariantNames = [];
 
         while ($row = fgetcsv($file)) {
@@ -2116,21 +2265,40 @@ class ProductController extends Controller
             $mappedRow = array_combine($escapedHeader, $row);
             
             $code = trim($mappedRow['code'] ?? '');
+            $name = trim($mappedRow['name'] ?? '');
+            if ($code === '' && $name === '') {
+                continue;
+            }
             if ($code !== '') {
                 $allCodes[] = $code;
             }
 
-            if (!empty($mappedRow['category'])) {
-                $allCategories[] = trim($mappedRow['category']);
+            $pCat = trim($mappedRow['parent_category'] ?? '');
+            $cat = trim($mappedRow['category'] ?? '');
+
+            if (!empty($pCat)) {
+                $allParentCategories[] = $pCat;
+            }
+            if (!empty($cat)) {
+                $allCategories[] = $cat;
+            }
+            if (!empty($pCat) || !empty($cat)) {
+                $allCategoryPairs[] = ['parent' => $pCat, 'name' => $cat];
             }
 
             if (!empty($mappedRow['brand']) && trim($mappedRow['brand']) !== 'N/A') {
                 $allBrands[] = trim($mappedRow['brand']);
             }
+            if (!empty($mappedRow['unit_code'])) {
+                $allUnits[] = trim($mappedRow['unit_code']);
+            }
 
-            if (!empty($mappedRow['variantname'])) {
-                foreach (explode(',', $mappedRow['variantname']) as $vName) {
-                    $allVariantNames[] = trim($vName);
+            $vOpt = trim($mappedRow['variant_option'] ?? '');
+            $vVal = trim($mappedRow['variant_value'] ?? ($mappedRow['variantname'] ?? ''));
+            if ($vVal !== '') {
+                $parsed = $parseVariants($vOpt, $vVal);
+                foreach ($parsed['combinations'] as $comb) {
+                    $allVariantNames[] = $comb;
                 }
             }
         }
@@ -2138,8 +2306,10 @@ class ProductController extends Controller
 
         // Filter unique records across all warm-up arrays
         $allCodes = array_unique($allCodes);
+        $allParentCategories = array_unique($allParentCategories);
         $allCategories = array_unique($allCategories);
         $allBrands = array_unique($allBrands);
+        $allUnits = array_unique($allUnits);
         $allVariantNames = array_unique(array_filter($allVariantNames));
 
         // Default category ensure
@@ -2149,13 +2319,52 @@ class ProductController extends Controller
         }
 
         // Warm up database taxonomy
-        DB::transaction(function () use ($allCategories, $allBrands, $allVariantNames) {
+        DB::transaction(function () use ($allParentCategories, $allCategoryPairs, $allCategories, $allBrands, $allUnits, $allVariantNames) {
+            // 1. Create parent categories
+            foreach ($allParentCategories as $parentName) {
+                Category::firstOrCreate(
+                    ['name' => $parentName, 'parent_id' => null],
+                    ['is_active' => true]
+                );
+            }
+
+            // 2. Create subcategories under parents
+            foreach ($allCategoryPairs as $pair) {
+                $pName = $pair['parent'];
+                $cName = $pair['name'];
+                if (!empty($pName) && !empty($cName)) {
+                    $parentCat = Category::where('name', $pName)->first();
+                    Category::firstOrCreate(
+                        ['name' => $cName, 'parent_id' => $parentCat ? $parentCat->id : null],
+                        ['is_active' => true]
+                    );
+                } elseif (!empty($cName)) {
+                    Category::firstOrCreate(
+                        ['name' => $cName],
+                        ['is_active' => true]
+                    );
+                }
+            }
+
+            // 3. Standalone categories
             foreach ($allCategories as $catName) {
                 Category::firstOrCreate(['name' => $catName], ['is_active' => true]);
             }
+
+            // 4. Create brands
             foreach ($allBrands as $brandName) {
                 Brand::firstOrCreate(['title' => $brandName], ['is_active' => true]);
             }
+
+            // 5. Create units if not present
+            foreach ($allUnits as $uCode) {
+                Unit::firstOrCreate(
+                    ['unit_code' => $uCode],
+                    ['unit_name' => $uCode, 'base_unit' => null, 'operator' => '*', 'operation_value' => 1, 'is_active' => true]
+                );
+            }
+
+            // 6. Create variants
             foreach (array_chunk($allVariantNames, 100) as $chunk) {
                 foreach ($chunk as $name) {
                     Variant::firstOrCreate(['name' => $name]);
@@ -2165,10 +2374,6 @@ class ProductController extends Controller
 
         // Hydrate Global Array Cache Lookups
         $existingProducts = Product::whereIn('code', $allCodes)->get()->keyBy('code');
-        
-        $categories = Category::whereIn('name', $allCategories)->get()->mapWithKeys(function ($item) {
-            return [strtolower($item->name) => $item->id];
-        })->toArray();
         
         $brands = Brand::whereIn('title', $allBrands)->get()->mapWithKeys(function ($item) {
             return [strtolower($item->title) => $item->id];
@@ -2198,6 +2403,31 @@ class ProductController extends Controller
         $defaultMargin = $general_setting->default_margin_value ?? 25;
         $addonsConfig = config('addons') ?? '';
 
+        $categoryResolver = function ($parentName, $catName) use ($defaultCategory) {
+            $parentName = trim($parentName ?? '');
+            $catName = trim($catName ?? '');
+
+            if ($parentName !== '' && $catName !== '') {
+                $parent = Category::whereRaw('LOWER(name) = ?', [strtolower($parentName)])->first();
+                if ($parent) {
+                    $child = Category::whereRaw('LOWER(name) = ?', [strtolower($catName)])
+                        ->where('parent_id', $parent->id)
+                        ->first();
+                    if ($child) return $child->id;
+                }
+                $cat = Category::whereRaw('LOWER(name) = ?', [strtolower($catName)])->first();
+                if ($cat) return $cat->id;
+            } elseif ($catName !== '') {
+                $cat = Category::whereRaw('LOWER(name) = ?', [strtolower($catName)])->first();
+                if ($cat) return $cat->id;
+            } elseif ($parentName !== '') {
+                $parent = Category::whereRaw('LOWER(name) = ?', [strtolower($parentName)])->first();
+                if ($parent) return $parent->id;
+            }
+
+            return $defaultCategory->id;
+        };
+
         // --- PASS 2: GENERATOR DRIVEN CHUNK STREAMING ---
         $importedCount = 0;
         $processedCodesInBatch = [];
@@ -2217,6 +2447,12 @@ class ProductController extends Controller
                 }
 
                 $mappedRow = array_combine($escapedHeader, $row);
+                $codeCheck = trim($mappedRow['code'] ?? '');
+                $nameCheck = trim($mappedRow['name'] ?? '');
+                if ($codeCheck === '' && $nameCheck === '') {
+                    continue;
+                }
+
                 $mappedRow['_spreadsheet_row_num'] = $rowCounter;
                 
                 $currentChunk[] = $mappedRow;
@@ -2286,39 +2522,42 @@ class ProductController extends Controller
                 }
 
                 $unitKey = strtolower(trim($rowRef['unit_code'] ?? ''));
-                if (!isset($units[$unitKey])) {
+                $unitId = $units[$unitKey] ?? (!empty($units) ? reset($units) : null);
+                if (!$unitId) {
                     $errors[] = __("db.Row :row: Unit not found: :code", ['row' => $spreadsheetRow, 'code' => $rowRef['unit_code'] ?? '']);
                     continue;
                 }
 
-                // Category Resolution (fallback to default if empty)
-                $normalizedCategoryKey = !empty($rowRef['category']) ? strtolower(trim($rowRef['category'])) : null;
-                $categoryId = $normalizedCategoryKey && isset($categories[$normalizedCategoryKey]) 
-                    ? $categories[$normalizedCategoryKey] 
-                    : $defaultCategory->id;
+                $cost = (float)($rowRef['cost'] ?? 0);
+                if ($cost < 0) {
+                    $errors[] = __("db.Row :row: Product cost cannot be negative", ['row' => $spreadsheetRow]);
+                    continue;
+                }
 
-                $processedCodesInBatch[] = $code;
+                $profit_margin_type = strtolower(trim($rowRef['profit_margin_type'] ?? 'percentage'));
+                if (!in_array($profit_margin_type, ['percentage', 'flat'])) {
+                    $profit_margin_type = 'percentage';
+                }
 
-                $parseNumber = function ($val) {
-                    return (float) str_replace(',', '', $val ?? 0);
-                };
+                $hasPriceInCsv = isset($rowRef['price']) && trim((string)$rowRef['price']) !== '';
+                $hasMarginInCsv = isset($rowRef['profitmargin']) && trim((string)$rowRef['profitmargin']) !== '';
 
-                $cost = $parseNumber($rowRef['cost'] ?? 0);
-                $price = $parseNumber($rowRef['price'] ?? 0);
-                $lowest_price = isset($rowRef['product_lowest_price']) && $rowRef['product_lowest_price'] !== '' ? $parseNumber($rowRef['product_lowest_price']) : null;
-                $average_price = isset($rowRef['product_average_price']) && $rowRef['product_average_price'] !== '' ? $parseNumber($rowRef['product_average_price']) : null;
-                $highest_price = isset($rowRef['product_highest_price']) && $rowRef['product_highest_price'] !== '' ? $parseNumber($rowRef['product_highest_price']) : null;
-                $wholesale_price = isset($rowRef['wholesale_price']) && $rowRef['wholesale_price'] !== '' ? $parseNumber($rowRef['wholesale_price']) : null;
-                $profit_margin_type = !empty($rowRef['profit_margin_type']) ? strtolower(trim($rowRef['profit_margin_type'])) : 'percentage';
+                $price = 0.00;
+                $margin = 0.00;
+                $wholesale_price = isset($rowRef['wholesale_price']) && trim((string)$rowRef['wholesale_price']) !== '' ? (float)$rowRef['wholesale_price'] : null;
 
-                if (!empty($rowRef['profitmargin'])) {
+                if ($hasPriceInCsv && $hasMarginInCsv) {
+                    $price = (float)$rowRef['price'];
+                    $margin = (float)$rowRef['profitmargin'];
+                } elseif ($hasMarginInCsv) {
                     $margin = (float)$rowRef['profitmargin'];
                     if ($profit_margin_type === 'flat') {
-                        $price = $cost > 0 ? ($cost + $margin) : $price;
+                        $price = $cost + $margin;
                     } else {
-                        $price = $cost > 0 ? ($cost * (1 + $margin / 100)) : $price;
+                        $price = $cost + ($cost * $margin / 100);
                     }
-                } elseif ($price > 0) {
+                } elseif ($hasPriceInCsv) {
+                    $price = (float)$rowRef['price'];
                     if ($profit_margin_type === 'flat') {
                         $margin = $cost > 0 ? ($price - $cost) : 0;
                     } else {
@@ -2340,6 +2579,29 @@ class ProductController extends Controller
                     $taxId = $taxesCache[$taxLookupKey] ?? null;
                 }
 
+                // Tax Method (1: Exclusive, 2: Inclusive)
+                $taxMethodVal = strtolower(trim($rowRef['tax_method'] ?? ''));
+                $taxMethod = ($taxMethodVal === 'inclusive' || $taxMethodVal === '2') ? 2 : 1;
+
+                // Warranty & Guarantee
+                $warranty = isset($rowRef['warranty']) && trim($rowRef['warranty']) !== '' ? (int)$rowRef['warranty'] : null;
+                $warranty_type = !empty($rowRef['warranty_type']) && in_array(strtolower(trim($rowRef['warranty_type'])), ['days', 'months', 'years']) ? strtolower(trim($rowRef['warranty_type'])) : 'months';
+
+                $guarantee = isset($rowRef['guarantee']) && trim($rowRef['guarantee']) !== '' ? (int)$rowRef['guarantee'] : null;
+                $guarantee_type = !empty($rowRef['guarantee_type']) && in_array(strtolower(trim($rowRef['guarantee_type'])), ['days', 'months', 'years']) ? strtolower(trim($rowRef['guarantee_type'])) : 'months';
+
+                // Alert quantity & Daily sale objective
+                $alert_quantity = isset($rowRef['alert_quantity']) && trim($rowRef['alert_quantity']) !== '' ? (float)$rowRef['alert_quantity'] : null;
+                $daily_sale_objective = isset($rowRef['daily_sale_objective']) && trim($rowRef['daily_sale_objective']) !== '' ? (float)$rowRef['daily_sale_objective'] : null;
+
+                // Variants Option & Values list
+                $vOpt = trim($rowRef['variant_option'] ?? '');
+                $vVal = trim($rowRef['variant_value'] ?? ($rowRef['variantname'] ?? ''));
+                $parsedVariants = $parseVariants($vOpt, $vVal);
+                $vOptions = $parsedVariants['options'];
+                $vValues = $parsedVariants['values'];
+                $vCombinations = $parsedVariants['combinations'];
+
                 // Slug Management Logic
                 $slug = null;
                 if (in_array('ecommerce', explode(',', $addonsConfig))) {
@@ -2354,61 +2616,57 @@ class ProductController extends Controller
                             if ($product && $existingSlug === $product->slug) {
                                 continue; 
                             }
-                            if (str_starts_with($existingSlug, $baseSlug)) {
+                            if (preg_match('/^' . preg_quote($baseSlug, '/') . '(-\d+)?$/', $existingSlug)) {
                                 $matchingCount++;
                             }
                         }
-                        $slug = $matchingCount ? "{$baseSlug}-{$matchingCount}" : $baseSlug;
+                        $slug = $matchingCount > 0 ? "{$baseSlug}-{$matchingCount}" : $baseSlug;
                         $slugMatches[] = $slug; 
                     }
                 }
 
-                // Secure Image Engine
+                // Category Resolution
+                $parentCatName = trim($rowRef['parent_category'] ?? '');
+                $catName = trim($rowRef['category'] ?? '');
+                $categoryId = $categoryResolver($parentCatName, $catName);
+
+                // Image processing
                 $stagedImages = [];
                 if (!empty($rowRef['image'])) {
-                    $urls = explode(',', $rowRef['image']);
-                    foreach ($urls as $url) {
-                        $url = trim($url);
-                        if (empty($url)) continue;
-
-                        $tempLocalFile = tempnam(sys_get_temp_dir(), 'csv_img_');
+                    $imgParts = array_filter(array_map('trim', explode(',', $rowRef['image'])));
+                    foreach ($imgParts as $rawImg) {
+                        $tempLocalFile = null;
                         $stagedSuccessfully = false;
 
                         try {
-                            if (filter_var($url, FILTER_VALIDATE_URL)) {
-                                $currentUrl = $url;
-                                // ... simplified logic as provided ...
-                                $chTarget = curl_init($currentUrl);
-                                $fp = fopen($tempLocalFile, 'wb');
-                                curl_setopt($chTarget, CURLOPT_FILE, $fp);
-                                curl_setopt($chTarget, CURLOPT_TIMEOUT, 15);
-                                curl_setopt($chTarget, CURLOPT_FOLLOWLOCATION, false); 
-                                curl_setopt($chTarget, CURLOPT_RESOLVE, []); 
-                                curl_setopt($chTarget, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
-                                curl_setopt($chTarget, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
-                                
-                                $success = curl_exec($chTarget);
-                                curl_close($chTarget);
-                                fclose($fp);
-
-                                if (!$success || filesize($tempLocalFile) > 5242880) {
-                                    throw new \Exception("Streaming operation dropped due to connection break or size breach.");
+                            if (filter_var($rawImg, FILTER_VALIDATE_URL)) {
+                                $tempLocalFile = tempnam(sys_get_temp_dir(), 'img_dl_');
+                                $ctx = stream_context_create([
+                                    'http' => ['timeout' => 4, 'follow_location' => 1, 'max_redirects' => 3, 'user_agent' => 'Mozilla/5.0']
+                                ]);
+                                $fileData = @file_get_contents($rawImg, false, $ctx);
+                                if ($fileData === false) {
+                                    throw new \Exception("Remote image unreachable: " . $rawImg);
                                 }
+                                file_put_contents($tempLocalFile, $fileData);
                             } else {
-                                $basePublicPath = realpath(public_path());
-                                $resolvedLocalPath = realpath(public_path($url));
+                                $localCleanName = basename($rawImg);
+                                $possibleLocalPaths = [
+                                    public_path('images/product/' . $localCleanName),
+                                    public_path('images/' . $localCleanName),
+                                    public_path('images/product_images/' . $localCleanName)
+                                ];
 
-                                if (!$resolvedLocalPath && file_exists(public_path('images/product/' . $url))) {
-                                    $resolvedLocalPath = realpath(public_path('images/product/' . $url));
+                                foreach ($possibleLocalPaths as $pPath) {
+                                    if (file_exists($pPath)) {
+                                        $tempLocalFile = tempnam(sys_get_temp_dir(), 'img_loc_');
+                                        copy($pPath, $tempLocalFile);
+                                        break;
+                                    }
                                 }
 
-                                if ($resolvedLocalPath && str_starts_with($resolvedLocalPath, $basePublicPath) && file_exists($resolvedLocalPath)) {
-                                    if (filesize($resolvedLocalPath) > 5242880) {
-                                        throw new \Exception("Local asset size exceeds 5MB.");
-                                    }
-                                    copy($resolvedLocalPath, $tempLocalFile);
-                                } else {
-                                    throw new \Exception("Asset not found locally.");
+                                if (!$tempLocalFile) {
+                                    continue;
                                 }
                             }
 
@@ -2436,12 +2694,14 @@ class ProductController extends Controller
                         } catch (\Exception $imgEx) {
                             Log::error("Row {$spreadsheetRow} image execution pipeline failure: " . $imgEx->getMessage());
                         } finally {
-                            if (!$stagedSuccessfully && file_exists($tempLocalFile)) {
+                            if (!$stagedSuccessfully && $tempLocalFile && file_exists($tempLocalFile)) {
                                 @unlink($tempLocalFile);
                             }
                         }
                     }
                 }
+
+                $processedCodesInBatch[] = $code;
 
                 $validatedChunkRows[] = [
                     '_spreadsheet_row_num'   => $spreadsheetRow,
@@ -2454,13 +2714,22 @@ class ProductController extends Controller
                     'brand'                  => strtolower(trim($rowRef['brand'] ?? '')),
                     'unit_id'                => $units[$unitKey],
                     'productdetails'         => $rowRef['productdetails'] ?? '',
-                    'variantname'            => $rowRef['variantname'] ?? '',
+                    'v_options'              => $vOptions,
+                    'v_values'               => $vValues,
+                    'v_combinations'         => $vCombinations,
                     'cost'                   => $cost,
                     'price'                  => $price,
                     'profit_margin'          => $margin,
                     'profit_margin_type'     => $profit_margin_type,
                     'wholesale_price'        => $wholesale_price,
                     'tax_id'                 => $taxId,
+                    'tax_method'             => $taxMethod,
+                    'alert_quantity'         => $alert_quantity,
+                    'daily_sale_objective'   => $daily_sale_objective,
+                    'warranty'               => $warranty,
+                    'warranty_type'          => $warranty_type,
+                    'guarantee'              => $guarantee,
+                    'guarantee_type'         => $guarantee_type,
                 ];
             }
 
@@ -2489,6 +2758,7 @@ class ProductController extends Controller
                         $isNew = true;
                     }
 
+                    $isVariant = !empty($data['v_combinations']);
                     $product->is_active = true;
                     $product->fill([
                         'name'                  => $data['name'],
@@ -2505,7 +2775,16 @@ class ProductController extends Controller
                         'profit_margin_type'    => $data['profit_margin_type'],
                         'wholesale_price'       => $data['wholesale_price'],
                         'tax_id'                => $data['tax_id'],
-                        'tax_method'            => 1,
+                        'tax_method'            => $data['tax_method'],
+                        'alert_quantity'        => $data['alert_quantity'],
+                        'daily_sale_objective'  => $data['daily_sale_objective'],
+                        'warranty'              => $data['warranty'],
+                        'warranty_type'         => $data['warranty_type'],
+                        'guarantee'             => $data['guarantee'],
+                        'guarantee_type'        => $data['guarantee_type'],
+                        'is_variant'            => $isVariant ? 1 : null,
+                        'variant_option'        => $isVariant ? json_encode($data['v_options']) : null,
+                        'variant_value'         => $isVariant ? json_encode($data['v_values']) : null,
                         'product_details'       => $data['productdetails'],
                     ]);
 
@@ -2543,13 +2822,12 @@ class ProductController extends Controller
 
                     // Variants handling if present
                     $variantIdsPassed = [];
-                    if (!empty($data['variantname'])) {
-                        $vNames = explode(',', $data['variantname']);
+                    if (!empty($data['v_combinations'])) {
                         $existingVariants = $isNew ? [] : ProductVariant::where('product_id', $product->id)->pluck('variant_id')->toArray();
                         $variantsToBulkInsert = [];
 
-                        foreach ($vNames as $k => $vName) {
-                            $cleanedVName = strtolower(trim($vName));
+                        foreach ($data['v_combinations'] as $k => $vCombName) {
+                            $cleanedVName = strtolower(trim($vCombName));
                             $vId = $variantsCache[$cleanedVName] ?? null;
                             if (!$vId) continue;
 
@@ -2560,7 +2838,7 @@ class ProductController extends Controller
                                     'product_id'       => $product->id,
                                     'variant_id'       => $vId,
                                     'position'         => $k + 1,
-                                    'item_code'        => $product->code . '-' . trim($vName),
+                                    'item_code'        => $product->code . '-' . trim($vCombName),
                                     'additional_cost'  => 0,
                                     'additional_price' => 0,
                                     'qty'              => 0,
@@ -2571,12 +2849,11 @@ class ProductController extends Controller
                                 } else {
                                     ProductVariant::create($variantRowData);
                                     foreach ($warehouses as $wid) {
-                                        Product_Warehouse::create([
+                                        Product_Warehouse::firstOrCreate([
                                             'product_id'   => $product->id,
                                             'variant_id'   => $vId,
                                             'warehouse_id' => $wid,
-                                            'qty'          => 0,
-                                        ]);
+                                        ], ['qty' => 0]);
                                     }
                                 }
                             }
@@ -2584,6 +2861,11 @@ class ProductController extends Controller
 
                         if ($isNew && !empty($variantsToBulkInsert)) {
                             ProductVariant::insert($variantsToBulkInsert);
+                        }
+
+                        if (!empty($variantIdsPassed)) {
+                            $product->variant_list = implode(',', $variantIdsPassed);
+                            $product->save();
                         }
                     }
 
@@ -2612,7 +2894,9 @@ class ProductController extends Controller
                             }
                         }
 
-                        Product_Warehouse::insert($warehouseData);
+                        if (!empty($warehouseData)) {
+                            Product_Warehouse::insert($warehouseData);
+                        }
                     }
 
                     $rowsImportedInThisBatchCount++;
@@ -2654,6 +2938,11 @@ class ProductController extends Controller
         if ($tempGeneratedCsv && file_exists($tempGeneratedCsv)) {
             @unlink($tempGeneratedCsv);
         }
+
+        $this->cacheForget('product_list');
+        $this->cacheForget('product_list_with_variant');
+        $this->cacheForget('category_list');
+        $this->cacheForget('brand_list');
 
         if (count($errors) > 0) {
             return back()->with('import_errors', $errors)->with('message', __('db.Import completed with some errors.'));

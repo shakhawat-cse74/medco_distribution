@@ -42,14 +42,11 @@ class HomeController extends Controller
 
 	public function __construct()
     {
-        if(!config('database.connections.saleprosaas_landlord')) {
-            $this->versionUpgradeInfo = $this->isUpdateAvailable();
-        }
 	}
 
     public function home()
     {
-        return view('backend.home');
+        return redirect('dashboard');
     }
 
     public function index()
@@ -240,8 +237,7 @@ class HomeController extends Controller
         DB::reconnect();
         //fetching data for auto updates
         if(!config('database.connections.saleprosaas_landlord') && Auth::user()->role_id <= 2) {
-            $versionUpgradeData = [];
-            $versionUpgradeData = $this->versionUpgradeInfo;
+            $versionUpgradeData = $this->isUpdateAvailable();
         }
         else {
             $versionUpgradeData = [];

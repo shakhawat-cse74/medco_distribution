@@ -203,6 +203,7 @@ class PurchaseController extends Controller
             }
 
             $data['paid_amount'] = 0; // important as paid amount will be updated by PaymentService
+            $data['payment_status'] = $data['payment_status'] ?? 1;
 
             // return dd($data);
             $lims_purchase_data = Purchase::create($data);
@@ -228,7 +229,7 @@ class PurchaseController extends Controller
             $batch_no = $data['batch_no'] ?? null;
             $expired_date = $data['expired_date'] ?? null;
             $purchase_unit = $data['purchase_unit'];
-            $unit_cost = $data['unit_cost'];
+            $unit_cost = $data['unit_cost'] ?? $data['net_unit_cost'];
             $net_unit_cost = $data['net_unit_cost'];
             $net_unit_margin = $data['net_unit_margin'];
             $net_unit_margin_type = $data['net_unit_margin_type'];
@@ -242,15 +243,37 @@ class PurchaseController extends Controller
             $log_data['item_description'] = '';
 
             foreach ($product_id as $i => $id) {
-                $lims_purchase_unit_data  = Unit::where('unit_name', $purchase_unit[$i])->first();
-
-                if ($lims_purchase_unit_data->operator == '*') {
-                    $quantity = $recieved[$i] * $lims_purchase_unit_data->operation_value;
-                } else {
-                    $quantity = $recieved[$i] / $lims_purchase_unit_data->operation_value;
-                }
                 $lims_product_data = Product::find($id);
-                $price = $lims_product_data->price;
+                $p_unit_val = $purchase_unit[$i] ?? null;
+                $lims_purchase_unit_data = null;
+                if ($p_unit_val) {
+                    $lims_purchase_unit_data = Unit::where('unit_name', $p_unit_val)
+                        ->orWhere('unit_code', $p_unit_val)
+                        ->orWhere('id', $p_unit_val)
+                        ->first();
+                }
+
+                if (!$lims_purchase_unit_data && $lims_product_data && $lims_product_data->unit_id) {
+                    $lims_purchase_unit_data = Unit::find($lims_product_data->unit_id);
+                }
+
+                if (!$lims_purchase_unit_data && $lims_product_data && $lims_product_data->purchase_unit_id) {
+                    $lims_purchase_unit_data = Unit::find($lims_product_data->purchase_unit_id);
+                }
+
+                if (!$lims_purchase_unit_data) {
+                    $lims_purchase_unit_data = Unit::first();
+                }
+
+                $op = ($lims_purchase_unit_data && $lims_purchase_unit_data->operator) ? $lims_purchase_unit_data->operator : '*';
+                $op_val = ($lims_purchase_unit_data && $lims_purchase_unit_data->operation_value) ? $lims_purchase_unit_data->operation_value : 1;
+
+                if ($op == '*') {
+                    $quantity = $recieved[$i] * $op_val;
+                } else {
+                    $quantity = $recieved[$i] / $op_val;
+                }
+                $price = $lims_product_data ? $lims_product_data->price : 0;
                 //dealing with product barch
                 if (isset($batch_no[$i])) {
                     $product_batch_data = ProductBatch::where([
@@ -425,6 +448,14 @@ class PurchaseController extends Controller
             $log_data['user_message'] = 'You just created a purchase. Reference No: ' . $lims_purchase_data->reference_no;
             // $log_data['mail_setting'] = MailSetting::latest()->first();
             $this->createActivityLog($log_data);
+
+            if (!empty($data['purchase_request_id'])) {
+                $pr = \App\Models\PurchaseRequest::find($data['purchase_request_id']);
+                if ($pr) {
+                    $pr->update(['status' => 3]);
+                    $pr->delete();
+                }
+            }
 
             DB::commit();
 

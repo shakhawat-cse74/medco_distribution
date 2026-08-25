@@ -13,37 +13,41 @@ trait AutoUpdateTrait{
     */
     public function isUpdateAvailable()
     {
-        $versionUpgradeData = [];
-        try {
-            $url = config('database.connections.saleprosaas_landlord')
-                    ? 'https://lion-coders.com/api/sale-pro-saas-purchase/verify/updatecheck'
-                    : 'https://lion-coders.com/api/sale-pro-purchase/verify/updatecheck';
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-            curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-            $response = curl_exec($ch);
-            $data = json_decode($response, false);
+        return \Illuminate\Support\Facades\Cache::remember('salepro_version_upgrade_data', 86400, function () {
+            $versionUpgradeData = [];
+            try {
+                $url = config('database.connections.saleprosaas_landlord')
+                        ? 'https://lion-coders.com/api/sale-pro-saas-purchase/verify/updatecheck'
+                        : 'https://lion-coders.com/api/sale-pro-purchase/verify/updatecheck';
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+                curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+                $response = curl_exec($ch);
+                curl_close($ch);
+                $data = json_decode($response, false);
 
-            if (isset($data) && !empty($data)) {
-                $clientVersionNumber = $this->stringToNumberConvert(env('VERSION'));
-                $demoVersionNumber      = $this->stringToNumberConvert($data->demo_version ?? '');
-                $minimumRequiredVersion = $this->stringToNumberConvert($data->minimum_required_version ?? '');
-                $versionUpgradeData['alert_version_upgrade_enable'] = false;
-                if ($demoVersionNumber > $clientVersionNumber && $clientVersionNumber >= $minimumRequiredVersion) {
-                    $versionUpgradeData['alert_version_upgrade_enable'] = true;
+                if (isset($data) && !empty($data)) {
+                    $clientVersionNumber = $this->stringToNumberConvert(env('VERSION'));
+                    $demoVersionNumber      = $this->stringToNumberConvert($data->demo_version ?? '');
+                    $minimumRequiredVersion = $this->stringToNumberConvert($data->minimum_required_version ?? '');
+                    $versionUpgradeData['alert_version_upgrade_enable'] = false;
+                    if ($demoVersionNumber > $clientVersionNumber && $clientVersionNumber >= $minimumRequiredVersion) {
+                        $versionUpgradeData['alert_version_upgrade_enable'] = true;
+                    }
+                    $versionUpgradeData['demo_version'] = $data->demo_version ?? '';
+                    $versionUpgradeData['latest_version_db_migrate_enable'] = $data->latest_version_db_migrate_enable ?? false;
+                    $versionUpgradeData['advertise_info'] = $data->advertise_info ?? '';
                 }
-                $versionUpgradeData['demo_version'] = $data->demo_version ?? '';
-                $versionUpgradeData['latest_version_db_migrate_enable'] = $data->latest_version_db_migrate_enable ?? false;
-                $versionUpgradeData['advertise_info'] = $data->advertise_info ?? '';
+            } catch (\Throwable $e) {
+                // Silence any update check exceptions
             }
-        } catch (\Throwable $e) {
-            // Silence any update check exceptions
-        }
 
-        return $versionUpgradeData;
+            return $versionUpgradeData;
+        });
     }
 
     private function stringToNumberConvert($dataString) {

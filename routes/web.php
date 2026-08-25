@@ -55,6 +55,7 @@ use App\Http\Controllers\GiftCardController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\RazorpayController;
 use App\Http\Controllers\MpesaController;
 use App\Http\Controllers\PaymentGatewayController;
@@ -212,7 +213,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
     Route::delete('/translations/{id}', [TranslationController::class, 'destroy']);
 
     Route::controller(HomeController::class)->group(function () {
-        // Route::get('/', 'index');
+        Route::get('/', 'index');
         Route::get('/dashboard', 'dashboard');
 
         Route::get('new-release', 'newVersionReleasePage')->name('new-release');
@@ -538,6 +539,14 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::post('importpurchase', 'importPurchase')->name('purchase.import');
     });
     Route::resource('purchases', PurchaseController::class);
+
+    Route::controller(PurchaseRequestController::class)->group(function () {
+        Route::prefix('purchase_requests')->group(function () {
+            Route::get('gen_invoice/{id}', 'genInvoice')->name('purchase_requests.invoice');
+            Route::get('{id}/create_purchase', 'createPurchase')->name('purchase_requests.create_purchase');
+        });
+    });
+    Route::resource('purchase_requests', PurchaseRequestController::class);
 
 
 

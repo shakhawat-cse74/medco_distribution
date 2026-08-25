@@ -560,12 +560,15 @@
                <div class="col-md-6">
                    <div class="form-group">
                        <label>{{__('db.Sample File')}}</label>
-                       <div class="d-flex" style="gap:8px;">
-                           <a href="sample_file/sample_products.xlsx" class="btn btn-success btn-block btn-md text-white font-weight-bold" download><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</a>
-                           <a href="sample_file/sample_products.csv" class="btn btn-info btn-block btn-md mt-0 text-white font-weight-bold" download><i class="ti ti-download"></i> CSV (.csv)</a>
-                       </div>
-                   </div>
-               </div>
+                        <div class="d-flex" style="gap:8px;">
+                            <a href="sample_file/sample_products.xlsx" class="btn btn-success btn-block btn-md text-white font-weight-bold" download><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</a>
+                            <a href="sample_file/sample_products.csv" class="btn btn-info btn-block btn-md mt-0 text-white font-weight-bold" download><i class="ti ti-download"></i> CSV (.csv)</a>
+                        </div>
+                        <div class="mt-2 text-muted" style="font-size:12px;">
+                            <span class="badge" style="background:#dc2626;color:#fff;padding:3px 6px;">Red</span> Mandatory &nbsp;|&nbsp; <span class="badge" style="background:#16a34a;color:#fff;padding:3px 6px;">Green</span> Optional
+                        </div>
+                    </div>
+                </div>
           </div>
           <button type="submit" class="btn btn-primary btn-block mt-2">{{__('db.submit')}}</button>
         </div>

@@ -9,6 +9,38 @@
 .bootstrap-select:not([class*="col-"]):not([class*="form-control"]):not(.input-group-btn) {width: auto;}
 .legend{width: 10px;height: 10px;border-radius: 50%;margin: 0 5px;display: inline-block;}
 .legend-label{font-size: 0.8em!important;color: #555;}
+
+.qi-product-table-wrapper {
+    max-height: 240px;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+}
+.qi-product-table-wrapper::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.qi-product-table-wrapper::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 4px;
+}
+.qi-product-table-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.qi-product-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #7c5cc4;
+}
+#qi-order-table thead th {
+    position: sticky !important;
+    top: 0 !important;
+    background-color: #f8fafc !important;
+    z-index: 10 !important;
+    border-top: none !important;
+}
 </style>
 @endpush
 
@@ -59,11 +91,11 @@
                     </div>
                 @endif
             @endif
-            <div class="col-12">
-                <div class="brand-text float-left mt-4">
-                    <h3 style="font-size:1em">{{ __('db.welcome') }} <span>{{ Auth::user()->name }}</span></h3>
+            <div class="col-12 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center flex-wrap my-3" style="gap: 12px;">
+                <div class="brand-text">
+                    <h3 style="font-size:1.1rem; margin-bottom: 0;">{{ __('db.welcome') }} <span>{{ Auth::user()->name }}</span></h3>
                 </div>
-                @if (in_array('restaurant', explode(',', cache()->get('general_setting')->modules)))
+                @if (in_array('restaurant', explode(',', gen_setting()->modules ?? '')))
                     @if (Auth::user()->role_id > 2 && isset(Auth::user()->service_staff))
                         @php
                             $cooked = DB::table('sales')
@@ -82,7 +114,7 @@
                         @endphp
                     @endif
                 @endif
-                @if (in_array('restaurant', explode(',', cache()->get('general_setting')->modules)) && isset($cooked) && $cooked > 0)
+                @if (in_array('restaurant', explode(',', gen_setting()->modules ?? '')) && isset($cooked) && $cooked > 0)
                     <a href="{{ route('restaurant.kitchen.dashboard') }}">
                         <div class="alert alert-warning alert-dismissible text-center mb-2">
                             <strong>{{ $cooked }} {{ __('db.Orders to serve') }}</strong>
@@ -96,12 +128,11 @@
                         ->first();
                 @endphp
                 @if ($revenue_profit_summary)
-                    <div class="filter-toggle btn-group d-inline-block">
-                        <div class="dashboard-filters">
+                    <div class="dashboard-filter-bar">
+                        <div class="dashboard-filters d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center" style="gap: 8px;">
                             @if (\Auth::user()->role_id <= 2)
                             {{-- Warehouse --}}
-
-                            <div class="filter-toggle btn-group mt-0" style=" border: 1px solid #7c5cc4; border-radius: 5px;">
+                            <div class="filter-toggle btn-group mt-0" style="border: 1px solid #7c5cc4; border-radius: 5px;">
                                 <select name="warehouse_id" class="selectpicker" id="warehouse_btn"
                                     data-live-search="true" data-live-search-style="begins">
                                     <option value="0" data-content="<i class='ti ti-map-pin mr-1'></i> {{ __('db.All Warehouse') }}">{{ __('db.All Warehouse') }}</option>
@@ -114,7 +145,7 @@
                             @endif
 
                             {{-- Date Range --}}
-                            <div id="dashboard-datepicker" class="ml-2">
+                            <div id="dashboard-datepicker">
                                 <div class="input-group input-group-md">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">
@@ -124,7 +155,7 @@
 
                                     <input type="text"
                                         class="daterangepicker-field form-control border-left-0"
-                                        placeholder="Select Date" style="padding-left:0;min-width: 200px;height:40px"/>
+                                        placeholder="Select Date" style="padding-left:0;min-width: 180px;height:40px"/>
 
                                     <input type="hidden" name="start_date" value="" />
                                     <input type="hidden" name="end_date" value="" />
@@ -1079,14 +1110,6 @@
             var end = moment();
 
             // Override initial start/end ONLY once (page load)
-            // @if(isset($start_date))
-            //     start = moment("{{ $start_date }}", 'YYYY-MM-DD');
-            // @endif
-
-            // @if(isset($end_date))
-            //     end = moment("{{ $end_date }}", 'YYYY-MM-DD');
-            // @endif
-
             function applyDashboardFilter(start, end) {
 
                 var start_date = start.format('YYYY-MM-DD');
@@ -1098,8 +1121,6 @@
                 // hidden fields (NOW SAFE)
                 $('input[name="start_date"]').val(start_date);
                 $('input[name="end_date"]').val(end_date);
-
-                // console.log(start_date+' '+end_date);
 
                 $(".date-btn").removeClass("active");
 
@@ -1124,144 +1145,520 @@
 
         });
 
-        // Quick Invoice Modal Logic
+        // Quick Invoice Modal Logic (Sale / Purchase Search Style)
         $(document).ready(function() {
-            let qiRowIndex = 0;
+            let typingTimer;
+            const doneTypingInterval = 200;
+            const $searchInput = $('#qi_product_search_input');
+            const $resultsContainer = $('#qi_product_results_container');
+            const $noResults = $('#qi_no_results_message');
+            const currencySymbol = '{{ config("currency") ?? "৳" }}';
 
-            function addQiRow() {
-                qiRowIndex++;
-                let newRow = `
-                <tr id="qi-row-${qiRowIndex}" style="font-size: 0.9rem;">
-                    <td class="align-middle px-1 py-1 text-center">${qiRowIndex}</td>
-                    <td class="align-middle px-1 py-1">
-                        <div class="position-relative">
-                            <input type="text" class="form-control form-control-sm qi-product-search" placeholder="Search Product..." autocomplete="off">
-                            <div class="qi-product-dropdown dropdown-menu w-100" style="display:none; max-height: 200px; overflow-y: auto; font-size: 0.9rem;"></div>
-                        </div>
-                        <input type="hidden" class="qi-product-id" name="product_id[]">
-                        <input type="hidden" class="qi-product-code" name="product_code[]">
-                        <input type="hidden" name="product_batch_id[]" value="">
-                        <input type="hidden" name="imei_number[]" value="">
-                        <input type="hidden" name="discount[]" value="0">
-                        <input type="hidden" name="tax_rate[]" value="0">
-                        <input type="hidden" name="tax[]" value="0">
-                        <input type="hidden" name="sale_unit[]" class="qi-sale-unit-id" value="">
-                        <input type="hidden" name="net_unit_price[]" class="qi-net-unit-price" value="0">
-                    </td>
-                    <td class="align-middle px-1 py-1"><input type="text" class="form-control form-control-sm" name="description[]"></td>
-                    <td class="align-middle px-1 py-1"><input type="number" class="form-control form-control-sm qi-qty" name="qty[]" value="1" min="1" step="any"></td>
-                    <td class="align-middle px-1 py-1"><input type="number" class="form-control form-control-sm qi-rate" name="product_price[]" value="0" step="any" readonly></td>
-                    <td class="align-middle px-1 py-1"><input type="text" class="form-control form-control-sm qi-subtotal" name="subtotal[]" value="0" readonly></td>
-                    <td class="align-middle px-1 py-1 text-center"><button type="button" class="btn btn-danger btn-sm qi-remove-row py-1 px-2"><i class="ti ti-trash"></i></button></td>
-                </tr>
-                `;
-                $('#qi-order-table tbody').append(newRow);
+            function formatCurrency(amount) {
+                let decimals = {{ gen_setting()->decimal ?? 2 }};
+                return currencySymbol + ' ' + (parseFloat(amount) || 0).toFixed(decimals);
             }
 
-            // Initialize with one row
-            addQiRow();
+            function clearQiSearchResults() {
+                $resultsContainer.empty().hide();
+                $noResults.hide();
+            }
 
-            $('#qi-add-row-btn').on('click', function() {
-                addQiRow();
-            });
+            function updateQiCustomerAddress() {
+                let $opt = $('#qi_customer_id option:selected');
+                if ($opt.length && $('#qi_customer_id').val()) {
+                    let name = $opt.data('name') || $opt.text();
+                    let company = $opt.data('company') || '';
+                    let phone = $opt.data('phone') || '';
+                    let address = $opt.data('address') || '';
+                    let city = $opt.data('city') || '';
+                    let state = $opt.data('state') || '';
+                    let postal = $opt.data('postal') || '';
+                    let country = $opt.data('country') || '';
 
-            $(document).on('click', '.qi-remove-row', function() {
-                if ($('#qi-order-table tbody tr').length > 1) {
-                    $(this).closest('tr').remove();
-                    calculateQiTotals();
+                    let addrLine1 = address ? address : 'No address provided';
+                    let addrLine2 = [city, state, postal].filter(Boolean).join(', ');
+                    if (country) addrLine2 += (addrLine2 ? ', ' : '') + country;
+
+                    let billHtml = `<div class="font-weight-bold text-dark">${name} ${company ? '<span class="text-muted font-weight-normal">(' + company + ')</span>' : ''}</div>
+                                    <div class="text-muted" style="font-size:11px;">${addrLine1}</div>
+                                    ${addrLine2 ? '<div class="text-muted" style="font-size:11px;">' + addrLine2 + '</div>' : ''}
+                                    ${phone ? '<div class="text-muted" style="font-size:11px;"><i class="ti ti-phone mr-1"></i>' + phone + '</div>' : ''}`;
+
+                    let shipHtml = `<div class="font-weight-bold text-dark">${name}</div>
+                                    <div class="text-muted" style="font-size:11px;">${addrLine1}</div>
+                                    ${addrLine2 ? '<div class="text-muted" style="font-size:11px;">' + addrLine2 + '</div>' : ''}
+                                    ${phone ? '<div class="text-muted" style="font-size:11px;"><i class="ti ti-phone mr-1"></i>' + phone + '</div>' : ''}`;
+
+                    $('#qi_bill_to_content').html(billHtml);
+                    $('#qi_ship_to_content').html(shipHtml);
                 } else {
-                    alert('You must have at least one product row.');
+                    $('#qi_bill_to_content').html('<span class="text-muted">Select customer to view billing address</span>');
+                    $('#qi_ship_to_content').html('<span class="text-muted">Select customer to view shipping address</span>');
                 }
+            }
+
+            $('#qi_customer_id').on('change', function() {
+                updateQiCustomerAddress();
             });
 
-            // Basic product search simulation
-            $(document).on('keyup', '.qi-product-search', function() {
-                let input = $(this);
-                let dropdown = input.siblings('.qi-product-dropdown');
-                let term = input.val();
-                
-                if (term.length < 2) {
-                    dropdown.hide();
+            // Initial address load
+            updateQiCustomerAddress();
+
+            let currentQiSearchXhr = null;
+
+            function searchQiProducts(searchTerm) {
+                searchTerm = (searchTerm || '').trim();
+                if (searchTerm.length === 0) {
+                    if (currentQiSearchXhr) {
+                        currentQiSearchXhr.abort();
+                    }
+                    clearQiSearchResults();
                     return;
                 }
 
-                // Call sales/search
-                $.ajax({
+                if (currentQiSearchXhr) {
+                    currentQiSearchXhr.abort();
+                }
+
+                let warehouse_id = $('#qi_warehouse_id').val() || 1;
+                $noResults.hide();
+
+                currentQiSearchXhr = $.ajax({
+                    url: '{{ url("/sales/search") }}',
                     type: 'GET',
-                    url: '{{url("/sales/search")}}',
                     data: {
-                        warehouse_id: 1, // Default warehouse
-                        search: term
+                        warehouse_id: warehouse_id,
+                        search: searchTerm
                     },
                     success: function(data) {
-                        dropdown.empty();
-                        if(data.length > 0) {
-                            data.forEach(function(item) {
-                                let label = item.name + ' (' + item.code + ')';
-                                let code = item.code;
-                                dropdown.append(`<a href="#" class="dropdown-item qi-product-option" data-code="${code}">${label}</a>`);
+                        $resultsContainer.empty();
+                        if (data && data.length > 0) {
+                            $noResults.hide();
+                            data.forEach(function(product) {
+                                let stockVal = product.qty !== undefined ? product.qty : 0;
+                                let priceVal = product.price !== undefined ? parseFloat(product.price).toFixed(2) : '0.00';
+                                let batch_id = product.product_batch_id || '';
+                                let imei_no = product.imei_number || '';
+
+                                let productHtml = '';
+
+                                if (product.is_imei == '1' || product.is_imei === 1 || product.is_imei === true) {
+                                    if (imei_no !== null && $.trim(imei_no) !== '') {
+                                        productHtml = `
+                                            <div class="qi-product-item p-2 border-bottom d-flex justify-content-between align-items-center" 
+                                                 style="cursor: pointer; transition: background 0.15s;"
+                                                 data-id="${product.id}"
+                                                 data-code="${product.code}"
+                                                 data-name="${product.name}"
+                                                 data-qty="${stockVal}"
+                                                 data-price="${product.price}"
+                                                 data-batch="${batch_id}"
+                                                 data-imei="${imei_no}"
+                                                 data-type="${product.type}">
+                                                <div>
+                                                    <div class="font-weight-bold text-dark" style="font-size: 14px;">${product.name}</div>
+                                                    <small class="text-muted"><i class="ti ti-barcode mr-1"></i>${product.code}</small>
+                                                    <span class="badge badge-info ml-1">IMEI: ${imei_no}</span>
+                                                </div>
+                                                <div class="text-right ml-3">
+                                                    <div class="font-weight-bold text-primary" style="font-size: 14px;">${formatCurrency(priceVal)}</div>
+                                                </div>
+                                            </div>`;
+                                    }
+                                } else if (product.product_batch_id != null) {
+                                    let expired = product.expired_date == 0 ? "expired" : (product.expired_date || '');
+                                    productHtml = `
+                                        <div class="qi-product-item p-2 border-bottom d-flex justify-content-between align-items-center" 
+                                             style="cursor: pointer; transition: background 0.15s;"
+                                             data-id="${product.id}"
+                                             data-code="${product.code}"
+                                             data-name="${product.name}"
+                                             data-qty="${stockVal}"
+                                             data-price="${product.price}"
+                                             data-batch="${batch_id}"
+                                             data-imei=""
+                                             data-type="${product.type}">
+                                            <div>
+                                                <div class="font-weight-bold text-dark" style="font-size: 14px;">${product.name}</div>
+                                                <small class="text-muted"><i class="ti ti-barcode mr-1"></i>${product.code}</small>
+                                                ${expired ? '<span class="badge badge-warning ml-1">'+expired+'</span>' : ''}
+                                            </div>
+                                            <div class="text-right ml-3">
+                                                <div class="font-weight-bold text-primary" style="font-size: 14px;">${formatCurrency(priceVal)}</div>
+                                            </div>
+                                        </div>`;
+                                } else {
+                                    productHtml = `
+                                        <div class="qi-product-item p-2 border-bottom d-flex justify-content-between align-items-center" 
+                                             style="cursor: pointer; transition: background 0.15s;"
+                                             data-id="${product.id}"
+                                             data-code="${product.code}"
+                                             data-name="${product.name}"
+                                             data-qty="${stockVal}"
+                                             data-price="${product.price}"
+                                             data-batch="${batch_id}"
+                                             data-imei=""
+                                             data-type="${product.type}">
+                                            <div>
+                                                <div class="font-weight-bold text-dark" style="font-size: 14px;">${product.name}</div>
+                                                <small class="text-muted"><i class="ti ti-barcode mr-1"></i>${product.code}</small>
+                                            </div>
+                                            <div class="text-right ml-3">
+                                                <div class="font-weight-bold text-primary" style="font-size: 14px;">${formatCurrency(priceVal)}</div>
+                                            </div>
+                                        </div>`;
+                                }
+
+                                if (productHtml) {
+                                    $resultsContainer.append(productHtml);
+                                }
                             });
-                            dropdown.show();
+                            $resultsContainer.show();
                         } else {
-                            dropdown.hide();
-                        }
-                    }
-                });
-            });
-
-            $(document).on('click', '.qi-product-option', function(e) {
-                e.preventDefault();
-                let option = $(this);
-                let code = option.data('code');
-                let label = option.text();
-                let row = option.closest('tr');
-                
-                // Get product details
-                $.ajax({
-                    type: 'GET',
-                    url: '{{url("sales/lims_product_search")}}',
-                    data: {
-                        data: {
-                            code: code,
-                            customer_id: 1, // Walkin customer
-                            qty: 1,
-                            embedded: 0,
-                            batch: '',
-                            pre_qty: 0,
-                            price: '',
-                            imei: ''
+                            $resultsContainer.hide();
+                            $noResults.show();
                         }
                     },
-                    success: function(data) {
-                        row.find('.qi-product-search').val(label);
-                        row.find('.qi-product-dropdown').hide();
-                        
-                        // Populate hidden inputs
-                        row.find('.qi-product-id').val(data.id || data[0] || data.product_id); // Ensure correct key is used
-                        row.find('.qi-product-code').val(code);
-                        let price = data.price !== undefined ? data.price : (data[2] || 0); 
-                        row.find('.qi-rate').val(price);
-                        row.find('.qi-net-unit-price').val(price);
-                        
-                        let saleUnit = '';
-                        if (data.unit_name) {
-                            saleUnit = data.unit_name.split(',')[0];
+                    error: function(xhr, status) {
+                        if (status !== 'abort') {
+                            $resultsContainer.hide();
+                            $noResults.show();
                         }
-                        row.find('.qi-sale-unit-id').val(saleUnit);
-                        
-                        calculateQiTotals();
                     }
                 });
-            });
+            }
 
-            // Hide dropdown when clicking outside
-            $(document).on('click', function (e) {
-                if ($(e.target).closest(".position-relative").length === 0) {
-                    $(".qi-product-dropdown").hide();
+            // Real-time instant search on input & paste (Same speed as Add Sale)
+            $searchInput.on('input', function() {
+                let val = $(this).val().trim();
+                if (val.length >= 1) {
+                    clearTimeout(typingTimer);
+                    typingTimer = setTimeout(function() {
+                        searchQiProducts(val);
+                    }, 50);
+                } else {
+                    clearQiSearchResults();
                 }
             });
 
-            $(document).on('input', '.qi-qty', function() {
+            $searchInput.on('paste', function(e) {
+                const pastedData = (e.originalEvent || e).clipboardData ? (e.originalEvent || e).clipboardData.getData('text') : '';
+                if (pastedData && pastedData.trim().length >= 1) {
+                    searchQiProducts(pastedData.trim());
+                }
+            });
+
+            // Close results dropdown on outside click
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#qi_product_results_container, #qi_product_search_input').length) {
+                    clearQiSearchResults();
+                }
+            });
+
+            // Hover effect on product items
+            $(document).on('mouseenter', '.qi-product-item', function() {
+                $(this).css('background-color', '#f4f0ff');
+            }).on('mouseleave', '.qi-product-item', function() {
+                $(this).css('background-color', '#ffffff');
+            });
+
+            let currentQiEditRow = null;
+
+            // When product item is clicked -> Add to invoice table!
+            $(document).on('click', '.qi-product-item', function() {
+                let id = $(this).data('id');
+                let code = $(this).data('code');
+                let name = $(this).data('name');
+                let price = parseFloat($(this).data('price')) || 0;
+                let stock = parseFloat($(this).data('qty')) || 0;
+                let batch = $(this).data('batch') || '';
+                let imei = $(this).data('imei') || '';
+                let type = $(this).data('type') || 'standard';
+
+                // Check if product already exists in table
+                let existingRow = null;
+                $('#qi-order-table tbody tr').each(function() {
+                    if ($(this).find('.qi-product-id').val() == id) {
+                        existingRow = $(this);
+                        return false;
+                    }
+                });
+
+                if (existingRow) {
+                    let currentQty = parseFloat(existingRow.find('.qi-qty').val()) || 0;
+                    existingRow.find('.qi-qty').val(currentQty + 1);
+                    if (imei) {
+                        let curImeis = existingRow.find('.qi-imei-number').val();
+                        if (curImeis && !curImeis.split(',').includes(imei)) {
+                            existingRow.find('.qi-imei-number').val(curImeis + ',' + imei);
+                        }
+                    }
+                } else {
+                    let rowCount = $('#qi-order-table tbody tr').length + 1;
+                    let newRow = `
+                    <tr style="font-size: 0.9rem;" 
+                        data-name="${name}" 
+                        data-code="${code}" 
+                        data-product-type="${type}"
+                        data-cost-default="0" 
+                        data-cost-lowest="0" 
+                        data-cost-avg="0" 
+                        data-cost-highest="0"
+                        data-retail-price="${price}"
+                        data-wholesale-price="0"
+                        data-units-name=""
+                        data-units-operator=""
+                        data-units-operation-value="">
+                        <td class="align-middle px-1 py-1 text-center font-weight-bold text-muted qi-row-num">${rowCount}</td>
+                        <td class="align-middle px-2 py-1" style="width: 115px;">
+                            <span class="badge badge-light border font-weight-bold text-dark px-2 py-1" style="font-size: 11px;">${code}</span>
+                            <input type="hidden" class="qi-product-id" name="product_id[]" value="${id}">
+                            <input type="hidden" class="qi-product-code" name="product_code[]" value="${code}">
+                            <input type="hidden" class="qi-product-batch-id" name="product_batch_id[]" value="${batch}">
+                            <input type="hidden" class="qi-imei-number" name="imei_number[]" value="${imei}">
+                            <input type="hidden" class="qi-tax-rate" name="tax_rate[]" value="0">
+                            <input type="hidden" name="sale_unit[]" class="qi-sale-unit-id" value="">
+                            <input type="hidden" name="net_unit_price[]" class="qi-net-unit-price" value="${price.toFixed(2)}">
+                            <input type="hidden" name="total[]" class="qi-line-total" value="${price.toFixed(2)}">
+                        </td>
+                        <td class="align-middle px-2 py-1">
+                            <div class="font-weight-bold text-dark qi-clickable-name" style="cursor: pointer;" title="Click to view purchase costs & edit product">
+                                ${name} <i class="ti ti-edit text-primary ml-1" style="font-size:11px;"></i>
+                            </div>
+                        </td>
+                        <td class="align-middle px-1 py-1" style="width: 95px;">
+                            <input type="number" class="form-control form-control-sm text-right qi-qty font-weight-bold" name="qty[]" value="1" min="0.01" step="any">
+                        </td>
+                        <td class="align-middle px-1 py-1 text-center" style="width: 70px;">
+                            <span class="badge badge-secondary px-2 py-1 qi-unit-display" style="font-size: 11px;">PC</span>
+                        </td>
+                        <td class="align-middle px-1 py-1" style="width: 110px;">
+                            <input type="number" class="form-control form-control-sm text-right qi-rate font-weight-bold" name="product_price[]" value="${price.toFixed(2)}" step="any">
+                        </td>
+                        <td class="align-middle px-1 py-1" style="width: 90px;">
+                            <input type="number" class="form-control form-control-sm text-right qi-discount font-weight-bold" name="discount[]" value="0" min="0" step="any">
+                        </td>
+                        <td class="align-middle px-1 py-1" style="width: 80px;">
+                            <input type="text" class="form-control form-control-sm text-right qi-tax font-weight-bold bg-light" name="tax[]" value="0.00" readonly>
+                        </td>
+                        <td class="align-middle px-1 py-1" style="width: 115px;">
+                            <input type="text" class="form-control form-control-sm text-right qi-subtotal font-weight-bold bg-light" name="subtotal[]" value="${price.toFixed(2)}" readonly>
+                        </td>
+                        <td class="align-middle px-1 py-1 text-center" style="width: 75px;">
+                            <button type="button" class="btn btn-outline-primary btn-sm qi-edit-row py-1 px-1 mr-1" title="View Purchase Costs & Edit Product"><i class="ti ti-edit"></i></button>
+                            <button type="button" class="btn btn-outline-danger btn-sm qi-remove-row py-1 px-1"><i class="ti ti-trash"></i></button>
+                        </td>
+                    </tr>`;
+                    $('#qi-order-table tbody').append(newRow);
+
+                    // Fetch sale unit, tax, discount & purchase cost insights in background
+                    let addedRow = $('#qi-order-table tbody tr:last');
+                    $.ajax({
+                        type: 'GET',
+                        url: '{{url("sales/lims_product_search")}}',
+                        data: {
+                            data: {
+                                code: code,
+                                customer_id: $('#qi_customer_id').val() || 1,
+                                qty: 1,
+                                embedded: 0,
+                                batch: batch,
+                                pre_qty: 0,
+                                price: price,
+                                imei: imei
+                            }
+                        },
+                        success: function(data) {
+                            if (data) {
+                                if (data.unit_name) {
+                                    let baseUnit = data.unit_name.split(',')[0];
+                                    addedRow.find('.qi-sale-unit-id').val(baseUnit);
+                                    addedRow.find('.qi-unit-display').text(baseUnit);
+                                    addedRow.attr('data-units-name', data.unit_name);
+                                    addedRow.attr('data-units-operator', data.unit_operator || '');
+                                    addedRow.attr('data-units-operation-value', data.unit_operation_value || '');
+                                }
+                                if (data.tax_rate) {
+                                    addedRow.find('.qi-tax-rate').val(data.tax_rate);
+                                }
+                                if (data.discount && data.discount > 0) {
+                                    addedRow.find('.qi-discount').val(parseFloat(data.discount).toFixed(2));
+                                }
+                                if (data.wholesale_price) {
+                                    addedRow.attr('data-wholesale-price', data.wholesale_price);
+                                }
+                                addedRow.attr('data-product-type', data.type || 'standard');
+                                addedRow.attr('data-retail-price', data.price || price);
+                                addedRow.attr('data-cost-default', data.cost || 0);
+                                addedRow.attr('data-cost-lowest', (data.cost_lowest !== undefined ? data.cost_lowest : data.cost) || 0);
+                                addedRow.attr('data-cost-avg', (data.cost_avg !== undefined ? data.cost_avg : data.cost) || 0);
+                                addedRow.attr('data-cost-highest', (data.cost_highest !== undefined ? data.cost_highest : data.cost) || 0);
+                                calculateQiTotals();
+                            }
+                        }
+                    });
+                }
+
+                clearQiSearchResults();
+                $searchInput.val('').focus();
+                calculateQiTotals();
+            });
+
+            // When price option changes inside Edit Modal
+            $('#qi_modal_price_option').on('change', function() {
+                $('#qi_modal_price').val($(this).val());
+            });
+
+            // Open Product Edit Modal on click of edit button or product title
+            $(document).on('click', '.qi-edit-row, .qi-clickable-name', function() {
+                currentQiEditRow = $(this).closest('tr');
+                let name = currentQiEditRow.attr('data-name') || '';
+                let code = currentQiEditRow.attr('data-code') || '';
+                let type = currentQiEditRow.attr('data-product-type') || 'standard';
+                let qty = parseFloat(currentQiEditRow.find('.qi-qty').val()) || 1;
+                let price = parseFloat(currentQiEditRow.find('.qi-rate').val()) || 0;
+                let discount = parseFloat(currentQiEditRow.find('.qi-discount').val()) || 0;
+                let taxRate = parseFloat(currentQiEditRow.find('.qi-tax-rate').val()) || 0;
+
+                let retailPrice = parseFloat(currentQiEditRow.attr('data-retail-price')) || price;
+                let wsPrice = parseFloat(currentQiEditRow.attr('data-wholesale-price')) || 0;
+
+                let costDefault = parseFloat(currentQiEditRow.attr('data-cost-default')) || 0;
+                let costLowest = parseFloat(currentQiEditRow.attr('data-cost-lowest')) || costDefault;
+                let costAvg = parseFloat(currentQiEditRow.attr('data-cost-avg')) || costDefault;
+                let costHighest = parseFloat(currentQiEditRow.attr('data-cost-highest')) || costDefault;
+
+                $('#qi_edit_product_title').text(name + ' (' + code + ')');
+                $('#qi_modal_qty').val(qty);
+                $('#qi_modal_price').val(price.toFixed(2));
+                $('#qi_modal_discount').val(discount.toFixed(2));
+
+                // Populate Price Options
+                let $priceOpt = $('#qi_modal_price_option');
+                $priceOpt.empty();
+                $priceOpt.append(`<option value="${retailPrice.toFixed(2)}" ${Math.abs(price - retailPrice) < 0.01 ? 'selected' : ''}>Retail Price: ${formatCurrency(retailPrice)}</option>`);
+                if (wsPrice > 0) {
+                    $priceOpt.append(`<option value="${wsPrice.toFixed(2)}" ${Math.abs(price - wsPrice) < 0.01 ? 'selected' : ''}>Wholesale Price: ${formatCurrency(wsPrice)}</option>`);
+                }
+
+                // Populate Tax Rate
+                $('#qi_modal_tax_rate').val(taxRate);
+
+                // Populate Product Unit
+                let unitsNameStr = currentQiEditRow.attr('data-units-name') || '';
+                let unitsOpStr = currentQiEditRow.attr('data-units-operator') || '';
+                let unitsValStr = currentQiEditRow.attr('data-units-operation-value') || '';
+                let currentUnit = currentQiEditRow.find('.qi-sale-unit-id').val();
+
+                let $unitSelect = $('#qi_modal_unit');
+                $unitSelect.empty();
+
+                if (type === 'standard' && unitsNameStr) {
+                    let uNames = unitsNameStr.split(',').filter(Boolean);
+                    let uOps = unitsOpStr.split(',').filter(Boolean);
+                    let uVals = unitsValStr.split(',').filter(Boolean);
+
+                    uNames.forEach((uName, idx) => {
+                        let op = uOps[idx] || '*';
+                        let opVal = uVals[idx] || 1;
+                        let isSelected = (currentUnit === uName || idx === 0) ? 'selected' : '';
+                        $unitSelect.append(`<option value="${uName}" data-operator="${op}" data-operation-value="${opVal}" ${isSelected}>${uName}</option>`);
+                    });
+                    $('#qi_edit_unit_group').show();
+                } else {
+                    $('#qi_edit_unit_group').hide();
+                }
+
+                // Populate IMEI section
+                let imeiStr = currentQiEditRow.find('.qi-imei-number').val() || '';
+                let $imeiTbody = $('#qi_imei_table tbody');
+                $imeiTbody.empty();
+                if (imeiStr.trim().length > 0) {
+                    let imeiArr = imeiStr.split(',').filter(Boolean);
+                    imeiArr.forEach((imeiVal) => {
+                        $imeiTbody.append(`
+                            <tr>
+                                <td class="py-1">
+                                    <input type="text" class="form-control form-control-sm qi-modal-imei-val" value="${imeiVal}" readonly>
+                                </td>
+                                <td class="py-1 text-right" style="width: 40px;">
+                                    <button type="button" class="btn btn-sm btn-danger qi-del-modal-imei py-0 px-2">X</button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                    $('#qi_imei_section').show();
+                } else {
+                    $('#qi_imei_section').hide();
+                }
+
+                // Cost History
+                $('#qi_modal_product_cost').text(formatCurrency(costDefault));
+                $('#qi_modal_cost_lowest').text(formatCurrency(costLowest));
+                $('#qi_modal_cost_avg').text(formatCurrency(costAvg));
+                $('#qi_modal_cost_highest').text(formatCurrency(costHighest));
+
+                $('#qiEditModal').modal('show');
+            });
+
+            // Delete IMEI row from modal
+            $(document).on('click', '.qi-del-modal-imei', function() {
+                $(this).closest('tr').remove();
+                let remainingImeis = [];
+                $('#qi_imei_table .qi-modal-imei-val').each(function() {
+                    remainingImeis.push($(this).val());
+                });
+                $('#qi_modal_qty').val(remainingImeis.length || 1);
+            });
+
+            // Update row from Product Edit Modal
+            $('#qi_modal_update_btn').on('click', function() {
+                if (!currentQiEditRow) return;
+
+                let newQty = parseFloat($('#qi_modal_qty').val()) || 1;
+                let newPrice = parseFloat($('#qi_modal_price').val()) || 0;
+                let newDiscount = parseFloat($('#qi_modal_discount').val()) || 0;
+                let newTaxRate = parseFloat($('#qi_modal_tax_rate').val()) || 0;
+                let newUnit = $('#qi_modal_unit').val() || '';
+
+                let remainingImeis = [];
+                $('#qi_imei_table .qi-modal-imei-val').each(function() {
+                    remainingImeis.push($(this).val());
+                });
+
+                currentQiEditRow.find('.qi-qty').val(newQty);
+                currentQiEditRow.find('.qi-rate').val(newPrice.toFixed(2));
+                currentQiEditRow.find('.qi-discount').val(newDiscount.toFixed(2));
+                currentQiEditRow.find('.qi-tax-rate').val(newTaxRate);
+                if (newUnit) {
+                    currentQiEditRow.find('.qi-sale-unit-id').val(newUnit);
+                    currentQiEditRow.find('.qi-unit-display').text(newUnit);
+                }
+                if (remainingImeis.length) {
+                    currentQiEditRow.find('.qi-imei-number').val(remainingImeis.join(','));
+                }
+
+                $('#qiEditModal').modal('hide');
+                calculateQiTotals();
+            });
+
+            // Remove Row
+            $(document).on('click', '.qi-remove-row', function() {
+                $(this).closest('tr').remove();
+                reindexQiRows();
+                calculateQiTotals();
+            });
+
+            function reindexQiRows() {
+                let idx = 1;
+                $('#qi-order-table tbody tr').each(function() {
+                    $(this).find('.qi-row-num').text(idx++);
+                });
+            }
+
+            // Live calculate on qty, rate, and discount change
+            $(document).on('input change', '.qi-qty, .qi-rate, .qi-discount', function() {
                 calculateQiTotals();
             });
 
@@ -1269,27 +1666,45 @@
                 let grandTotal = 0;
                 let totalQty = 0;
                 let itemCount = 0;
+                let totalDiscount = 0;
+                let totalTax = 0;
 
                 $('#qi-order-table tbody tr').each(function() {
+                    let pid = $(this).find('.qi-product-id').val();
                     let qty = parseFloat($(this).find('.qi-qty').val()) || 0;
                     let rate = parseFloat($(this).find('.qi-rate').val()) || 0;
-                    let subtotal = qty * rate;
-                    
+                    let discount = parseFloat($(this).find('.qi-discount').val()) || 0;
+                    let taxRate = parseFloat($(this).find('.qi-tax-rate').val()) || 0;
+
+                    let netPrice = Math.max(0, rate - discount);
+                    let itemTax = netPrice * (taxRate / 100) * qty;
+                    let subtotal = (netPrice * qty) + itemTax;
+
+                    $(this).find('.qi-tax').val(itemTax.toFixed(2));
                     $(this).find('.qi-subtotal').val(subtotal.toFixed(2));
-                    
-                    if (qty > 0 && rate > 0) {
+                    $(this).find('.qi-line-total').val(subtotal.toFixed(2));
+                    $(this).find('.qi-net-unit-price').val(netPrice.toFixed(2));
+
+                    if (pid && qty > 0) {
                         grandTotal += subtotal;
                         totalQty += qty;
+                        totalDiscount += (discount * qty);
+                        totalTax += itemTax;
                         itemCount++;
                     }
                 });
 
                 $('#qi-total-display').text(grandTotal.toFixed(2));
+                $('#qi-qty-display').text(totalQty);
+                $('#qi-item-display').text(itemCount);
+
                 $('#qi_grand_total').val(grandTotal.toFixed(2));
                 $('#qi_total_price').val(grandTotal.toFixed(2));
                 $('#qi_total_qty').val(totalQty);
+                $('#qi_total_discount').val(totalDiscount.toFixed(2));
+                $('#qi_total_tax').val(totalTax.toFixed(2));
                 $('#qi_item').val(itemCount);
-                $('#qi_paid_amount').val(grandTotal.toFixed(2)); // Default to fully paid
+                $('#qi_paid_amount').val(grandTotal.toFixed(2));
                 $('#qi_paying_amount').val(grandTotal.toFixed(2));
             }
 
@@ -1297,46 +1712,93 @@
                 $('#qi_paying_amount').val($(this).val());
             });
 
+            // Focus search input and load customer details when modal opens
+            $('#quickInvoiceModal').on('show.bs.modal shown.bs.modal', function() {
+                clearQiSearchResults();
+                updateQiCustomerAddress();
+                setTimeout(function() {
+                    $('#qi_product_search_input').focus();
+                }, 100);
+            });
+
+            // Submit Quick Invoice and instantly Print in the SAME tab
             $('#qi-submit-btn').on('click', function() {
                 let form = $('#quick-invoice-form');
-                
-                // Validate
-                if ($('#qi_item').val() == "0") {
-                    alert("Please select at least one product.");
-                    return;
-                }
 
-                // Remove empty rows before submit
+                let validRows = 0;
                 $('#qi-order-table tbody tr').each(function() {
                     let pid = $(this).find('.qi-product-id').val();
-                    if (!pid || pid === '') {
-                        $(this).remove();
+                    let qty = parseFloat($(this).find('.qi-qty').val()) || 0;
+                    if (pid && qty > 0) {
+                        validRows++;
                     }
                 });
 
-                if ($('#qi-order-table tbody tr').length === 0) {
-                    alert("Please select at least one valid product.");
-                    // Re-add an empty row so the table isn't permanently empty
-                    addQiRow();
+                if (validRows === 0) {
+                    alert("Please search and select at least one product with quantity > 0.");
+                    $searchInput.focus();
                     return;
                 }
+
+                let submitBtn = $(this);
+                submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span> Processing...');
 
                 $.ajax({
                     type: 'POST',
                     url: form.attr('action'),
                     data: form.serialize(),
                     success: function(response) {
-                        alert('Invoice created successfully!');
+                        submitBtn.prop('disabled', false).html('<i class="ti ti-printer mr-1"></i> Save & Print Invoice');
+
+                        let sale_id = null;
+                        if (typeof response === 'object') {
+                            sale_id = response.sale_id || response.id || response;
+                        } else {
+                            sale_id = response;
+                        }
+
                         $('#quickInvoiceModal').modal('hide');
-                        
-                        // Redirect to view/print invoice
-                        let sale_id = response.sale_id ? response.sale_id : response;
-                        let link = "{{ url('sales/gen_invoice') }}/" + sale_id + "?is_print=true";
-                        window.location.href = link;
+
+                        // Reset form for next invoice
+                        $('#qi-order-table tbody').empty();
+                        calculateQiTotals();
+                        $searchInput.val('');
+
+                        if (sale_id && !isNaN(sale_id)) {
+                            // Print invoice in the SAME tab using hidden iframe
+                            let printUrl = "{{ url('sales/gen_invoice') }}/" + sale_id + "?is_print=true";
+                            let $iframe = $('#qi-print-iframe');
+                            if (!$iframe.length) {
+                                $iframe = $('<iframe id="qi-print-iframe" name="qi-print-iframe" style="position:fixed; top:-9999px; left:-9999px; width:1px; height:1px; border:none; visibility:hidden;"></iframe>').appendTo('body');
+                            }
+                            $iframe.off('load').on('load', function() {
+                                setTimeout(function() {
+                                    try {
+                                        let iframeWin = $iframe[0].contentWindow || $iframe[0];
+                                        iframeWin.focus();
+                                        iframeWin.print();
+                                    } catch (e) {
+                                        console.error('Invoice print error:', e);
+                                    }
+                                }, 300);
+                            });
+                            $iframe.attr('src', printUrl);
+                        } else {
+                            alert("Invoice created successfully!");
+                        }
                     },
                     error: function(xhr) {
-                        alert('Error creating invoice. Check console for details.');
-                        console.log(xhr.responseText);
+                        submitBtn.prop('disabled', false).html('<i class="ti ti-printer mr-1"></i> Save & Print Invoice');
+                        let errorMsg = 'Error creating invoice.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        } else if (xhr.responseText) {
+                            errorMsg = xhr.responseText.substring(0, 150);
+                        }
+                        alert(errorMsg);
+                        console.error('Quick Invoice Error:', xhr);
                     }
                 });
             });
@@ -1346,72 +1808,122 @@
 
     <!-- Quick Invoice Modal -->
     <div id="quickInvoiceModal" tabindex="-1" role="dialog" aria-labelledby="quickInvoiceLabel" aria-hidden="true" class="modal fade text-left">
-        <div role="document" class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header" style="padding: 5px 1rem;" >
-                    <h5 id="quickInvoiceLabel" class="modal-title">{{__('Quick Invoice')}}</h5>
+        <div role="document" class="modal-dialog modal-xl" style="max-width: 92vw; margin: 1rem auto;">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light py-2 px-3">
+                    <h5 id="quickInvoiceLabel" class="modal-title font-weight-bold" style="color: #7c5cc4;"><i class="ti ti-file-invoice mr-1"></i> {{__('Quick Invoice')}}</h5>
                     <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="ti ti-x"></i></span></button>
                 </div>
-                <div class="modal-body">
-                    <p class="italic" style="margin-bottom: 0px; text-align:right"><small>{{__('db.The field labels marked with are required input fields')}} *.</small></p>
+                <div class="modal-body p-3">
                     <form id="quick-invoice-form" action="{{ route('sales.store') }}" method="POST">
                         @csrf
-                        <!-- Hidden Fields required by sale store -->
-                        <div class="row">
+                        @php
+                            $lims_warehouse_list = App\Models\Warehouse::where('is_active', true)->get();
+                            $lims_biller_list = App\Models\Biller::where('is_active', true)->get();
+                            $lims_customer_list = App\Models\Customer::where('is_active', true)->get();
+                            $lims_tax_list = App\Models\Tax::where('is_active', true)->get();
+                            $lims_pos_setting_data = App\Models\PosSetting::latest()->first();
+                            $default_customer_id = $lims_pos_setting_data->customer_id ?? ($lims_customer_list[0]->id ?? 1);
+                            $default_warehouse_id = $lims_pos_setting_data->warehouse_id ?? ($lims_warehouse_list[0]->id ?? 1);
+                            $default_biller_id = $lims_pos_setting_data->biller_id ?? ($lims_biller_list[0]->id ?? 1);
+
+                            $tax_name_all = ['No Tax'];
+                            $tax_rate_all = [0];
+                            foreach($lims_tax_list as $tax) {
+                                $tax_name_all[] = $tax->name;
+                                $tax_rate_all[] = $tax->rate;
+                            }
+                        @endphp
+
+                        <div class="row mb-2">
+                            <div class="col-md-4">
+                                <div class="form-group mb-2">
+                                    <label class="font-weight-bold">{{__('Customer')}} *</label>
+                                    <div class="input-group">
+                                        <select required name="customer_id" id="qi_customer_id" class="selectpicker form-control form-control-sm" data-live-search="true" title="Select customer...">
+                                            @foreach($lims_customer_list as $customer)
+                                                <option value="{{$customer->id}}" 
+                                                        data-name="{{$customer->name}}"
+                                                        data-company="{{$customer->company_name}}"
+                                                        data-phone="{{$customer->phone_number}}"
+                                                        data-address="{{$customer->address}}"
+                                                        data-city="{{$customer->city}}"
+                                                        data-state="{{$customer->state}}"
+                                                        data-postal="{{$customer->postal_code}}"
+                                                        data-country="{{$customer->country}}"
+                                                        @if($customer->id == $default_customer_id) selected @endif>
+                                                    {{$customer->name}} @if($customer->phone_number)({{$customer->phone_number}})@endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" data-toggle="modal" data-target="#addCustomer" title="Add New Customer"><i class="ti ti-plus"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-2">
+                                    <label class="font-weight-bold">{{__('Warehouse')}} *</label>
+                                    <select required name="warehouse_id" id="qi_warehouse_id" class="selectpicker form-control form-control-sm" data-live-search="true" title="Select warehouse...">
+                                        @foreach($lims_warehouse_list as $warehouse)
+                                            <option value="{{$warehouse->id}}" @if($warehouse->id == $default_warehouse_id) selected @endif>{{$warehouse->name}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-2">
+                                    <label class="font-weight-bold">{{__('Biller')}} *</label>
+                                    <select required name="biller_id" id="qi_biller_id" class="selectpicker form-control form-control-sm" data-live-search="true" title="Select biller...">
+                                        @foreach($lims_biller_list as $biller)
+                                            <option value="{{$biller->id}}" @if($biller->id == $default_biller_id) selected @endif>{{$biller->name}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bill To & Ship To Details Box (Modern & Clean) -->
+                        <div class="row mb-2">
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>{{__('db.customer')}} *</label>
-                                    <div class="input-group pos">
-                                        @php
-                                        $deposit = [];
-                                        $points = [];
-                                        $customer_active = DB::table('permissions')
-                                        ->join('role_has_permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
-                                        ->where([
-                                            ['permissions.name', 'customers-add'],
-                                            ['role_id', \Auth::user()->role_id] ])->first();
-
-                                            $lims_pos_setting_data = App\Models\PosSetting::latest()->first();
-                                            $lims_customer_list = App\Models\Customer::where('is_active', true)->get();
-
-                                            if($lims_pos_setting_data) {
-                                                $customer_id = $lims_pos_setting_data->customer_id;
-                                            }
-                                            else{
-                                                $customer_id = $lims_customer_list[0]->id;
-                                            }
-                                        @endphp
-                                        @if($customer_active)
-                                        <select required name="customer_id" id="qi_customer_id" class="selectpicker form-control" data-live-search="true" title="Select customer...">
-                                        @foreach($lims_customer_list as $customer)
-                                            @php
-                                            $deposit[$customer->id] = $customer->deposit - $customer->expense;
-
-                                            $points[$customer->id] = $customer->points;
-                                            @endphp
-                                            <option value="{{$customer->id}}" data-type="{{$customer->type}}" data-credit-limit="{{ $customer->credit_limit }}" data-pay_term_no="{{ $customer->pay_term_no }}" data-pay_term_period="{{ $customer->pay_term_period }}"  @if($customer->id == $customer_id) selected @endif>{{$customer->name}} @if($customer->wa_number)({{$customer->wa_number}})@endif</option>
-                                        @endforeach
-                                        </select>
-                                        <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#addCustomer"><i class="ti ti-plus"></i></button>
-                                        @else
-                                        <select required name="customer_id" id="qi_customer_id" class="selectpicker form-control" data-live-search="true" title="Select customer...">
-                                        @foreach($lims_customer_list as $customer)
-                                            @php
-                                            $deposit[$customer->id] = $customer->deposit - $customer->expense;
-
-                                            $points[$customer->id] = $customer->points;
-                                            @endphp
-                                            <option value="{{$customer->id}}" data-type="{{$customer->type}}" data-credit-limit="{{ $customer->credit_limit }}" data-pay_term_no="{{ $customer->pay_term_no }}" data-pay_term_period="{{ $customer->pay_term_period }}"  @if($customer->id == $customer_id) selected @endif>{{$customer->name . ' (' . $customer->phone_number . ')'}}</option>
-                                        @endforeach
-                                        </select>
-                                        @endif
-                                        <x-validation-error fieldName="customer_id" />
+                                <div class="card border mb-2 shadow-sm" style="border-radius: 6px;">
+                                    <div class="card-header py-1 px-3 bg-light font-weight-bold d-flex justify-content-between align-items-center" style="font-size: 12px; color: #7c5cc4;">
+                                        <span><i class="ti ti-user mr-1"></i> {{__('Bill To')}}</span>
+                                        <span class="badge badge-secondary px-2 py-0" style="font-size: 10px;">Billing Address</span>
+                                    </div>
+                                    <div class="card-body p-2" id="qi_bill_to_content" style="font-size: 12px; min-height: 48px; line-height: 1.4;">
+                                        <span class="text-muted">Loading customer details...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border mb-2 shadow-sm" style="border-radius: 6px;">
+                                    <div class="card-header py-1 px-3 bg-light font-weight-bold d-flex justify-content-between align-items-center" style="font-size: 12px; color: #7c5cc4;">
+                                        <span><i class="ti ti-truck mr-1"></i> {{__('Ship To')}}</span>
+                                        <span class="badge badge-secondary px-2 py-0" style="font-size: 10px;">Shipping Address</span>
+                                    </div>
+                                    <div class="card-body p-2" id="qi_ship_to_content" style="font-size: 12px; min-height: 48px; line-height: 1.4;">
+                                        <span class="text-muted">Loading customer details...</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <input type="hidden" name="warehouse_id" value="1">
-                        <input type="hidden" name="biller_id" value="1">
+
+                        <!-- Product Search Bar (Like Sale/Purchase Create) -->
+                        <div class="search-box form-group mb-3 position-relative">
+                            <label class="font-weight-bold">{{__('Select Product')}} *</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" style="background-color: #7c5cc4; color: #fff; border-color: #7c5cc4;"><i class="ti ti-barcode"></i></span>
+                                </div>
+                                <input type="text" id="qi_product_search_input" placeholder="Please type product name or code and select..." class="form-control" autocomplete="off" style="border: 1px solid #7c5cc4;" />
+                            </div>
+                            <div id="qi_product_results_container" class="dropdown-menu w-100 shadow-lg border" style="display:none; max-height: 280px; overflow-y: auto; z-index: 1060; margin-top: 2px;"></div>
+                            <div id="qi_no_results_message" style="display:none; background-color: #f8fafc; color: #64748b; padding: 6px 12px; font-size: 13px; border: 1px solid #e2e8f0; border-radius: 4px; margin-top: 4px;">{{__('No in-stock products found matching your search.')}}</div>
+                        </div>
+
+                        <!-- Hidden required fields -->
                         <input type="hidden" name="exchange_rate" value="1">
                         <input type="hidden" name="currency_id" value="1">
                         <input type="hidden" name="sale_status" value="1">
@@ -1420,47 +1932,68 @@
                         <input type="hidden" name="draft" value="0">
                         <input type="hidden" name="item" id="qi_item" value="0">
                         <input type="hidden" name="total_qty" id="qi_total_qty" value="0">
-                        <input type="hidden" name="total_discount" value="0">
-                        <input type="hidden" name="total_tax" value="0">
+                        <input type="hidden" name="total_discount" id="qi_total_discount" value="0">
+                        <input type="hidden" name="total_tax" id="qi_total_tax" value="0">
                         <input type="hidden" name="total_price" id="qi_total_price" value="0">
                         <input type="hidden" name="grand_total" id="qi_grand_total" value="0">
                         <input type="hidden" name="order_tax_rate" value="0">
                         <input type="hidden" name="order_tax" value="0">
                         <input type="hidden" name="order_discount" value="0">
                         <input type="hidden" name="shipping_cost" value="0">
-                        <input type="hidden" name="payment_status" value="4"> 
+                        <input type="hidden" name="payment_status" value="4">
 
-                        <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
-                            <table class="table table-bordered table-hover table-sm" id="qi-order-table" style="font-size: 0.9rem;">
-                                <thead class="bg-white" style="position: sticky; top: 0; z-index: 1; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);">
+                        <div class="table-responsive border rounded qi-product-table-wrapper" style="max-height: 240px; min-height: 120px; overflow-y: auto; overflow-x: auto; background: #fff;">
+                            <table class="table table-bordered table-sm mb-0" id="qi-order-table" style="font-size: 0.9rem; width: 100%;">
+                                <thead style="position: sticky; top: 0; background-color: #f8fafc !important; z-index: 10;">
                                     <tr>
-                                        <th class="px-1 py-2 text-center">#</th>
-                                        <th class="px-1 py-2">{{__('db.Product')}} *</th>
-                                        <th class="px-1 py-2">{{__('db.Description')}}</th>
-                                        <th class="px-1 py-2">{{__('db.Quantity')}} *</th>
-                                        <th class="px-1 py-2">{{__('db.Rate')}}</th>
-                                        <th class="px-1 py-2">{{__('db.Subtotal')}}</th>
-                                        <th class="px-1 py-2 text-center"><i class="ti ti-trash"></i></th>
+                                        <th style="width: 35px;" class="text-center">#</th>
+                                        <th style="width: 115px;">{{__('Item Code')}}</th>
+                                        <th style="min-width: 200px;">{{__('Description')}} *</th>
+                                        <th style="width: 95px;">{{__('Quantity')}} *</th>
+                                        <th style="width: 70px;" class="text-center">{{__('UM')}}</th>
+                                        <th style="width: 110px;">{{__('Unit Price')}} *</th>
+                                        <th style="width: 90px;">{{__('Discount')}}</th>
+                                        <th style="width: 80px;">{{__('Tax')}}</th>
+                                        <th style="width: 115px;">{{__('Subtotal')}}</th>
+                                        <th style="width: 75px;" class="text-center">{{__('Action')}}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Rows added via JS -->
+                                    <!-- Rows added when product is selected from search -->
                                 </tbody>
                             </table>
                         </div>
-                        <button type="button" class="btn btn-secondary btn-sm mt-2" id="qi-add-row-btn"><i class="ti ti-plus"></i> Add line</button>
 
-                        <div class="row mt-2">
-                            <div class="col-md-6 offset-md-6">
-                                <table class="table table-borderless table-sm mb-0">
+                        <div class="row mt-3 pt-2 border-top">
+                            <div class="col-md-6">
+                                <div class="form-group mb-2">
+                                    <label class="font-weight-bold">{{__('Paying Method')}} *</label>
+                                    <select name="paid_by_id[]" class="form-control form-control-sm">
+                                        <option value="1">Cash</option>
+                                        <option value="3">Credit Card</option>
+                                        <option value="4">Cheque</option>
+                                        <option value="6">Deposit</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-0">
+                                    <label class="font-weight-bold">{{__('Sale Note')}} / Memo</label>
+                                    <textarea name="sale_note" rows="2" class="form-control form-control-sm" placeholder="Optional sale notes / memo..."></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm mb-2">
                                     <tr>
-                                        <td class="text-right py-1 align-middle"><strong>Grand Total</strong></td>
-                                        <td class="text-right py-1"><span id="qi-total-display" style="font-size: 1.25rem; font-weight: bold;">0.00</span></td>
+                                        <td class="text-right py-1 align-middle font-weight-bold">{{__('Total Items')}} / Pieces:</td>
+                                        <td class="text-right py-1" style="width: 150px;"><span id="qi-item-display" class="badge badge-secondary px-2 py-1">0</span> (<span id="qi-qty-display">0</span> Qty)</td>
                                     </tr>
                                     <tr>
-                                        <td class="text-right py-1 align-middle"><strong>Paying Amount *</strong></td>
+                                        <td class="text-right py-1 align-middle font-weight-bold">{{__('Grand Total')}}:</td>
+                                        <td class="text-right py-1"><span id="qi-total-display" style="font-size: 1.35rem; font-weight: bold; color: #7c5cc4;">0.00</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-right py-1 align-middle font-weight-bold">{{__('Paid Amount')}} *:</td>
                                         <td class="py-1">
-                                            <input type="number" name="paid_amount[]" class="form-control form-control-sm text-right" value="0" step="any" id="qi_paid_amount" required>
+                                            <input type="number" name="paid_amount[]" class="form-control form-control-sm text-right font-weight-bold" value="0" step="any" id="qi_paid_amount" required>
                                             <input type="hidden" name="paying_amount[]" id="qi_paying_amount" value="0">
                                             <input type="hidden" name="payment_note" value="">
                                             <input type="hidden" name="cheque_no" value="">
@@ -1470,22 +2003,13 @@
                                             <input type="hidden" name="gift_card_id" value="">
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td class="text-right py-1 align-middle"><strong>Paying Method *</strong></td>
-                                        <td class="py-1">
-                                            <select name="paid_by_id[]" class="form-control form-control-sm">
-                                                <option value="1">Cash</option>
-                                                <option value="3">Credit Card</option>
-                                                <option value="4">Cheque</option>
-                                            </select>
-                                        </td>
-                                    </tr>
                                 </table>
+                                <div class="text-right">
+                                    <button type="button" class="btn btn-success px-4 font-weight-bold shadow-sm" style="background-color: #7c5cc4; border-color: #7c5cc4;" id="qi-submit-btn">
+                                        <i class="ti ti-printer mr-1"></i> {{__('Save & Print Invoice')}}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="form-group mt-2 mb-0 text-right">
-                            <button type="button" class="btn btn-sm px-5" style="background-color: #7c5cc4; border-color: #7c5cc4; color: white; padding-top: 0.4rem; padding-bottom: 0.4rem;" id="qi-submit-btn">{{__('db.Save')}}</button>
                         </div>
                     </form>
                 </div>
@@ -1493,5 +2017,94 @@
         </div>
     </div>
 
-@endpush
+    <!-- Quick Invoice Product Edit Modal (Exact Match to Sale Edit Modal) -->
+    <div id="qiEditModal" tabindex="-1" role="dialog" aria-labelledby="qiEditModalLabel" aria-hidden="true" class="modal fade text-left" style="z-index: 1065;">
+        <div role="document" class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-light py-2 px-3">
+                    <h5 id="qi_modal_product_name_header" class="modal-title font-weight-bold text-dark">
+                        <i class="ti ti-edit mr-1 text-primary"></i> <span id="qi_edit_product_title">{{__('Edit Product')}}</span>
+                    </h5>
+                    <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="ti ti-x"></i></span></button>
+                </div>
+                <div class="modal-body p-3">
+                    <form id="qi-edit-item-form">
+                        <div class="row">
+                            <div class="col-md-4 form-group mb-3">
+                                <label class="font-weight-bold" style="font-size: 13px;">{{__('Quantity')}} *</label>
+                                <input type="number" id="qi_modal_qty" class="form-control font-weight-bold" step="any" min="0.01">
+                            </div>
+                            <div class="col-md-4 form-group mb-3">
+                                <label class="font-weight-bold" style="font-size: 13px;">{{__('Unit Discount')}}</label>
+                                <input type="number" id="qi_modal_discount" class="form-control font-weight-bold" step="any" min="0" value="0">
+                            </div>
+                            <div class="col-md-4 form-group mb-3">
+                                <label class="font-weight-bold" style="font-size: 13px;">{{__('Price Option')}}</label>
+                                <select id="qi_modal_price_option" class="form-control">
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-group mb-3">
+                                <label class="font-weight-bold" style="font-size: 13px;">{{__('Unit Price')}} *</label>
+                                <input type="number" id="qi_modal_price" class="form-control font-weight-bold" step="any">
+                            </div>
+                            <div class="col-md-4 form-group mb-3">
+                                <label class="font-weight-bold" style="font-size: 13px;">{{__('Tax Rate')}}</label>
+                                <select id="qi_modal_tax_rate" class="form-control">
+                                    @foreach($tax_name_all as $key => $name)
+                                        <option value="{{$tax_rate_all[$key]}}" data-name="{{$name}}">{{$name}} ({{$tax_rate_all[$key]}}%)</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-group mb-3" id="qi_edit_unit_group">
+                                <label class="font-weight-bold" style="font-size: 13px;">{{__('Product Unit')}}</label>
+                                <select id="qi_modal_unit" class="form-control">
+                                </select>
+                            </div>
+                            <div class="col-md-12 form-group mb-2" id="qi_imei_section" style="display:none;">
+                                <label class="font-weight-bold" style="font-size: 13px;">{{__('IMEI or Serial Numbers')}}</label>
+                                <div class="table-responsive border rounded p-2 bg-light" style="max-height: 120px; overflow-y:auto;">
+                                    <table id="qi_imei_table" class="table table-sm table-borderless mb-0">
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
 
+                        <!-- Purchase Price History (Lowest, Average, Highest Cost) -->
+                        <div class="mt-2 p-3 border rounded shadow-sm" style="background:#f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong style="font-size:13px; color:#334155;">
+                                    <i class="ti ti-coins text-primary mr-1"></i> {{__('Purchase Price History')}}
+                                </strong>
+                                <span class="badge badge-light border text-muted" style="font-size:12px;">
+                                    Default Cost: <span id="qi_modal_product_cost" class="font-weight-bold text-dark">0.00</span>
+                                </span>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <small class="text-muted d-block font-weight-bold mb-1" style="font-size:12px;">Lowest Cost</small>
+                                    <span class="badge badge-success px-3 py-1 font-weight-bold" style="font-size:14px;" id="qi_modal_cost_lowest">0.00</span>
+                                </div>
+                                <div class="col-4" style="border-left: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1;">
+                                    <small class="text-muted d-block font-weight-bold mb-1" style="font-size:12px;">Average Cost</small>
+                                    <span class="badge badge-primary px-3 py-1 font-weight-bold" style="font-size:14px;" id="qi_modal_cost_avg">0.00</span>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block font-weight-bold mb-1" style="font-size:12px;">Highest Cost</small>
+                                    <span class="badge badge-danger px-3 py-1 font-weight-bold" style="font-size:14px;" id="qi_modal_cost_highest">0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer py-2 px-3 bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{__('Close')}}</button>
+                    <button type="button" id="qi_modal_update_btn" class="btn btn-primary btn-sm px-4 font-weight-bold" style="background-color: #7c5cc4; border-color: #7c5cc4;">
+                        <i class="ti ti-check mr-1"></i> {{__('Update')}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@endpush

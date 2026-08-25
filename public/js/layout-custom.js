@@ -79,50 +79,61 @@ document.addEventListener("DOMContentLoaded", function () {
 
 $(document).ready(function() {
     // Hide alerts after 7 seconds
-    $("div.alert").delay(7000).slideUp(750);
+    $("div.alert:not(.not-slide)").delay(7000).slideUp(750);
+
+    var $sidebar = $('nav.side-navbar');
+    var $page = $('.page');
+    var $backdrop = $('#sidebar-backdrop');
 
     // Sidebar Toggle & Synchronization
-    function setSidebar(collapsed) {
-        var $sidebar = $('nav.side-navbar');
-        var $page = $('.page');
-        var isDesktop = $(window).outerWidth() > 991;
-
-        if (isDesktop) {
-            if (collapsed) {
-                $sidebar.addClass('shrink');
-                $page.addClass('active');
-                localStorage.setItem("salepro_sidebar_state", "collapsed");
-            } else {
-                $sidebar.removeClass('shrink');
-                $page.removeClass('active');
-                localStorage.setItem("salepro_sidebar_state", "expanded");
-            }
-            $sidebar.removeClass('show-sm');
-        } else {
+    function setDesktopSidebar(collapsed) {
+        if (collapsed) {
             $sidebar.addClass('shrink');
+            $page.addClass('active');
+            localStorage.setItem("salepro_sidebar_state", "collapsed");
+        } else {
+            $sidebar.removeClass('shrink');
             $page.removeClass('active');
-            if (collapsed) {
-                $sidebar.removeClass('show-sm');
-            } else {
-                $sidebar.addClass('show-sm');
-            }
+            localStorage.setItem("salepro_sidebar_state", "expanded");
+        }
+        $sidebar.removeClass('show-sm');
+        $backdrop.removeClass('show');
+        $('body').removeClass('sidebar-mobile-open');
+    }
+
+    function openMobileSidebar() {
+        $sidebar.addClass('show-sm');
+        $backdrop.addClass('show');
+        $('body').addClass('sidebar-mobile-open');
+    }
+
+    function closeMobileSidebar() {
+        $sidebar.removeClass('show-sm');
+        $backdrop.removeClass('show');
+        $('body').removeClass('sidebar-mobile-open');
+    }
+
+    function toggleMobileSidebar() {
+        if ($sidebar.hasClass('show-sm')) {
+            closeMobileSidebar();
+        } else {
+            openMobileSidebar();
         }
     }
 
     // Initialize on page load
     var isDesktop = $(window).outerWidth() > 991;
     var savedState = localStorage.getItem("salepro_sidebar_state");
-    // Clear any broken legacy 'layout' key
     localStorage.removeItem("layout");
 
     if (isDesktop) {
         if (savedState === "collapsed") {
-            setSidebar(true);
+            setDesktopSidebar(true);
         } else {
-            setSidebar(false);
+            setDesktopSidebar(false);
         }
     } else {
-        setSidebar(true);
+        closeMobileSidebar();
     }
 
     // Toggle button handler
@@ -130,36 +141,53 @@ $(document).ready(function() {
         e.preventDefault();
         e.stopPropagation();
 
-        var isDesktop = $(window).outerWidth() > 991;
-        var $sidebar = $('nav.side-navbar');
-
-        if (isDesktop) {
+        var isDesktopNow = $(window).outerWidth() > 991;
+        if (isDesktopNow) {
             var isCollapsed = $sidebar.hasClass('shrink');
-            setSidebar(!isCollapsed);
+            setDesktopSidebar(!isCollapsed);
         } else {
-            $sidebar.toggleClass('show-sm');
+            toggleMobileSidebar();
         }
     });
 
-    // Mobile close
-    $(document).on('click', 'nav.side-navbar .close', function() {
-        $('nav.side-navbar').removeClass('show-sm');
+    // Mobile close button and backdrop click
+    $(document).on('click', '#sidebar-backdrop, #sidebar-close-btn, nav.side-navbar .close', function(e) {
+        e.preventDefault();
+        closeMobileSidebar();
+    });
+
+    // Auto close mobile sidebar when clicking menu links that navigate
+    $(document).on('click', '#side-main-menu a:not([data-toggle="collapse"]):not([href^="#"])', function() {
+        if ($(window).outerWidth() <= 991) {
+            closeMobileSidebar();
+        }
+    });
+
+    // Close on Escape key press
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape' && $(window).outerWidth() <= 991 && $sidebar.hasClass('show-sm')) {
+            closeMobileSidebar();
+        }
     });
 
     // Auto-adjust on window resize
+    var resizeTimer;
     $(window).on('resize', function() {
-        var isDesktop = $(window).outerWidth() > 991;
-        var savedState = localStorage.getItem("salepro_sidebar_state");
-        if (isDesktop) {
-            if (savedState === "collapsed") {
-                setSidebar(true);
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            var isDesktopNow = $(window).outerWidth() > 991;
+            if (isDesktopNow) {
+                closeMobileSidebar();
+                var state = localStorage.getItem("salepro_sidebar_state");
+                if (state === "collapsed") {
+                    setDesktopSidebar(true);
+                } else {
+                    setDesktopSidebar(false);
+                }
             } else {
-                setSidebar(false);
+                $page.removeClass('active');
             }
-        } else {
-            $('nav.side-navbar').removeClass('show-sm').addClass('shrink');
-            $('.page').removeClass('active');
-        }
+        }, 100);
     });
 });
 

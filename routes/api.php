@@ -55,7 +55,7 @@ use App\Http\Controllers\Api\HolidayController;
 use App\Http\Controllers\Api\CourierController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\RoleController;
-use App\Http\Controllers\Api\RouteMapController;
+// use App\Http\Controllers\Api\RouteMapController;
 use App\Http\Controllers\Api\StockCountController;
 // use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\ProductionController;
@@ -89,7 +89,7 @@ Route::group(['middleware' => ['api']], function () {
 
 Route::middleware($middleware)->name('api.')->group(function () {
     // Route::post('/check', [SetupController::class, 'checkLicense']);
-    Route::get('/offline-api-map', [RouteMapController::class, 'index']);
+    // Route::get('/offline-api-map', [RouteMapController::class, 'index']);
 
     Route::middleware('validate_mobile_token')->group(function () {
         Route::get('/get-registration-form-data', [RegisterController::class, 'getRegistrationFormData']);

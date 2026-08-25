@@ -93,6 +93,7 @@
             @can('purchases-index')
             <li id="purchase-list-menu"><a class="{{ request()->is('purchases') ? 'active' : '' }}" href="{{route('purchases.index')}}">{{__('db.Purchase List')}}</a></li>
             @endcan
+            <li id="purchase-request-menu"><a class="{{ request()->is('purchase_requests*') ? 'active' : '' }}" href="{{route('purchase_requests.index')}}">{{__('Purchase Request')}}</a></li>
             @can('purchases-add')
             <li id="purchase-create-menu"><a class="{{ request()->is('purchases/create') ? 'active' : '' }}" href="{{route('purchases.create')}}">{{__('db.Add Purchase')}}</a></li>
             @endcan

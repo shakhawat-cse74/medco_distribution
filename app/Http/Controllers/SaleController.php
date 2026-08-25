@@ -905,7 +905,6 @@ class SaleController extends Controller
         //set the paid_amount value to $new_data variable
         $new_data['paid_amount'] = $data['paid_amount'] ?? 0;
 
-
         if (is_array($data['paid_amount'])) {
             $data['paid_amount'] = array_sum($data['paid_amount']);
         }
@@ -913,23 +912,21 @@ class SaleController extends Controller
         // ======== 2. make or generate reference_no ==============
         if (isset($data['pos'])) {
             if (!isset($data['reference_no']))
-
-                // invoice implement new (27-04-25)
                 $data['reference_no'] = $this->invoiceService->generateInvoiceName('posr-');
 
-            // foreach($new_data['paid_amount'] as $paid_amount)
-            // {
-            //     $balance = $data['grand_total'] - $paid_amount;
-            // }
-            $balance = $data['grand_total'] - $data['paid_amount'];
+            $balance = round(floatval($data['grand_total']) - floatval($data['paid_amount']), 2);
 
+            if (!empty($data['draft']) || (isset($data['sale_status']) && $data['sale_status'] == 3)) {
+                $data['payment_status'] = 1; // Pending
+            } elseif ($balance <= 0 && floatval($data['grand_total']) > 0) {
+                $data['payment_status'] = 4; // Paid
+            } elseif (floatval($data['paid_amount']) > 0 && $balance > 0) {
+                $data['payment_status'] = 2; // Due / Partial
+            } else {
+                $data['payment_status'] = 2; // Due
+            }
 
-            if ($balance > 0 || $balance < 0)
-                $data['payment_status'] = 2;
-            else
-                $data['payment_status'] = 4;
-
-            if ($data['draft']) {
+            if (!empty($data['draft']) && !empty($data['sale_id'])) {
                 $lims_sale_data = Sale::find($data['sale_id']);
                 if ($lims_sale_data) {
                     $lims_product_sale_data = Product_Sale::where('sale_id', $data['sale_id'])->get();
@@ -942,7 +939,6 @@ class SaleController extends Controller
         } else {
             if (!isset($data['reference_no']))
                 $data['reference_no'] = $this->invoiceService->generateInvoiceName('sr-');
-            // $data['reference_no'] = 'sr-' . date("Ymd") . '-'. date("his");
         }
 
         $document = $request->document;
@@ -1019,10 +1015,12 @@ class SaleController extends Controller
                 return redirect()->back()->with('not_permitted', $validation['message'])->withInput();
             }
 
-            if ($data['coupon_active'] && !$data['draft']) {
+            if (!empty($data['coupon_active']) && empty($data['draft']) && !empty($data['coupon_id'])) {
                 $lims_coupon_data = Coupon::find($data['coupon_id']);
-                $lims_coupon_data->used += 1;
-                $lims_coupon_data->save();
+                if ($lims_coupon_data) {
+                    $lims_coupon_data->used += 1;
+                    $lims_coupon_data->save();
+                }
             }
 
             $lims_sale_data = Sale::create($data);
@@ -1397,17 +1395,18 @@ class SaleController extends Controller
 
 
 
-        if (in_array('razorpay', $data['paid_by_id'])) {
-            foreach ($data['paid_by_id'] as $key => $value) {
+        $paidByIds = isset($data['paid_by_id']) ? (array)$data['paid_by_id'] : [];
+        if (in_array('razorpay', $paidByIds)) {
+            foreach ($paidByIds as $key => $value) {
                 if ($value == 'razorpay') {
                     $lims_payment_data = new Payment();
                     $lims_payment_data->user_id = Auth::id();
                     $lims_payment_data->sale_id = $lims_sale_data->id;
 
-                    $lims_payment_data->payment_reference = $this->invoiceService->generateInvoiceName('raz-'); // 'raz-' . date("Ymd") . '-' . date("his");
-                    $lims_payment_data->amount = $data['paid_amount'][$key]; // from frontend
+                    $lims_payment_data->payment_reference = $this->invoiceService->generateInvoiceName('raz-');
+                    $lims_payment_data->amount = is_array($data['paid_amount']) ? ($data['paid_amount'][$key] ?? 0) : $data['paid_amount'];
                     $lims_payment_data->paying_method = 'Razorpay';
-                    $lims_payment_data->payment_note = 'Payment via Razorpay. Payment ID: ' . $data['razorpay_payment_id'];
+                    $lims_payment_data->payment_note = 'Payment via Razorpay. Payment ID: ' . ($data['razorpay_payment_id'] ?? '');
                     $lims_payment_data->currency_id = $lims_sale_data->currency_id;
                     $lims_payment_data->exchange_rate = $lims_sale_data->exchange_rate ?? 1;
 
@@ -1433,32 +1432,31 @@ class SaleController extends Controller
                     // ===========================================
                 }
             }
-            } else if ($data['payment_status'] == 3 || $data['payment_status'] == 4 || ($data['payment_status'] == 2 && (is_array($data['paid_amount']) ? array_sum($data['paid_amount']) : $data['paid_amount']) > 0)) {
-            foreach ($data['paid_by_id'] as $key => $value) {
-                if (!is_array($data['paid_amount'])) {
-                    \Log::error('paid_amount is not array!', ['data' => $data]);
-                }
-                if ($data['paid_amount'][$key] > 0) {
-                    $lims_payment_data = new Payment();
+        } elseif (!empty($paidByIds) && ($data['payment_status'] == 3 || $data['payment_status'] == 4 || ($data['payment_status'] == 2 && (is_array($data['paid_amount']) ? array_sum($data['paid_amount']) : floatval($data['paid_amount'])) > 0))) {
+            foreach ($paidByIds as $key => $value) {
+                $pAmount = is_array($data['paid_amount']) ? floatval($data['paid_amount'][$key] ?? 0) : floatval($data['paid_amount']);
+                $payingAmt = (isset($data['paying_amount']) && is_array($data['paying_amount'])) ? floatval($data['paying_amount'][$key] ?? $pAmount) : $pAmount;
 
+                if ($pAmount > 0) {
+                    $lims_payment_data = new Payment();
                     $lims_payment_data->user_id = Auth::id();
                     $paying_method = '';
 
-                    if ($data['paid_by_id'][$key] == 1)
+                    if ($value == 1 || $value === '1' || $value === 'cash' || $value === 'Cash') {
                         $paying_method = 'Cash';
-                    elseif ($data['paid_by_id'][$key] == 2) {
+                    } elseif ($value == 2 || $value === '2' || $value === 'gift_card' || $value === 'Gift Card') {
                         $paying_method = 'Gift Card';
-                    } elseif ($data['paid_by_id'][$key] == 3)
+                    } elseif ($value == 3 || $value === '3' || $value === 'card' || $value === 'Credit Card') {
                         $paying_method = 'Credit Card';
-                    elseif ($data['paid_by_id'][$key] == 4)
+                    } elseif ($value == 4 || $value === '4' || $value === 'cheque' || $value === 'Cheque') {
                         $paying_method = 'Cheque';
-                    elseif ($data['paid_by_id'][$key] == 5)
+                    } elseif ($value == 5 || $value === '5' || $value === 'paypal' || $value === 'Paypal') {
                         $paying_method = 'Paypal';
-                    elseif ($data['paid_by_id'][$key] == 6)
+                    } elseif ($value == 6 || $value === '6' || $value === 'deposit' || $value === 'Deposit') {
                         $paying_method = 'Deposit';
-                    elseif ($data['paid_by_id'][$key] == 7) {
+                    } elseif ($value == 7 || $value === '7' || $value === 'points' || $value === 'Points') {
                         $paying_method = 'Points';
-                        if ($lims_reward_point_setting_data && $lims_reward_point_setting_data->is_active  && request()->has('redeem_point')) {
+                        if ($lims_reward_point_setting_data && $lims_reward_point_setting_data->is_active && request()->has('redeem_point')) {
                             $reward_points = RewardPoint::query()->create([
                                 'points' => 0,
                                 'deducted_points' => $request->redeem_point,
@@ -1469,29 +1467,31 @@ class SaleController extends Controller
                             ]);
                             $lims_customer_data->update(['points' => $lims_customer_data->points - $request->redeem_point]);
                         }
-                    } elseif ($data['paid_by_id'][$key] == 8) {
+                    } elseif ($value == 8 || $value === '8' || $value === 'pesapal' || $value === 'Pesapal') {
                         $paying_method = 'Pesapal';
+                    } elseif ($value === 'credit_sale' || $value === 'credit') {
+                        $paying_method = 'Credit Sale';
                     } else {
-                        $paying_method = ucfirst($data['paid_by_id'][$key]); // For string values like 'Pesapal', 'Stripe', etc.
+                        $paying_method = ucfirst($value);
                     }
 
-
-                    if ($cash_register_data)
+                    if ($cash_register_data) {
                         $lims_payment_data->cash_register_id = $cash_register_data->id;
+                    }
                     $lims_account_data = Account::where('is_default', true)->first();
-                    if (!empty($data['account_id']) && $data['account_id'] != 0)
+                    if (!empty($data['account_id']) && $data['account_id'] != 0) {
                         $lims_payment_data->account_id = $data['account_id'];
-                    else
-                        $lims_payment_data->account_id = $lims_account_data->id;
+                    } else {
+                        $lims_payment_data->account_id = $lims_account_data ? $lims_account_data->id : null;
+                    }
                     $lims_payment_data->sale_id = $lims_sale_data->id;
-                    $data['payment_reference'] = $this->invoiceService->generateInvoiceName('spr-'); // 'spr-' . date("Ymd") . '-' . date("his");
+                    $data['payment_reference'] = $this->invoiceService->generateInvoiceName('spr-');
                     $lims_payment_data->payment_reference = $data['payment_reference'];
-                    $lims_payment_data->amount = $data['paid_amount'][$key];
-                    $lims_payment_data->change = $data['paying_amount'][$key] - $data['paid_amount'][$key];
+                    $lims_payment_data->amount = $pAmount;
+                    $lims_payment_data->change = max(0, $payingAmt - $pAmount);
                     $lims_payment_data->paying_method = $paying_method;
-                    $lims_payment_data->payment_note = $data['payment_note'];
+                    $lims_payment_data->payment_note = $data['payment_note'] ?? null;
                     $lims_payment_data->payment_at = date('Y-m-d H:i:s');
-
 
                     if (isset($data['payment_receiver'])) {
                         $lims_payment_data->payment_receiver = $data['payment_receiver'];
@@ -1513,65 +1513,49 @@ class SaleController extends Controller
                     }
                     // ===========================================
 
-                    if (isset($data['cash']) && $data['cash'] > 0 &&  isset($data['bank']) && $data['bank']) {
-                        $lims_payment_data = Payment::latest()->first();
-                        $data['payment_id'] = $lims_payment_data->id;
-                        $lims_pos_setting_data = PosSetting::latest()->first();
-                        // Check Payment Method is Card
-                        if($paying_method == 'Credit Card'){
+                    $data['payment_id'] = $lims_payment_data->id;
+                    if ($paying_method == 'Credit Card') {
+                        if (!empty($data['card_number'])) {
                             $cardDetails = [];
                             $cardDetails['card_number'] = $data['card_number'];
-                            $cardDetails['card_holder_name'] = $data['card_holder_name'];
-                            $cardDetails['card_type'] = $data['card_type'];
-                            $data['charge_id'] = '12345';
+                            $cardDetails['card_holder_name'] = $data['card_holder_name'] ?? '';
+                            $cardDetails['card_type'] = $data['card_type'] ?? '';
+                            $data['charge_id'] = $data['charge_id'] ?? '12345';
                             $data['data'] = json_encode($cardDetails);
 
                             PaymentWithCreditCard::create($data);
                         }
-                        else if ($paying_method == 'Gift Card') {
+                    } elseif ($paying_method == 'Gift Card') {
+                        if (!empty($data['gift_card_id'])) {
                             $lims_gift_card_data = GiftCard::find($data['gift_card_id']);
-                            $lims_gift_card_data->expense += $data['paid_amount'][$key];
-                            $lims_gift_card_data->save();
-                            PaymentWithGiftCard::create($data);
-                        }
-                        else if ($paying_method == 'Cheque') {
-                            PaymentWithCheque::create($data);
-                        }
-                        else if($paying_method == 'Deposit'){
-                            $lims_customer_data->deposit -= $data['paid_amount'][$key];
-                            $lims_customer_data->save();
-                        }
-                        else if($paying_method == 'Points'){
-                            if(!isset($data['draft'])){
-                                $lims_customer_data->points -= $data['used_points'];
-                                $lims_customer_data->save();
+                            if ($lims_gift_card_data) {
+                                $lims_gift_card_data->expense += $pAmount;
+                                $lims_gift_card_data->save();
+                                PaymentWithGiftCard::create($data);
                             }
                         }
-                        else if($paying_method == 'Pesapal'){
-                            $redirectUrl = $this->submitOrderRequest($lims_customer_data,$data['paid_amount'][$key]); // Assume this returns a URL
+                    } elseif ($paying_method == 'Cheque') {
+                        if (!empty($data['cheque_no'])) {
+                            PaymentWithCheque::create($data);
+                        }
+                    } elseif ($paying_method == 'Deposit') {
+                        if ($lims_customer_data) {
+                            $lims_customer_data->deposit -= $pAmount;
                             $lims_customer_data->save();
                         }
-
-                    // === ACCOUNTING ENGINE PHASE 2E: PAYMENT ===
-                    $accountingService = app(\App\Services\AccountingService::class);
-                    $result = $accountingService->recordPayment($lims_payment_data);
-                    if (!$result->success) {
-                        \Log::error('Accounting failed for Sale Payment', ['payment_id' => $lims_payment_data->id, 'error' => $result->error]);
-                        if (\Schema::hasColumn($lims_payment_data->getTable(), 'accounting_status')) {
-                            $lims_payment_data->accounting_status = 'failed';
-                            $lims_payment_data->save();
+                    } elseif ($paying_method == 'Points') {
+                        if (!isset($data['draft']) && isset($data['used_points'])) {
+                            $lims_customer_data->points -= $data['used_points'];
+                            $lims_customer_data->save();
                         }
-                    }
-                    // ===========================================
-
-                    } else if ($paying_method == 'Pesapal') {
-                        $redirectUrl = $this->submitOrderRequest($lims_customer_data, $data['paid_amount'][$key]);
+                    } elseif ($paying_method == 'Pesapal') {
+                        $redirectUrl = $this->submitOrderRequest($lims_customer_data, $pAmount);
                         $lims_customer_data->save();
 
                         DB::commit();
 
                         $mail_setting = MailSetting::latest()->first();
-                        if ($mail_data['email'] && $data['sale_status'] == 1 && $mail_setting) {
+                        if (!empty($mail_data['email']) && $data['sale_status'] == 1 && $mail_setting) {
                             $this->setMailInfo($mail_setting);
                             try {
                                 Mail::to($mail_data['email'])->send(new SaleDetails($mail_data));
@@ -6571,35 +6555,10 @@ class SaleController extends Controller
 
     public function search(Request $request)
     {
-        $warehouse_id = $request->warehouse_id;
+        $warehouse_id = $request->warehouse_id ?? (Auth::user()->warehouse_id ?? 1);
 
         // Trim first, THEN check length
         $search = trim($request->search ?? '');
-
-        if (strlen($search) < 1) {
-            return response()->json([]);
-        }
-
-        $today = Carbon::now()->toDateString();
-
-        // -------------------------------------------------------
-        // Handle embedded barcode (13 digits -> truncate to first 7)
-        // -------------------------------------------------------
-        $product_embed_code = null;
-
-        if (preg_match('/^\d{13}$/', $search)) {
-            $product_embed_code = substr($search, 0, 7);
-            $embeddedProduct = Product::where('is_embeded', true)
-                ->where(function ($q) use ($product_embed_code) {
-                    $q->where('code', $product_embed_code)
-                        ->orWhere('name', 'like', '%' . $product_embed_code . '%');
-                })
-                ->first();
-
-            if ($embeddedProduct) {
-                $search = $product_embed_code;
-            }
-        }
 
         // -------------------------------------------------------
         // Shared SELECT columns for product + warehouse joins
@@ -6634,10 +6593,36 @@ class SaleController extends Controller
             if ($without_stock == 'no') {
                 $q->where(function($q2) {
                     $q2->where('product_warehouse.qty', '>', 0)
+                       ->orWhere('products.qty', '>', 0)
                        ->orWhereIn('products.type', ['service', 'digital', 'combo']);
                 });
             }
         };
+
+        if (strlen($search) < 1) {
+            return response()->json([]);
+        }
+
+        $today = Carbon::now()->toDateString();
+
+        // -------------------------------------------------------
+        // Handle embedded barcode (13 digits -> truncate to first 7)
+        // -------------------------------------------------------
+        $product_embed_code = null;
+
+        if (preg_match('/^\d{13}$/', $search)) {
+            $product_embed_code = substr($search, 0, 7);
+            $embeddedProduct = Product::where('is_embeded', true)
+                ->where(function ($q) use ($product_embed_code) {
+                    $q->where('code', $product_embed_code)
+                        ->orWhere('name', 'like', '%' . $product_embed_code . '%');
+                })
+                ->first();
+
+            if ($embeddedProduct) {
+                $search = $product_embed_code;
+            }
+        }
 
         // -------------------------------------------------------
         // Step 1: Exact matches (fast path)
@@ -6657,7 +6642,7 @@ class SaleController extends Controller
             ->select(array_merge($productColumns, [
                 'product_variants.item_code as code',
                 $variantPriceCase,
-                'product_warehouse.qty',
+                DB::raw('COALESCE(product_warehouse.qty, products.qty, 0) as qty'),
                 'product_warehouse.imei_number',
                 'product_warehouse.product_batch_id',
                 'product_warehouse.variant_id as matched_variant_id',
@@ -6711,11 +6696,11 @@ class SaleController extends Controller
                 ->where($stockFilter)
                 ->select(array_merge($productColumns, [
                     $standardPriceCase,
-                    'product_warehouse.qty',
+                    DB::raw('COALESCE(product_warehouse.qty, products.qty, 0) as qty'),
                     'product_warehouse.imei_number',
                     'product_warehouse.product_batch_id',
                 ]))
-                ->limit(20)
+                ->limit(30)
                 ->get();
 
             // 2c. Variant item_code fuzzy match
@@ -6733,11 +6718,11 @@ class SaleController extends Controller
                     ->select(array_merge($productColumns, [
                         'product_variants.item_code as code',
                         $variantPriceCase,
-                        'product_warehouse.qty',
+                        DB::raw('COALESCE(product_warehouse.qty, products.qty, 0) as qty'),
                         'product_warehouse.imei_number',
                         'product_warehouse.product_batch_id',
                     ]))
-                    ->limit(20)
+                    ->limit(30)
                     ->get();
             }
 

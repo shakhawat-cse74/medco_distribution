@@ -40,7 +40,7 @@
     <!-- Icons CSS-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
 
-    @if (Route::current()->getName() != '/')
+    @if (!request()->is('/'))
         <link rel="preload" href="{{ asset($asset_prefix . 'vendor/bootstrap/css/awesome-bootstrap-checkbox.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
         <noscript>
             <link href="{{ asset($asset_prefix . 'vendor/bootstrap/css/awesome-bootstrap-checkbox.css') }}" rel="stylesheet">
@@ -54,8 +54,7 @@
     @endif
 
     <link rel="stylesheet" href="{{ asset($asset_prefix . 'css/style.default.css') }}?v={{ time() }}" id="theme-stylesheet" type="text/css">
-    
-
+    <link rel="stylesheet" href="{{ asset($asset_prefix . 'css/responsive-custom.css') }}?v={{ time() }}" id="responsive-stylesheet" type="text/css">
 
     @if (Config::get('app.locale') == 'ar' || (gen_setting()->is_rtl ?? false))
         <!-- RTL css -->
@@ -79,72 +78,29 @@
 
     <!-- Custom CSS from general settings -->
     {!! gen_setting()->custom_css ?? ''!!}
-
-    <style>
-        /* ===== Robust Responsive Sidebar & Content Layout ===== */
-        .side-navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            height: 100vh;
-            z-index: 999;
-            background-color: #fff;
-            transition: transform 0.2s ease, width 0.2s ease, opacity 0.2s ease;
-        }
-        .dark-mode .side-navbar {
-            background-color: #283046;
-        }
-        .side-navbar.shrink {
-            display: none !important;
-            width: 0 !important;
-            opacity: 0 !important;
-        }
-        .page {
-            position: relative;
-            margin-left: 250px !important;
-            width: calc(100% - 250px) !important;
-            min-height: 100vh;
-            padding-bottom: 50px;
-            transition: margin-left 0.2s ease, width 0.2s ease;
-        }
-        .page.active {
-            margin-left: 0 !important;
-            width: 100% !important;
-        }
-
-        /* POS Page Fullscreen */
-        body.pos-page .side-navbar {
-            display: none !important;
-        }
-        body.pos-page .page {
-            margin-left: 0 !important;
-            width: 100% !important;
-        }
-
-        @media (max-width: 991.98px) {
-            .side-navbar {
-                left: -260px;
-                box-shadow: 0 0 20px rgba(0,0,0,0.25);
-                transition: left 0.25s ease;
-            }
-            .side-navbar.show-sm {
-                left: 0 !important;
-                display: block !important;
-                z-index: 1050 !important;
-            }
-            .page, .page.active {
-                margin-left: 0 !important;
-                width: 100% !important;
-            }
-        }
-    </style>
 </head>
 
 <body class="@if ($theme == 'dark') dark-mode @endif  @if (Route::current()->getName() == 'sale.pos') pos-page @endif">
+    <!-- Sidebar Backdrop for Mobile -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
     <!-- Side Navbar -->
     <nav class="side-navbar d-print-none">
-        <span class="brand-big">
+        <div class="sidebar-header-mobile">
+            <div class="sidebar-brand">
+                <a href="{{ url('/dashboard') }}">
+                    @if (gen_setting()->site_logo ?? false)
+                        <img src="{{ url('logo', gen_setting()->site_logo) }}" style="max-height: 36px; width: auto;">
+                    @else
+                        <span>{{ gen_setting()->site_title ?? 'POS' }}</span>
+                    @endif
+                </a>
+            </div>
+            <button type="button" class="btn-close-sidebar" id="sidebar-close-btn" aria-label="Close sidebar">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <span class="brand-big d-none d-lg-block">
             <a href="{{ url('/dashboard') }}">
                 @if (gen_setting()->site_logo ?? false)
                     <img src="{{ url('logo', gen_setting()->site_logo) }}" width="115">
@@ -161,7 +117,7 @@
         @if (Route::current()->getName() != 'sale.pos')
             <header class="container-fluid">
                 <nav class="navbar">
-                    <a id="toggle-btn" class="menu-btn"><i class="ti ti-menu-deep"> </i></a>
+                    <a id="toggle-btn" class="menu-btn" role="button" aria-label="Toggle navigation"><i class="ti ti-menu-deep"> </i></a>
 
                     <ul class="nav-menu list-unstyled d-flex flex-md-row align-items-md-center">
                         <div class="dropdown d-none d-lg-block">
@@ -406,7 +362,7 @@
                         </li>
                         <li class="nav-item">
                             <a rel="nofollow" data-toggle="tooltip" class="nav-link dropdown-item"><i
-                                    class="ti ti-user"></i> <span>{{ ucfirst(Auth::user()->name) }}</span> <i
+                                    class="ti ti-user"></i> <span class="user-name-text">{{ ucfirst(Auth::user()->name) }}</span> <i
                                     class="ti ti-angle-down"></i>
                             </a>
                             <ul class="right-sidebar">
@@ -471,14 +427,15 @@
                     </div>
                 </div>
                 @if (config('app.user_verified') != true)
-                <a href="https://wa.me/8801924756759" target="_blank">
-                    <div class="contact-button" style="display: flex;justify-content: center;align-items: center;background-color: #9fe870;border-radius: 50%;bottom: 20px;height: 70px;right: 20px;width: 70px;font-size: 30px;color: #f5f6f7;text-align: center;line-height: 64px;position: fixed;z-index: 999;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="#101010" class="bi bi-whatsapp" viewBox="0 0 16 16">
-                            <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"></path>
-                        </svg>
-                    </div>
-                    <span style="background-color: #9fe870;border-radius: 15px;bottom: 10px;height: 18px;right: 5px;width: 100px;font-size: 12px;font-weight:600;color: #111;text-align: center;line-height: 1.5;position: fixed;z-index: 999;">Have Questions?</span>
-                </a>
+                <div class="contact-button-wrapper">
+                    <a href="https://wa.me/8801924756759" target="_blank" title="Contact Us on WhatsApp">
+                        <div class="contact-button" style="display: flex;justify-content: center;align-items: center;background-color: #25D366;border-radius: 50%;bottom: 20px;height: 52px;right: 20px;width: 52px;font-size: 26px;color: #fff;text-align: center;position: fixed;z-index: 999;box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#fff" class="bi bi-whatsapp" viewBox="0 0 16 16">
+                                <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"></path>
+                            </svg>
+                        </div>
+                    </a>
+                </div>
                 @endif
             </div>
         </footer>

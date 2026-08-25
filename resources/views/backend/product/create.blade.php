@@ -652,27 +652,26 @@
                         </div>
                     </div>
 
-                    {{-- ── 5. Variants (Hidden/Commented) ── --}}
-                    {{--
+                    {{-- ── 5. Variants ── --}}
                     <div class="sp-card">
                         <div class="sp-card-header">
                             <i class="ti ti-adjustments section-icon"></i>
-                            <h6>Variants</h6>
+                            <h6>{{__('db.Variants')}}</h6>
                         </div>
                         <div class="sp-card-body">
                             <div class="sp-collapse-trigger" id="variant-option">
                                 <input name="is_variant" type="checkbox" id="is-variant" value="1">
-                                &nbsp; This product has variant
+                                &nbsp; {{__('db.This product has variant')}}
                             </div>
                             <div id="variant-section" style="display:none; margin-top:12px;">
                                 <div id="variant-input-section">
                                     <div class="row">
                                         <div class="col-md-4 form-group mt-2">
-                                            <label>Option *</label>
-                                            <input type="text" name="variant_option[]" class="form-control variant-field" placeholder="Size, Color etc">
+                                            <label>{{__('db.Option')}} *</label>
+                                            <input type="text" name="variant_option[]" class="form-control variant-field" placeholder="{{__('db.Size, Color etc')}}">
                                         </div>
                                         <div class="col-md-7 form-group mt-2">
-                                            <label>Value *</label>
+                                            <label>{{__('db.Value')}} *</label>
                                             <input type="text" name="variant_value[]" class="type-variant form-control variant-field">
                                         </div>
                                         <div class="col-sm-1 form-group mt-2" style="display:flex;flex-direction:column;align-items:center;justify-content:end;">
@@ -682,17 +681,17 @@
                                 </div>
                                 <div class="form-group mt-2">
                                     <button type="button" class="btn btn-info btn-sm add-more-variant">
-                                        <i class="ti ti-plus"></i> Add More Variant
+                                        <i class="ti ti-plus"></i> {{__('db.Add More Variant')}}
                                     </button>
                                 </div>
                                 <div class="table-responsive">
                                     <table id="variant-table" class="table table-hover variant-list">
                                         <thead>
                                             <tr>
-                                                <th>Name</th>
-                                                <th>Item Code</th>
-                                                <th>Additional Cost</th>
-                                                <th>Additional Price</th>
+                                                <th>{{__('db.name')}}</th>
+                                                <th>{{__('db.Item Code')}}</th>
+                                                <th>{{__('db.Additional Cost')}}</th>
+                                                <th>{{__('db.Additional Price')}}</th>
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
@@ -701,7 +700,6 @@
                             </div>
                         </div>
                     </div>
-                    --}}
 
                     {{-- ── 6. Inventory ── --}}
                     <div class="sp-card">

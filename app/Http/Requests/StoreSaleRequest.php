@@ -89,6 +89,29 @@ class StoreSaleRequest extends FormRequest
                 'draft' => $this->input('draft', 0),
             ]);
         }
+
+        // Auto-calculate payment_status if missing (especially in POS sales)
+        if (!$this->has('payment_status') || is_null($this->input('payment_status'))) {
+            $paid = $this->input('paid_amount', 0);
+            if (is_array($paid)) {
+                $paid = array_sum($paid);
+            }
+            $paid = floatval($paid);
+            $grandTotal = floatval($this->input('grand_total', 0));
+            $balance = round($grandTotal - $paid, 2);
+
+            if ($this->input('sale_status') == 3 || $this->input('draft')) {
+                $paymentStatus = 1; // Pending
+            } elseif ($balance <= 0 && $grandTotal > 0) {
+                $paymentStatus = 4; // Paid
+            } elseif ($paid > 0 && $balance > 0) {
+                $paymentStatus = 2; // Due / Partial
+            } else {
+                $paymentStatus = 2; // Due
+            }
+
+            $this->merge(['payment_status' => $paymentStatus]);
+        }
     }
 
     public function rules(): array
@@ -99,7 +122,7 @@ class StoreSaleRequest extends FormRequest
             'warehouse_id'   => 'required|exists:warehouses,id',
             'item'           => 'required|min:1',
             'sale_status'    => 'required',
-            'payment_status' => 'required',
+            'payment_status' => 'nullable',
             'document'       => 'nullable|file|mimes:jpg,jpeg,png,gif,pdf,csv,docx,xlsx,txt',
         ];
     }
@@ -112,7 +135,6 @@ class StoreSaleRequest extends FormRequest
             'warehouse_id.required'   => 'Please select a warehouse.',
             'item.required'           => 'Please add at least one item.',
             'sale_status.required'    => 'Sale status is required.',
-            'payment_status.required' => 'Payment status is required.',
             'document.mimes'          => 'The document must be a file of type: jpg, jpeg, png, gif, pdf, csv, docx, xlsx, txt.',
         ];
     }

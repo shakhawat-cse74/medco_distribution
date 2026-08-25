@@ -524,35 +524,34 @@ body.dark-mode .dropzone .dz-message {
                     </div>
                 </div>
 
-                {{-- ── 5. Variants (Hidden/Commented) ── --}}
-                {{--
+                {{-- ── 5. Variants ── --}}
                 <div class="sp-card">
                     <div class="sp-card-header">
                         <i class="ti ti-adjustments section-icon"></i>
-                        <h6>Variants</h6>
+                        <h6>{{__('db.Variants')}}</h6>
                     </div>
                     <div class="sp-card-body">
-                        @if($lims_product_data->is_variant)
                         <div class="sp-collapse-trigger" id="variant-option">
-                            <h5 class="d-none mb-0">
+                            @if($lims_product_data->is_variant)
                                 <input name="is_variant" type="checkbox" id="is-variant" value="1" checked>
-                                &nbsp; This product has variant
-                            </h5>
+                            @else
+                                <input name="is_variant" type="checkbox" id="is-variant" value="1">
+                            @endif
+                            &nbsp; {{__('db.This product has variant')}}
                         </div>
-                        @endif
 
-                        <div id="variant-section">
+                        <div id="variant-section" @if(!$lims_product_data->is_variant) style="display:none; margin-top:12px;" @else style="margin-top:12px;" @endif>
                             @if($lims_product_data->variant_option)
                             <div id="variant-input-section">
                                 @foreach($lims_product_data->variant_option as $key => $variant_option)
                                 <?php $noOfVariantValue += count(explode(",", $lims_product_data->variant_value[$key])); ?>
                                 <div class="row">
                                     <div class="col-sm-4 form-group mt-2">
-                                        <label>Option *</label>
+                                        <label>{{__('db.Option')}} *</label>
                                         <input type="text" name="variant_option[]" class="form-control variant-field" value="{{$lims_product_data->variant_option[$key]}}">
                                     </div>
                                     <div class="col-sm-7 form-group mt-2">
-                                        <label>Value *</label>
+                                        <label>{{__('db.Value')}} *</label>
                                         <input type="text" name="variant_value[]" class="type-variant form-control variant-field" value="{{$lims_product_data->variant_value[$key]}}">
                                     </div>
                                     <div class="col-sm-1 form-group mt-2" style="display:flex;flex-direction:column;align-items:center;justify-content:end;">
@@ -565,11 +564,11 @@ body.dark-mode .dropzone .dz-message {
                             <div id="variant-input-section">
                                 <div class="row">
                                     <div class="col-md-4 form-group mt-2">
-                                        <label>Option *</label>
-                                        <input type="text" name="variant_option[]" class="form-control variant-field" placeholder="Size, Color etc">
+                                        <label>{{__('db.Option')}} *</label>
+                                        <input type="text" name="variant_option[]" class="form-control variant-field" placeholder="{{__('db.Size, Color etc')}}">
                                     </div>
                                     <div class="col-md-7 form-group mt-2">
-                                        <label>Value *</label>
+                                        <label>{{__('db.Value')}} *</label>
                                         <input type="text" name="variant_value[]" class="type-variant form-control variant-field">
                                     </div>
                                     <div class="col-sm-1 form-group mt-2" style="display:flex;flex-direction:column;align-items:center;justify-content:end;">
@@ -580,17 +579,17 @@ body.dark-mode .dropzone .dz-message {
                             @endif
                             <div class="col-md-12 form-group mt-2 px-0">
                                 <button type="button" class="btn btn-info btn-sm add-more-variant">
-                                    <i class="ti ti-plus"></i> Add More Variant
+                                    <i class="ti ti-plus"></i> {{__('db.Add More Variant')}}
                                 </button>
                             </div>
                             <div class="table-responsive">
                                 <table id="variant-table" class="table table-hover variant-list">
                                     <thead>
                                         <tr>
-                                            <th>Name</th>
-                                            <th>Item Code</th>
-                                            <th>Additional Cost</th>
-                                            <th>Additional Price</th>
+                                            <th>{{__('db.name')}}</th>
+                                            <th>{{__('db.Item Code')}}</th>
+                                            <th>{{__('db.Additional Cost')}}</th>
+                                            <th>{{__('db.Additional Price')}}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -610,7 +609,6 @@ body.dark-mode .dropzone .dz-message {
                         </div>
                     </div>
                 </div>
-                --}}
 
                 {{-- ── 6. Inventory ── --}}
                 <div class="sp-card">

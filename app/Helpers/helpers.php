@@ -83,21 +83,31 @@ if (!function_exists('format_currency')) {
 if (! function_exists('gen_setting')) {
     function gen_setting()
     {
-        return Cache::remember('general_setting', 60 * 60 * 24 * 365, function () {
-            $setting = DB::table('general_settings')->latest()->first();
-            if (!$setting) {
-                return (object)[
-                    'site_title' => 'BanglaSoft',
-                    'site_logo' => 'banglasoft_logo.png',
-                    'font_css' => null,
-                    'is_rtl' => 0,
-                    'currency' => '$',
-                    'currency_position' => 'prefix',
-                    'decimal' => 2,
-                ];
-            }
-            return $setting;
+        $setting = Cache::remember('general_setting', 60 * 60 * 24 * 365, function () {
+            return DB::table('general_settings')->latest()->first();
         });
+
+        if (!$setting || !is_object($setting)) {
+            $setting = (object)[];
+        }
+
+        // Ensure default properties always exist on the stdClass
+        if (!isset($setting->site_title)) $setting->site_title = 'BanglaSoft';
+        if (!isset($setting->site_logo)) $setting->site_logo = 'banglasoft_logo.png';
+        if (!isset($setting->favicon)) $setting->favicon = 'banglasoft_logo.png';
+        if (!isset($setting->font_css)) $setting->font_css = null;
+        if (!isset($setting->auth_css)) $setting->auth_css = null;
+        if (!isset($setting->pos_css)) $setting->pos_css = null;
+        if (!isset($setting->custom_css)) $setting->custom_css = null;
+        if (!isset($setting->is_rtl)) $setting->is_rtl = 0;
+        if (!isset($setting->currency)) $setting->currency = '$';
+        if (!isset($setting->currency_position)) $setting->currency_position = 'prefix';
+        if (!isset($setting->decimal)) $setting->decimal = 2;
+        if (!isset($setting->date_format) || empty($setting->date_format)) $setting->date_format = 'd-m-Y';
+        if (!isset($setting->theme)) $setting->theme = 'default.css';
+        if (!isset($setting->modules)) $setting->modules = '';
+
+        return $setting;
     }
 }
 

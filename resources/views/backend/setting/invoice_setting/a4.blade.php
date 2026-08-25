@@ -1,462 +1,441 @@
 <!DOCTYPE html>
-<html>
-@php
-    $show = json_decode($invoice_settings->show_column);
-@endphp
-
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="{{ url('logo', gen_setting()->site_logo) }}" />
-    <title>{{ $lims_sale_data->customer->name . '_Sale_' . $lims_sale_data->reference_no }}</title>
-    @php
-        $primary_color =
-            isset($show->active_primary_color) &&
-            $show->active_primary_color == 1 &&
-            !empty($invoice_settings->primary_color)
-                ? $invoice_settings->primary_color
-                : '#014b94';
-    @endphp
+    <title>{{ ($lims_customer_data->name ?? 'Customer') . '_Invoice_' . $lims_sale_data->reference_no }}</title>
     <style type="text/css">
-        span,
-        td {
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f6f9;
+            color: #000;
             font-size: 13px;
+        }
+
+        .invoice-page {
+            width: 210mm;
+            min-height: 287mm;
+            margin: 0 auto;
+            background: #fff;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .invoice-box {
+            border: 1.5px solid #222;
+            padding: 14px 16px 20px 16px;
+            min-height: 278mm;
+            position: relative;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Top Header */
+        .header-section {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .header-logo {
+            text-align: center;
+            margin-bottom: 3px;
+        }
+
+        .header-logo img {
+            max-height: 75px;
+            max-width: 220px;
+            object-fit: contain;
+        }
+
+        .invoice-title {
+            color: #d84315;
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin: 2px 0;
+            text-transform: uppercase;
+        }
+
+        .company-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: #111;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .company-address {
+            font-size: 12px;
+            color: #222;
+            margin-top: 3px;
+        }
+
+        .company-contact {
+            font-size: 11.5px;
+            color: #222;
+            margin-top: 2px;
+        }
+
+        /* Metadata table */
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+
+        .meta-table td {
+            vertical-align: top;
+            font-size: 12.5px;
             line-height: 1.4;
         }
 
+        /* Products Table */
+        .main-invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #777;
+            margin-top: 4px;
+        }
+
+        .main-invoice-table th {
+            border: 1px solid #777;
+            padding: 4px 5px;
+            color: #b33923;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+            background-color: #fff;
+        }
+
+        .main-invoice-table td {
+            border: 1px solid #777;
+            padding: 4px 5px;
+            font-size: 12px;
+        }
+
+        /* Totals section below table (borderless) */
+        .totals-container-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: none;
+            margin-top: 6px;
+        }
+
+        .totals-container-table td {
+            border: none;
+            padding: 0;
+        }
+
+        .totals-inner-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: none;
+        }
+
+        .totals-inner-table td {
+            border: none !important;
+            padding: 2.5px 4px !important;
+            font-size: 13px;
+        }
+
+        .signature-section {
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .sig-line {
+            border-top: 1.5px solid #000;
+            width: 200px;
+            margin: 0 auto;
+            padding-top: 4px;
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .page-num {
+            text-align: right;
+            font-size: 11px;
+            color: #333;
+            margin-top: 12px;
+        }
+
+        .hidden-print {
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .btn-action {
+            display: inline-block;
+            padding: 7px 18px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            margin: 0 5px;
+            border: none;
+        }
+
+        .btn-back {
+            background-color: #17a2b8;
+            color: #fff;
+        }
+
+        .btn-print {
+            background-color: #7c5cc4;
+            color: #fff;
+        }
+
         @media print {
+            body {
+                background: none;
+                padding: 0;
+                margin: 0;
+            }
+
             .hidden-print {
                 display: none !important;
             }
 
-            tr.table-header {
-                background-color: {{ $primary_color }} !important;
-                -webkit-print-color-adjust: exact;
+            .invoice-page {
+                width: 100% !important;
+                min-height: auto !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
 
-            td.td-text {
-                background-color: rgb(205, 218, 235) !important;
-                -webkit-print-color-adjust: exact;
+            .invoice-box {
+                border: 1.5px solid #222 !important;
+                padding: 14px 16px 15px 16px !important;
+                min-height: 275mm !important;
             }
-        }
 
-        table,
-        tr,
-        td {
-            font-family: sans-serif;
-            border-collapse: collapse;
+            @page {
+                size: A4 portrait;
+                margin: 5mm 7mm;
+            }
         }
     </style>
 </head>
-
 <body>
 
-    @php $url = route('sales.index'); @endphp
     <div class="hidden-print">
-        <table>
-            <tr>
-                <td><a href="{{ $url }}" class="btn btn-info"><i class="ti ti-arrow-left"></i>
-                        {{ __('db.Back') }}</a> </td>
-                <td><button onclick="window.print();" class="btn btn-primary"><i class="ti ti-printer"></i>
-                        {{ __('db.Print') }}</button></td>
-            </tr>
-        </table>
-        <br>
+        <a href="{{ route('sales.index') }}" class="btn-action btn-back"><i class="ti ti-arrow-left"></i> {{ __('db.Back') }}</a>
+        <button onclick="window.print();" class="btn-action btn-print"><i class="ti ti-printer"></i> {{ __('db.Print') }}</button>
     </div>
-    <table style="width: 100%;border-collapse: collapse;">
-        <tr>
-            <td colspan="2" style="padding:9px 0;width:40%">
-                @if (isset($show->show_warehouse_info) && $show->show_warehouse_info == 1)
-                    <h1 style="margin:0">{{ gen_setting()->company_name ?? $lims_biller_data->company_name }}</h1>
-                    <div>
-                        <span>{{ __('db.Address') }}:</span>&nbsp;&nbsp;<span>{{ $lims_warehouse_data->address }}</span>
-                    </div>
-                    <div>
-                        <span>{{ __('db.Phone') }}:</span>&nbsp;&nbsp;<span>{{ $lims_warehouse_data->phone }}</span>
-                    </div>
-                    @if (gen_setting()->vat_registration_number && isset($show->show_vat_registration_number) && $show->show_vat_registration_number == 1)
-                        <div>
-                            <span>{{ __('db.VAT Number') }}:</span>&nbsp;&nbsp;<span>{{ gen_setting()->vat_registration_number }}</span>
-                        </div>
-                    @endif
 
-                @endif
-            </td>
-            <td style="width:30%; text-align: middle; vertical-align: top;">
-                @if (gen_setting()->site_logo || $invoice_settings->company_logo)
-                    <img src="{{ $invoice_settings->company_logo ? url('invoices', $invoice_settings->company_logo) : url('logo', gen_setting()->site_logo) }}"
-                        height="{{ $invoice_settings->logo_height ?? 'auto' }}"
-                        width="{{ $invoice_settings->logo_width ?? 'auto' }}" style="margin:5px 0;">
-                @endif
-            </td>
-            <td style="padding:5px -19px;width:30%;text-align:right;">
-                <div style="display: flex;justify-content: space-between;border-bottom:1px solid #aaa">
-                    <span>{{ __('db.reference') }}:</span> <span>{{ $lims_sale_data->reference_no }}</span>
-                </div>
-                <div style="display: flex;justify-content: space-between;border-bottom:1px solid #aaa">
-                    <span>{{ __('db.date') }}:</span>
-                    @if (isset($show->active_date_format) && $show->active_date_format == 1)
-                        {{ Carbon\Carbon::parse($lims_sale_data->created_at)->format($invoice_settings->invoice_date_format) }}
-                    @else
-                        {{ $lims_sale_data->created_at }}
-                    @endif
-                </div>
-                @if ($paid_by_info)
-                    <div style="display: flex;justify-content: space-between;border-bottom:1px solid #aaa">
-                        <span>{{ __('db.Paid By') }}:</span> <span>{{ $paid_by_info }}</span>
-                    </div>
-                @endif
-
-                @if (isset($show->show_biller_info) && $show->show_biller_info == 1)
-                    <div style="display: flex;justify-content: space-between;border-bottom:1px solid #aaa">
-                        <span>{{ __('db.Served By') }}:</span> <span>{{ $lims_bill_by['name'] }} -
-                            ({{ $lims_bill_by['user_name'] }})</span>
-                    </div>
-                @endif
-                <?php
-                foreach ($sale_custom_fields as $key => $fieldName) {
-                    $field_name = str_replace(' ', '_', strtolower($fieldName));
-                    echo '<div style="display: flex;justify-content: space-between;border-bottom:1px solid #aaa"><span>' . $fieldName . ':</span> <span> ' . $lims_sale_data->$field_name . '</span></div>';
-                }
-                foreach ($customer_custom_fields as $key => $fieldName) {
-                    $field_name = str_replace(' ', '_', strtolower($fieldName));
-                    echo '<div style="display: flex;justify-content: space-between;border-bottom:1px solid #aaa"><span>' . $fieldName . ':</span> <span>' . $lims_customer_data->$field_name . '</span></div>';
-                }
-                ?>
-            </td>
-        </tr>
-    </table>
-    <table style="width: 100%;border-collapse: collapse; margin-top: 4px;">
-        <tr>
-            @if (isset($show->show_bill_to_info) && $show->show_bill_to_info == 1)
-                <td colspan="3" style="padding:4px 0;width:30%;vertical-align:top">
-                    <h2
-                        style="background-color: {{ isset($show->active_primary_color) &&
-                        $show->active_primary_color == 1 &&
-                        !empty($invoice_settings->primary_color)
-                            ? $invoice_settings->primary_color
-                            : '#014b94' }}; color: white; padding: 3px 10px; margin-bottom: 0;">
-                        Bill To
-                    </h2>
-                    <div style="margin-top: 10px;margin-left: 10px">
-                        <span>{{ __('db.customer') }}: {{ $lims_customer_data->name }}</span>
-                    </div>
-                    <div style="margin-left: 10px">
-                        <span>{{__('Tax Number')}}:</span>&nbsp;&nbsp;<span>{{$lims_customer_data->tax_no}}</span>
-                    </div>
-                    <div style="margin-left: 10px">
-
-                        <span>{{ __('db.Address') }}:</span>&nbsp;&nbsp;
-                        @if ($lims_sale_data->sale_type == 'online')
-                            <span>{{ $lims_sale_data->shipping_name }}, {{ $lims_sale_data->shipping_address }},
-                                {{ $lims_sale_data->shipping_city }}, {{ $lims_sale_data->shipping_country }},
-                                {{ $lims_sale_data->shipping_zip }}</span>
-                        @else
-                            <span>{{ $lims_customer_data->address }}</span>
+    <div class="invoice-page">
+        <div class="invoice-box">
+            <div class="top-content">
+                <!-- Header: Logo, Title, Company Name, Address, Contact -->
+                <div class="header-section">
+                    <div class="header-logo">
+                        @if (gen_setting()->site_logo || $invoice_settings->company_logo)
+                            <img src="{{ $invoice_settings->company_logo ? url('invoices', $invoice_settings->company_logo) : url('logo', gen_setting()->site_logo) }}" alt="Logo">
                         @endif
                     </div>
-                    @if (isset($lims_customer_data->phone_number) || isset($lims_sale_data->shipping_phone))
-                        <div style="margin-bottom: 10px;margin-left: 10px">
-                            <span>Phone:</span>&nbsp;&nbsp;
-                            @if ($lims_sale_data->sale_type == 'online')
-                                <span>{{ $lims_sale_data->shipping_phone }}
-                                @else
-                                    <span>{{ $lims_customer_data->phone_number }}</span>
+                    <div class="invoice-title">INVOICE</div>
+                    <div class="company-name">
+                        {{ gen_setting()->company_name ?? ($lims_biller_data->company_name ?? 'MEDCO DISTRIBUTIONS WNY INC') }}
+                    </div>
+                    <div class="company-address">
+                        {{ $lims_warehouse_data->address ?? (gen_setting()->address ?? '1285 William Street,Buffalo,NY-14206') }}
+                    </div>
+                    <div class="company-contact">
+                        @php
+                            $mobile = $lims_warehouse_data->phone ?? '9292809807';
+                            $phone = $lims_biller_data->phone_number ?? '7167872330';
+                            $email = $lims_warehouse_data->email ?? ($lims_biller_data->email ?? (gen_setting()->email ?? 'medcodistributionwny@gmail.com'));
+                        @endphp
+                        Mobile : {{ $mobile }}@if($phone && $phone != $mobile), Phone : {{ $phone }}@endif , E-mail : {{ $email }}
+                    </div>
+                </div>
+
+                <!-- Meta Details: Bill To & Invoice Info -->
+                <table class="meta-table">
+                    <tr>
+                        <!-- Bill To -->
+                        <td style="width: 58%;">
+                            <div>
+                                <strong>Bill To:</strong> <strong style="text-transform: uppercase;">{{ $lims_customer_data->company_name ? $lims_customer_data->company_name : $lims_customer_data->name }}</strong>
+                            </div>
+                            @if($lims_customer_data->company_name && $lims_customer_data->name && $lims_customer_data->company_name != $lims_customer_data->name)
+                                <div>{{ $lims_customer_data->name }}</div>
                             @endif
-                        </div>
-                    @endif
-                </td>
-            @endif
+                            @php
+                                $custAddr = $lims_customer_data->address;
+                                $cityStateZip = array_filter([$lims_customer_data->city, $lims_customer_data->state, $lims_customer_data->postal_code]);
+                                $cityStateZipStr = implode(', ', $cityStateZip);
+                            @endphp
+                            @if($custAddr || $cityStateZipStr)
+                                <div>
+                                    {{ $custAddr }}@if($custAddr && $cityStateZipStr), @endif{{ $cityStateZipStr }}
+                                </div>
+                            @endif
+                            @if($lims_customer_data->phone_number)
+                                <div>{{ $lims_customer_data->phone_number }}</div>
+                            @endif
+                        </td>
 
-        </tr>
-    </table>
-    <table dir="@if (Config::get('app.locale') == 'ar' || gen_setting()->is_rtl) {{ 'rtl' }} @endif"
-        style="width: 100%;border-collapse: collapse;">
-        <tr class="table-header"
-            style="background-color: {{ isset($show->active_primary_color) &&
-            $show->active_primary_color == 1 &&
-            !empty($invoice_settings->primary_color)
-                ? $invoice_settings->primary_color
-                : '#014b94' }}; color: white;">
-            <td style="border:1px solid #222;padding:1px 3px;width:4%;text-align:center">#</td>
+                        <!-- Invoice Info -->
+                        <td style="width: 42%;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="font-weight: bold; width: 95px; padding: 1px 0;">Invoice No.</td>
+                                    <td style="font-weight: bold; padding: 1px 0;">{{ $lims_sale_data->reference_no }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold; padding: 1px 0;">Date</td>
+                                    <td style="font-weight: bold; padding: 1px 0;">{{ \Carbon\Carbon::parse($lims_sale_data->created_at)->format('m/d/Y') }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold; padding: 1px 0;">Prepared By</td>
+                                    <td style="padding: 1px 0;">{{ $lims_bill_by['name'] ?? ($lims_biller_data->name ?? 'Admin') }}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
 
-            <td style="border:1px solid #222;padding:1px 3px;width:49%;text-align:center">{{ __('db.Description') }}
-            </td>
-            <td style="border:1px solid #222;padding:1px 3px;width:6%;text-align:center">{{ __('db.qty') }}</td>
-            <td style="border:1px solid #222;padding:1px 3px;width:9%;text-align:center">{{ __('db.Unit Price') }}</td>
-            <td style="border:1px solid #222;padding:1px 3px;width:7%;text-align:center">{{ __('db.Total') }}</td>
-            <td style="border:1px solid #222;padding:1px 3px;width:7%;text-align:center">{{ __('db.Tax') }}</td>
-            <td style="border:1px solid #222;padding:1px 2px;width:13%;text-align:center;">{{ __('db.Subtotal') }}</td>
-        </tr>
-        @foreach ($line_items as $key => $item)
-            <tr>
-                <td
-                    style="@if (Config::get('app.locale') == 'ar' || gen_setting()->is_rtl) {{ 'border-right:1px solid #222;' }} @endif border:1px solid #222;padding:1px 3px;text-align: center;">
-                    {{ $key + 1 }}</td>
-                <td style="border:1px solid #222;padding:1px 3px;font-size: 15px;line-height: 1.2;">
+                <!-- Main Products Table (Only items, no lines/dividers below) -->
+                <table class="main-invoice-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 4%; text-align: center;">SL</th>
+                            <th style="width: 44%; text-align: left;">DESCRIPTION</th>
+                            <th style="width: 11%; text-align: right;">UNIT PRICE</th>
+                            <th style="width: 9%; text-align: center;">Unit Type</th>
+                            <th style="width: 7%; text-align: right;">QTY</th>
+                            <th style="width: 12%; text-align: right;">DISCOUNT</th>
+                            <th style="width: 13%; text-align: right;">AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($line_items as $key => $item)
+                            @php
+                                $itemAmount = ($item->net_unit_price * $item->qty) - ($item->discount * $item->qty);
+                                $unitCodeDisplay = strtoupper($item->unit_code ?: 'PC');
+                            @endphp
+                            <tr>
+                                <td style="text-align: center; font-weight: bold; vertical-align: middle;">
+                                    {{ $key + 1 }}
+                                </td>
+                                <td style="text-align: left; font-weight: bold; vertical-align: middle; line-height: 1.3;">
+                                    {!! $item->product_name !!}
+                                    @if ($item->imei_number && !str_contains($item->imei_number, 'null'))
+                                        <div style="font-size: 11px; font-weight: normal; color: #555;">IMEI: {{ $item->imei_number }}</div>
+                                    @endif
+                                </td>
+                                <td style="text-align: right; font-weight: bold; vertical-align: middle;">
+                                    {{ number_format($item->net_unit_price, 2) }}
+                                </td>
+                                <td style="text-align: center; font-weight: bold; vertical-align: middle;">
+                                    {{ $unitCodeDisplay }}
+                                </td>
+                                <td style="text-align: right; font-weight: bold; vertical-align: middle;">
+                                    {{ number_format($item->qty, 2) }}
+                                </td>
+                                <td style="text-align: right; vertical-align: middle;">
+                                    {{ number_format($item->discount * $item->qty, 2) }}
+                                </td>
+                                <td style="text-align: right; font-weight: bold; vertical-align: middle;">
+                                    {{ number_format($itemAmount, 2) }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
 
-                    {!! $item->product_name !!}
+                <!-- Clean Borderless Totals Section Below Items Table -->
+                <table class="totals-container-table">
+                    <tr>
+                        <!-- Left space for notes if any -->
+                        <td style="width: 58%; vertical-align: top; padding-top: 6px;">
+                            @if ($lims_sale_data->sale_note)
+                                <div style="font-size: 12px; color: #444;"><strong>Note:</strong> {{ $lims_sale_data->sale_note }}</div>
+                            @endif
+                        </td>
 
-                    @if (!empty($item->topping_names))
-                        <br><small>({{ implode(', ', $item->topping_names) }})</small>
-                    @endif
+                        <!-- Right Totals List (clean, no extra boxes/borders) -->
+                        <td style="width: 42%; vertical-align: top; padding-top: 6px;">
+                            <table class="totals-inner-table">
+                                <tr>
+                                    <td style="font-weight: bold; text-align: left; width: 55%; color: #000;">Sub Total</td>
+                                    <td style="font-weight: bold; text-align: right; width: 45%; color: #000;">{{ number_format($lims_sale_data->total_price - $lims_sale_data->total_discount, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold; text-align: left; color: #000;">TAX</td>
+                                    <td style="text-align: right; color: #000;">{{ number_format($lims_sale_data->total_tax + $lims_sale_data->order_tax, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold; text-align: left; color: #000;">Total</td>
+                                    <td style="font-weight: bold; text-align: right; color: #000;">{{ number_format($lims_sale_data->grand_total, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold; text-align: left; color: #000; border-bottom: 1px solid #777 !important; padding-bottom: 3px !important;">Paid</td>
+                                    <td style="text-align: right; color: #000; border-bottom: 1px solid #777 !important; padding-bottom: 3px !important;">{{ number_format($lims_sale_data->paid_amount, 2) }}</td>
+                                </tr>
+                                @php
+                                    $previousDue = $prevDue > 0 ? $prevDue : 0;
+                                    $balanceDue = ($lims_sale_data->grand_total - $lims_sale_data->paid_amount) + $previousDue;
+                                @endphp
+                                <tr>
+                                    <td style="font-weight: bold; text-align: left; color: #d84315; padding-top: 4px !important;">Previous Due</td>
+                                    <td style="font-weight: bold; text-align: right; color: #d84315; padding-top: 4px !important;">{{ number_format($previousDue, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold; text-align: left; color: #d84315; font-size: 13.5px;">Balance Due</td>
+                                    <td style="font-weight: bold; text-align: right; color: #d84315; font-size: 13.5px;">{{ number_format($balanceDue, 2) }}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
 
-                    @foreach ($item->custom_fields as $fieldName => $fieldValue)
-                        @if ($fieldValue)
-                            <br>
-                            <span style="font-weight: bold;">{{ $fieldName }}</span>
-                            {{ ': ' . $fieldValue }}
-                        @endif
-                    @endforeach
-                    @if ($item->imei_number && !str_contains($item->imei_number, 'null'))
-                        <br><small>IMEI or Serial: {{ $item->imei_number }}</small>
-                    @endif
-                    <!-- warranty -->
-                    @if (isset($item->warranty_duration))
-                        <br>
-                        <span
-                            style="font-weight: bold;">Warranty</span>{{ ': ' . $item->warranty_duration }}
-                        <br>
-                        <span style="font-weight: bold;">Expire At</span>{{ ': ' . $item->warranty_end }}
-                    @endif
-                    <!-- guarantee -->
-                    @if (isset($item->guarantee_duration))
-                        <br>
-                        <span
-                            style="font-weight: bold;">Guarantee</span>{{ ': ' . $item->guarantee_duration }}
-                        <br>
-                        <span style="font-weight: bold;">Expire At</span>{{ ': ' . $item->guarantee_end }}
-                    @endif
-                </td>
-                <td style="border:1px solid #222;padding:1px 3px;text-align:center">
-                    {{ $item->qty . ' ' . $item->unit_code . ' ' . $item->variant_name }}</td>
-                <td style="border:1px solid #222;padding:1px 3px;text-align:center">
-                    {{format_currency($item->net_unit_price, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                    @if (!empty($item->topping_prices))
-                        <br><small>+
-                            {{ implode(' + ', array_map(fn($price) => number_format($price, gen_setting()->decimal, '.', ','), $item->topping_prices)) }}</small>
-                    @endif
-                </td>
-                <td style="border:1px solid #222;padding:1px 3px;text-align:center">
-                    {{format_currency($item->line_total, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                </td>
-                <td style="border:1px solid #222;padding:1px 3px;text-align:center">
-                    {{format_currency($item->tax, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                </td>
-                <td
-                    style="border:1px solid #222;border-right:1px solid #222;padding:1px 3px;text-align:center;font-size: 15px;">
-                    {{format_currency($item->subtotal, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                </td>
-            </tr>
-        @endforeach
-        <tr>
-            <td colspan="3" rowspan="@if (gen_setting()->invoice_format == 'gst' && gen_setting()->state == 2) 6 @else 5 @endif"
-                style="border:1px solid #222;padding:1px 3px;text-align: center; vertical-align: top;">
-                @if (isset($show->show_payment_note) && $show->show_payment_note == 1 && $lims_sale_data->payment_note)
-                    <p class="">
-                        <strong>{{ __('db.Payment Note') }}:</strong>{{ $lims_sale_data->payment_note }}</p>
-                @endif
-                @if (isset($show->show_sale_note) && isset($lims_sale_data->sale_note) && $show->show_sale_note)
-                    <p class=""> <strong>{{ __('db.Sale Note') }}:</strong>{{ $lims_sale_data->sale_note }}</p>
-                @endif
+            <!-- Footer Signatures & Page Number -->
+            <div class="bottom-content">
+                <div class="signature-section">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 45%; text-align: center; vertical-align: bottom;">
+                                <div class="sig-line">Customer Signature</div>
+                            </td>
+                            <td style="width: 10%;"></td>
+                            <td style="width: 45%; text-align: center; vertical-align: bottom;">
+                                <div class="sig-line">Authorised Signature</div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="page-num">Page 1 of 1</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                @if($installment_info)
-                    <div style="border: 1px solid #222; padding: 5px; margin-top: 5px; text-align: left;">
-                        <h4 style="margin: 0; text-align: center; border-bottom: 1px solid #222;">INSTALMENT SALE</h4>
-                        <p style="margin: 5px 0;"><strong>Plan:</strong> {{$installment_info->plan->name}}</p>
-                        <p style="margin: 5px 0;"><strong>Duration:</strong> {{$installment_info->plan->months}} Months</p>
-                        <p style="margin: 5px 0;"><strong>Additional Amount:</strong> {{format_currency($installment_info->plan->additional_amount, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$')}}</p>
-                        <p style="margin: 5px 0;"><strong>Down Payment:</strong> {{format_currency($installment_info->plan->down_payment, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$')}}</p>
-                        <p style="margin: 5px 0;"><strong>Instalments Paid:</strong> {{$installment_info->paid}}/{{$installment_info->total}}</p>
-                        @if($installment_info->next)
-                        <p style="margin: 5px 0;"><strong>Next Due:</strong> {{\Carbon\Carbon::parse($installment_info->next->payment_date)->format('d M Y')}}</p>
-                        @endif
-                    </div>
-                @endif
-            </td>
-            <td class="td-text" colspan="3"
-                style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                {{ __('db.Total Before Tax') }}
-            </td>
-            <td class="td-text"
-                style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                {{ format_currency($lims_sale_data->total_price - ($lims_sale_data->total_tax + $lims_sale_data->order_tax), $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-            </td>
-        </tr>
-        @if (gen_setting()->invoice_format == 'gst' && gen_setting()->state == 1)
-            <tr>
-                <td class="td-text" colspan="3"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                    IGST
-                </td>
-                <td class="td-text"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                    {{ format_currency($lims_sale_data->total_tax + $lims_sale_data->order_tax, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                </td>
-            </tr>
-        @elseif(gen_setting()->invoice_format == 'gst' && gen_setting()->state == 2)
-            <tr>
-                <td class="td-text" colspan="3"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                    SGST
-                </td>
-                <td class="td-text"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                    @php $total_tax_amount = ($lims_sale_data->total_tax + $lims_sale_data->order_tax) / 2; @endphp
-                    {{ format_currency($total_tax_amount, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                </td>
-            </tr>
-            <tr>
-                <td class="td-text" colspan="3"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                    CGST
-                </td>
-                <td class="td-text"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                    @php $total_tax_amount = ($lims_sale_data->total_tax + $lims_sale_data->order_tax) / 2; @endphp
-                    {{ format_currency($total_tax_amount, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                </td>
-            </tr>
-        @else
-            <tr>
-                <td class="td-text" colspan="3"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                    {{ __('db.Tax') }}
-                </td>
-                <td class="td-text"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                    {{ format_currency($lims_sale_data->total_tax + $lims_sale_data->order_tax, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                </td>
-            </tr>
-        @endif
-        <tr>
-            <td class="td-text" colspan="3"
-                style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                {{ __('db.Discount') }}
-            </td>
-            <td class="td-text"
-                style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                {{ format_currency($lims_sale_data->total_discount + $lims_sale_data->order_discount, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-            </td>
-        </tr>
-        <tr>
-            <td class="td-text" colspan="3"
-                style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                {{ __('db.Shipping Cost') }}
-            </td>
-            <td class="td-text"
-                style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                {{ format_currency($lims_sale_data->shipping_cost ?? 0, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-            </td>
-
-        </tr>
-        <tr>
-            <td class="td-text" colspan="3"
-                style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                {{ __('db.grand total') }}</td>
-            <td class="td-text"
-                style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                {{ format_currency($lims_sale_data->grand_total, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-            </td>
-        </tr>
-        <tr>
-            @if (gen_setting()->currency_position == 'prefix')
-                <td class="td-text" colspan="3" rowspan="4"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;vertical-align: bottom;font-size: 15px; vertical-align: top;">
-                    @if (isset($show->show_in_words) && $show->show_in_words == 1)
-                        {{ __('db.In Words') }}<br>{{ $currency_code }} <span
-                            style="text-transform:capitalize;font-size: 15px;">{{ str_replace('-', ' ', $numberInWords) }}</span>
-                        only
-                    @endif
-                </td>
-            @else
-                <td class="td-text" colspan="3" rowspan="4"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;vertical-align: bottom;font-size: 15px; vertical-align: top;">
-                    {{ __('db.In Words') }}:<br><span
-                        style="text-transform:capitalize;font-size: 15px;">{{ str_replace('-', ' ', $numberInWords) }}</span>
-                    {{ $currency_code }} only
-                </td>
-            @endif
-        </tr>
-
-        <tr>
-            <td class="td-text" colspan="3"
-                style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                {{ __('db.Paid') }}
-            </td>
-            <td class="td-text"
-                style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                {{ format_currency($lims_sale_data->paid_amount, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-            </td>
-        </tr>
-        <tr>
-            @if ($change_amount > 0)
-                <td class="td-text" colspan="3"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                    {{ __('db.Change') }}
-                </td>
-                <td class="td-text"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                    {{ format_currency($change_amount, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                </td>
-            @else
-                <td class="td-text" colspan="3"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                    {{ __('db.Due') }}
-                </td>
-                <td class="td-text"
-                    style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                    {{ format_currency($lims_sale_data->grand_total - $lims_sale_data->paid_amount, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                </td>
-            @endif
-        </tr>
-
-        @if ($totalDue && isset($show->hide_total_due) && $lims_customer_data->type != 'walkin')
-            <tr>
-                @if (!$show->hide_total_due)
-                    <td class="td-text" colspan="3"
-                        style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);">
-                        {{ __('db.Total Due') }}
-                    </td>
-                    <td class="td-text" colspan="4"
-                        style="border:1px solid #222;padding:1px 3px;background-color:rgb(205, 218, 235);text-align: center;font-size: 15px;">
-                        {{ format_currency($totalDue, $lims_sale_data->currency->symbol ?? $lims_sale_data->currency->code ?? '$') }}
-                    </td>
-                @endif
-            </tr>
-        @endif
-    </table>
-    <table style="width: 100%; border-collapse: collapse;margin-top:-9px;">
-
-        <tr>
-            <td style="width: 100%; text-align: center">
-                <br>
-                <br>
-                @if (isset($show->show_barcode) && $show->show_barcode == 1)
-                    <?php echo '<img style="max-width:100%" src="data:image/png;base64,' . DNS1D::getBarcodePNG($lims_sale_data->reference_no, 'C128') . '" alt="barcode"   />'; ?>
-                @endif
-                <br><br>
-                @if (isset($show->show_qr_code) && $show->show_qr_code == 1)
-                    <?php echo '<img style="width:5%" src="data:image/png;base64,' . DNS2D::getBarcodePNG($qrText, 'QRCODE') . '" alt="barcode"   />'; ?>
-                @endif
-                <br>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                @if (isset($show->show_footer_text) && $show->show_footer_text == 1)
-                    {!! $invoice_settings->footer_text ?? __('db.Thank you for shopping with us Please come again') !!}
-                @endif
-            </td>
-        </tr>
-    </table>
+    @if(request()->get('is_print') || request()->query('is_print'))
     <script type="text/javascript">
-        localStorage.clear();
-
-        function auto_print() {
-            window.print();
-
-        }
-        //setTimeout(auto_print, 1000);
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                window.print();
+            }, 300);
+        });
     </script>
-</body>
+    @endif
 
+</body>
 </html>
