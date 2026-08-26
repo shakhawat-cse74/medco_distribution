@@ -9066,5 +9066,216 @@ return [
         'key' => 'Product created successfully',
         'value' => 'Product created successfully',
     ],
-
+    [
+        'key' => 'Delivery Management',
+        'value' => 'Delivery Management',
+    ],
+    [
+        'key' => 'delivery_men_list',
+        'value' => 'Delivery Men List',
+    ],
+    [
+        'key' => 'add_delivery_man',
+        'value' => 'Add Delivery Man',
+    ],
+    [
+        'key' => 'view_delivery_man',
+        'value' => 'View Delivery Man',
+    ],
+    [
+        'key' => 'edit_delivery_man',
+        'value' => 'Edit Delivery Man',
+    ],
+    [
+        'key' => 'delete_delivery_man',
+        'value' => 'Delete Delivery Man',
+    ],
+    [
+        'key' => 'field_orders',
+        'value' => 'Field Orders',
+    ],
+    [
+        'key' => 'create_field_order',
+        'value' => 'Create Field Order',
+    ],
+    [
+        'key' => 'view_field_order',
+        'value' => 'View Field Order',
+    ],
+    [
+        'key' => 'edit_field_order',
+        'value' => 'Edit Field Order',
+    ],
+    [
+        'key' => 'cancel_field_order',
+        'value' => 'Cancel Field Order',
+    ],
+    [
+        'key' => 'field_payments',
+        'value' => 'Field Payments',
+    ],
+    [
+        'key' => 'collect_payment',
+        'value' => 'Collect Payment',
+    ],
+    [
+        'key' => 'view_payment',
+        'value' => 'View Payment',
+    ],
+    [
+        'key' => 'edit_payment',
+        'value' => 'Edit Payment',
+    ],
+    [
+        'key' => 'delete_payment',
+        'value' => 'Delete Payment',
+    ],
+    [
+        'key' => 'delivery_management',
+        'value' => 'Delivery Management',
+    ],
+    [
+        'key' => 'assignment_man_assignments',
+        'value' => 'Delivery Man Assignments',
+    ],
+    [
+        'key' => 'assign_delivery_man',
+        'value' => 'Assign Delivery Man',
+    ],
+    [
+        'key' => 'delivery_routes',
+        'value' => 'Delivery Routes',
+    ],
+    [
+        'key' => 'vehicle_management',
+        'value' => 'Vehicle Management',
+    ],
+    [
+        'key' => 'delivery_proofs',
+        'value' => 'Delivery Proofs',
+    ],
+    [
+        'key' => 'capture_proof',
+        'value' => 'Capture Proof',
+    ],
+    [
+        'key' => 'commission_management',
+        'value' => 'Commission Management',
+    ],
+    [
+        'key' => 'calculate_commission',
+        'value' => 'Calculate Commission',
+    ],
+    [
+        'key' => 'cash_deposits',
+        'value' => 'Cash Deposits',
+    ],
+    [
+        'key' => 'record_deposit',
+        'value' => 'Record Deposit',
+    ],
+    [
+        'key' => 'field_returns',
+        'value' => 'Field Returns',
+    ],
+    [
+        'key' => 'initiate_return',
+        'value' => 'Initiate Return',
+    ],
+    [
+        'key' => 'customer_visits',
+        'value' => 'Customer Visits',
+    ],
+    [
+        'key' => 'check_customer_in',
+        'value' => 'Check Customer In',
+    ],
+    [
+        'key' => 'delivery_schedules',
+        'value' => 'Delivery Schedules',
+    ],
+    [
+        'key' => 'delivery_notifications',
+        'value' => 'Delivery Notifications',
+    ],
+    [
+        'key' => 'delivery_reports',
+        'value' => 'Delivery Reports',
+    ],
+    [
+        'key' => 'delivery_man_dashboard',
+        'value' => 'Delivery Man Dashboard',
+    ],
+    [
+        'key' => 'delivery_man_wise_order',
+        'value' => 'Delivery Man Wise Order',
+    ],
+    [
+        'key' => 'delivery_man_wise_collection',
+        'value' => 'Delivery Man Wise Collection',
+    ],
+    [
+        'key' => 'delivery_man_wise_due',
+        'value' => 'Delivery Man Wise Due',
+    ],
+    [
+        'key' => 'delivery_performance',
+        'value' => 'Delivery Performance',
+    ],
+    [
+        'key' => 'commission_report',
+        'value' => 'Commission Report',
+    ],
+    [
+        'key' => 'commission_payout',
+        'value' => 'Commission Payout',
+    ],
+    [
+        'key' => 'customer_visit_report',
+        'value' => 'Customer Visit Report',
+    ],
+    [
+        'key' => 'product_wise_field_sale',
+        'value' => 'Product Wise Field Sale',
+    ],
+    [
+        'key' => 'delivery_man_commissions',
+        'value' => 'Delivery Man Commissions',
+    ],
+    [
+        'key' => 'delivery_man_commissions_settings',
+        'value' => 'Delivery Man Commissions Settings',
+    ],
+    [
+        'key' => 'delivery_man_commissions_slabs',
+        'value' => 'Delivery Man Commissions Slabs',
+    ],
+    [
+        'key' => 'update_delivery_settings',
+        'value' => 'Update Delivery Settings',
+    ],
+    [
+        'key' => 'delivery_charge_settings',
+        'value' => 'Delivery Charge Settings',
+    ],
+    [
+        'key' => 'time_slot_settings',
+        'value' => 'Time Slot Settings',
+    ],
+    [
+        'key' => 'general_settings',
+        'value' => 'General Settings',
+    ],
+    [
+        'key' => 'delivery_man_summaries',
+        'value' => 'Delivery Man Summaries',
+    ],
+    [
+        'key' => 'pending_deposits',
+        'value' => 'Pending Deposits',
+    ],
+    [
+        'key' => 'field_return_products',
+        'value' => 'Field Return Products',
+    ],
 ];
