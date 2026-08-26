@@ -20,28 +20,28 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <div class="btn-group mb-3" role="group">
-                        <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'today' ? 'active' : '' }}" data-period="today">Today</button>
-                        <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'week' ? 'active' : '' }}" data-period="week">Weekly</button>
-                        <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'month' ? 'active' : '' }}" data-period="month">Monthly</button>
-                        <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'custom' ? 'active' : '' }}" data-period="custom">Custom</button>
-                    </div>
-                    <div class="row g-2" id="filter-row">
-                        <div class="col-md-3">
-                            <select class="form-select" id="delivery_man_filter">
-                                <option value="">{{__('db.All Delivery Men')}}</option>
-                                @foreach($lims_delivery_man_list as $dm)
-                                    <option value="{{ $dm->id }}" {{ ($selectedDeliveryManId ?? '') == $dm->id ? 'selected' : '' }}>{{ $dm->name }}</option>
-                                @endforeach
-                            </select>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'today' ? 'active' : '' }}" data-period="today">Today</button>
+                            <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'week' ? 'active' : '' }}" data-period="week">Weekly</button>
+                            <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'month' ? 'active' : '' }}" data-period="month">Monthly</button>
+                            <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'custom' ? 'active' : '' }}" data-period="custom">Custom</button>
                         </div>
-                        <div class="col-md-3 d-none" id="start_date_col">
+                        <select class="form-select" id="delivery_man_filter" style="width: auto; min-width: 180px;">
+                            <option value="">{{__('db.All Delivery Men')}}</option>
+                            @foreach($lims_delivery_man_list as $dm)
+                                <option value="{{ $dm->id }}" {{ ($selectedDeliveryManId ?? '') == $dm->id ? 'selected' : '' }}>{{ $dm->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="row g-2 d-none" id="custom-date-row">
+                        <div class="col-md-4">
                             <input type="text" class="form-control datepicker" id="start_date" value="{{ $startDate }}" placeholder="Start date">
                         </div>
-                        <div class="col-md-3 d-none" id="end_date_col">
+                        <div class="col-md-4">
                             <input type="text" class="form-control datepicker" id="end_date" value="{{ $endDate }}" placeholder="End date">
                         </div>
-                        <div class="col-md-3 d-none" id="apply_col">
+                        <div class="col-md-4">
                             <button type="button" class="btn btn-primary w-100" id="applyFilter">Apply</button>
                         </div>
                     </div>
@@ -397,11 +397,11 @@ $(document).ready(function() {
         $('.period-tab').removeClass('active');
         $(this).addClass('active');
         if (period === 'custom') {
-            $('#start_date_col, #end_date_col, #apply_col').removeClass('d-none');
+            $('#custom-date-row').removeClass('d-none');
             $('#start_date').focus();
             return;
         }
-        $('#start_date_col, #end_date_col, #apply_col').addClass('d-none');
+        $('#custom-date-row').addClass('d-none');
         const deliveryManId = $('#delivery_man_filter').val();
         loadDashboardData(period, '', '', deliveryManId);
     });
