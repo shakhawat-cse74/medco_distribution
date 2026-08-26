@@ -1053,7 +1053,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('receipt/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'receipt'])->name('receipt');
         Route::post('split-payment/{order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'splitPayment'])->name('splitPayment');
         Route::get('order-payments/{order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'getOrderPayments']);
-        Route::post('send-receipt/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'sendReceipt'])->name('sendReceipt');
+        Route::get('send-receipt/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'sendReceipt'])->name('sendReceipt');
         Route::get('daily-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'dailySummary'])->name('dailySummary');
         Route::get('weekly-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'weeklySummary'])->name('weeklySummary');
         Route::get('monthly-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'monthlySummary'])->name('monthlySummary');
@@ -1074,6 +1074,17 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('completed-deliveries', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'completedDeliveries'])->name('completedDeliveries');
         Route::get('due-deliveries', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'dueDeliveries'])->name('dueDeliveries');
         Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'delete'])->name('delete');
+    });
+
+    Route::prefix('warehouse-products')->name('warehouse-products.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'index'])->name('index');
+        Route::get('create', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'create'])->name('create');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'store'])->name('store');
+        Route::get('{id}/edit', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'edit'])->name('edit');
+        Route::put('update/{id}', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'update'])->name('update');
+        Route::post('warehouse-product-data', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'warehouseProductData'])->name('warehouseProductData');
+        Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'destroy'])->name('destroy');
+        Route::post('deletebyselection', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'deleteBySelection'])->name('deletebyselection');
     });
 
     Route::prefix('delivery-proofs')->name('delivery-proofs.')->group(function () {

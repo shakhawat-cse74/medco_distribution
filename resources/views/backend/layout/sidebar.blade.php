@@ -53,6 +53,9 @@
             @can('delivery-man-delivery-index')
             <li id="delivery-man-delivery-menu"><a class="{{ request()->is('delivery-man-delivery') ? 'active' : '' }}" href="{{route('delivery-man-delivery.index')}}">{{ __('db.delivery_management') }}</a></li>
             @endcan
+            @can('warehouse-products-index')
+            <li id="warehouse-products-menu"><a class="{{ request()->is('warehouse-products') ? 'active' : '' }}" href="{{route('warehouse-products.index')}}">{{ __('db.Warehouse Products') }}</a></li>
+            @endcan
         </ul>
     </li>
     @endcanany
