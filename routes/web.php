@@ -1051,6 +1051,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'show'])->name('show');
         Route::get('{id}/edit', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'edit'])->name('edit');
         Route::post('update/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'update'])->name('update');
+        Route::delete('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'destroy'])->name('destroy');
         Route::get('receipt/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'receipt'])->name('receipt');
         Route::post('split-payment/{order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'splitPayment'])->name('splitPayment');
         Route::get('order-payments/{order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'getOrderPayments']);
@@ -1058,6 +1059,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('daily-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'dailySummary'])->name('dailySummary');
         Route::get('weekly-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'weeklySummary'])->name('weeklySummary');
         Route::get('monthly-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'monthlySummary'])->name('monthlySummary');
+        Route::post('field-payment-data', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'fieldPaymentData'])->name('fieldPaymentData');
     });
 
     Route::prefix('delivery-man-delivery')->name('delivery-man-delivery.')->group(function () {
