@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DeliveryManagementController extends Controller
 {
@@ -76,7 +77,7 @@ class DeliveryManagementController extends Controller
         foreach ($deliveries as $key => $delivery) {
             $nestedData['key'] = $key;
             $nestedData['reference_no'] = $delivery->reference_no;
-            $nestedData['delivery_man'] = $delivery->delivery->name ?? 'N/A';
+            $nestedData['delivery_man'] = $delivery->deliveryMan ? $delivery->deliveryMan->name : 'N/A';
             $nestedData['customer'] = $delivery->customer->name ?? 'N/A';
             $nestedData['address'] = $delivery->address;
             $nestedData['status'] = ucfirst($delivery->status);
@@ -94,7 +95,7 @@ class DeliveryManagementController extends Controller
                         <button type="button" data-id="' . $delivery->id . '" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> ' . __("db.edit") . '</button>
                     </li>
                     <li>
-                        <form action="' . route("delivery-man-delivery.destroy", $id) . '" method="POST">' . csrf_field() . '' . method_field("POST") . '
+                        <form action="' . route("delivery-man-delivery.delete", $delivery->id) . '" method="POST">' . csrf_field() . '' . method_field("DELETE") . '
                             <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="ti ti-trash"></i> ' . __("db.delete") . '</button>
                         </form>
                     </li>
@@ -114,19 +115,31 @@ class DeliveryManagementController extends Controller
 
     public function assign(Request $request)
     {
-        $this->validate($request, [
-            'field_order_id' => 'required|exists:field_orders,id',
+        $request->validate([
+            'field_order_id' => 'required|string|exists:field_orders,reference_no',
             'delivery_man_id' => 'required|exists:delivery_men,id',
+            'priority' => 'nullable|in:normal,high,urgent',
         ]);
 
-        $fieldOrder = FieldOrder::findOrFail($request->field_order_id);
+        $fieldOrder = FieldOrder::where('reference_no', $request->field_order_id)->firstOrFail();
         $customer = Customer::findOrFail($fieldOrder->customer_id);
+
+        $existingDelivery = DeliveryManDelivery::where('field_order_id', $fieldOrder->id)
+            ->whereIn('status', ['assigned', 'started'])
+            ->first();
+
+        if ($existingDelivery) {
+            return response()->json([
+                'success' => false,
+                'message' => __('db.This order is already assigned to a delivery man')
+            ]);
+        }
 
         try {
             DB::beginTransaction();
 
             $delivery = DeliveryManDelivery::create([
-                'reference_no' => 'DLV-' . date("Ymd") . '-' . date("his"),
+                'reference_no' => 'DLV-' . date("Ymd") . '-' . strtoupper(Str::random(6)),
                 'field_order_id' => $fieldOrder->id,
                 'delivery_man_id' => $request->delivery_man_id,
                 'customer_id' => $fieldOrder->customer_id,
@@ -134,7 +147,7 @@ class DeliveryManagementController extends Controller
                 'city' => $fieldOrder->delivery_city,
                 'country' => $fieldOrder->delivery_country,
                 'status' => 'assigned',
-                'priority' => 'normal',
+                'priority' => $request->priority ?? 'normal',
                 'assigned_by' => Auth::id(),
                 'assigned_at' => now(),
             ]);
