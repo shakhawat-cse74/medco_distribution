@@ -16,17 +16,17 @@
 </div>
 
 <div class="page-block">
-    <!-- Summary Cards -->
+    <!-- Today's Summary Cards -->
     <div class="row">
         <div class="col-md-3">
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <i class="ti ti-shopping-cart bg-success rounded-circle p-3 text-white me-3"></i>
-                                <div>
-                                    <h6>Total Orders</h6>
-                                    <h3>{{ $totalOrders }}</h3>
-                                </div>
+                        <div>
+                            <h6>Today's Total Orders</h6>
+                            <h3>{{ $totalOrders }}</h3>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -37,10 +37,10 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <i class="ti ti-money bg-warning rounded-circle p-3 text-white me-3"></i>
-                                <div>
-                                    <h6>Total Collection</h6>
-                                    <h3>{{ $totalCollection }}</h3>
-                                </div>
+                        <div>
+                            <h6>Today's Total Collection</h6>
+                            <h3>{{ $totalCollection }}</h3>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -51,10 +51,10 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <i class="ti ti-clock bg-danger rounded-circle p-3 text-white me-3"></i>
-                                <div>
-                                    <h6>Pending Deliveries</h6>
-                                    <h3>{{ $totalDeliveries - $completedOrders }}</h3>
-                                </div>
+                        <div>
+                            <h6>Pending Deliveries</h6>
+                            <h3>{{ $totalDeliveries - $totalDeliveries }}</h3>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -153,11 +153,11 @@
 
                         <div class="col-md-6">
                             <h6>Activity Summary</h6>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Visits:</span>
-                                        <span>{{ $totalVisits }}</span>
-                                    </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Visits Today:</span>
+                                    <span>{{ $totalVisits }}</span>
+                                </div>
                                 <div class="d-flex justify-content-between">
                                     <span>Cash Deposits:</span>
                                     <span>{{ $totalDeposits }}</span>
@@ -168,11 +168,11 @@
                                 </div>
                             </div>
 
-                                <div class="alert alert-info">
-                                    <h6>Status</h6>
-                                    <p class="mb-0">You have {{ $totalOrders - $completedOrders }} pending orders to complete.</p>
-                                    <p class="mb-0">{{ $totalDue > 0 ? 'You have ' . $totalDue . ' due amount to collect.' : 'All payments collected.' }}</p>
-                                </div>
+                            <div class="alert alert-info">
+                                <h6>Today's Status</h6>
+                                <p class="mb-0">You have {{ $totalOrders - $completedOrders }} pending orders to complete.</p>
+                                <p class="mb-0">{{ $totalDue > 0 ? 'You have ' . $totalDue . ' due amount to collect.' : 'All payments collected today.' }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>

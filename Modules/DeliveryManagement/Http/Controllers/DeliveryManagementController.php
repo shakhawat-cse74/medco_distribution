@@ -14,13 +14,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Modules\DeliveryManagement\Traits\ChecksDeliveryManRole;
 
 class DeliveryManagementController extends Controller
 {
-    use ChecksDeliveryManRole;
-
     public function index()
     {
         $role = Role::find(Auth::user()->role_id);
@@ -31,22 +27,10 @@ class DeliveryManagementController extends Controller
             if (empty($all_permission))
                 $all_permission[] = 'dummy text';
 
-            $isDeliveryMan = $this->isDeliveryManUser();
-            
-            $query = DeliveryManDelivery::with(['deliveryMan', 'customer', 'fieldOrder']);
-            
-            // If delivery man user, filter to their own deliveries only
-            if ($isDeliveryMan) {
-                $authDeliveryMan = $this->getAuthDeliveryMan();
-                if ($authDeliveryMan) {
-                    $query->where('delivery_man_id', $authDeliveryMan->id);
-                }
-            }
-            
-            $lims_delivery_list = $query->get();
-            $lims_delivery_man_list = DeliveryMan::active()->get();
+            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+            $lims_delivery_list = DeliveryManDelivery::with(['deliveryMan', 'customer', 'fieldOrder'])->get();
 
-            return view('backend.delivery_management.index', compact('lims_delivery_list', 'lims_delivery_man_list', 'all_permission', 'isDeliveryMan'));
+            return view('backend.delivery_management.index', compact('lims_delivery_list', 'lims_delivery_man_list', 'all_permission'));
         } else {
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
@@ -66,14 +50,6 @@ class DeliveryManagementController extends Controller
         $search = $request->input('search.value');
 
         $query = DeliveryManDelivery::with(['deliveryMan', 'customer', 'fieldOrder']);
-
-        // If delivery man user, filter to their own deliveries only
-        if ($this->isDeliveryManUser()) {
-            $authDeliveryMan = $this->getAuthDeliveryMan();
-            if ($authDeliveryMan) {
-                $query->where('delivery_man_id', $authDeliveryMan->id);
-            }
-        }
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -100,7 +76,7 @@ class DeliveryManagementController extends Controller
         foreach ($deliveries as $key => $delivery) {
             $nestedData['key'] = $key;
             $nestedData['reference_no'] = $delivery->reference_no;
-            $nestedData['delivery_man'] = $delivery->deliveryMan ? $delivery->deliveryMan->name : 'N/A';
+            $nestedData['delivery_man'] = $delivery->delivery->name ?? 'N/A';
             $nestedData['customer'] = $delivery->customer->name ?? 'N/A';
             $nestedData['address'] = $delivery->address;
             $nestedData['status'] = ucfirst($delivery->status);
@@ -108,27 +84,22 @@ class DeliveryManagementController extends Controller
             $nestedData['id'] = $delivery->id;
             $nestedData['date'] = date(config('date_format'), strtotime($delivery->created_at));
 
-            $isDeliveryMan = $this->isDeliveryManUser();
-            if (!$isDeliveryMan) {
-                $nestedData['options'] = '<div class="btn-group">
-                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' . __("db.action") . '
-                        <span class="caret"></span>
-                        <span class="sr-only">Toggle Dropdown</span>
-                    </button>
-                    <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
-                        <li>
-                            <button type="button" data-id="' . $delivery->id . '" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> ' . __("db.edit") . '</button>
-                        </li>
-                        <li>
-                            <form action="' . route("delivery-man-delivery.delete", $delivery->id) . '" method="POST">' . csrf_field() . '' . method_field("DELETE") . '
-                                <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="ti ti-trash"></i> ' . __("db.delete") . '</button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>';
-            } else {
-                $nestedData['options'] = '-';
-            }
+            $nestedData['options'] = '<div class="btn-group">
+                <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' . __("db.action") . '
+                    <span class="caret"></span>
+                    <span class="sr-only">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
+                    <li>
+                        <button type="button" data-id="' . $delivery->id . '" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> ' . __("db.edit") . '</button>
+                    </li>
+                    <li>
+                        <form action="' . route("delivery-man-delivery.destroy", $id) . '" method="POST">' . csrf_field() . '' . method_field("POST") . '
+                            <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="ti ti-trash"></i> ' . __("db.delete") . '</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>';
 
             $data[] = $nestedData;
         }
@@ -143,31 +114,19 @@ class DeliveryManagementController extends Controller
 
     public function assign(Request $request)
     {
-        $request->validate([
-            'field_order_id' => 'required|string|exists:field_orders,reference_no',
+        $this->validate($request, [
+            'field_order_id' => 'required|exists:field_orders,id',
             'delivery_man_id' => 'required|exists:delivery_men,id',
-            'priority' => 'nullable|in:normal,high,urgent',
         ]);
 
-        $fieldOrder = FieldOrder::where('reference_no', $request->field_order_id)->firstOrFail();
+        $fieldOrder = FieldOrder::findOrFail($request->field_order_id);
         $customer = Customer::findOrFail($fieldOrder->customer_id);
-
-        $existingDelivery = DeliveryManDelivery::where('field_order_id', $fieldOrder->id)
-            ->whereIn('status', ['assigned', 'started'])
-            ->first();
-
-        if ($existingDelivery) {
-            return response()->json([
-                'success' => false,
-                'message' => __('db.This order is already assigned to a delivery man')
-            ]);
-        }
 
         try {
             DB::beginTransaction();
 
             $delivery = DeliveryManDelivery::create([
-                'reference_no' => 'DLV-' . date("Ymd") . '-' . strtoupper(Str::random(6)),
+                'reference_no' => 'DLV-' . date("Ymd") . '-' . date("his"),
                 'field_order_id' => $fieldOrder->id,
                 'delivery_man_id' => $request->delivery_man_id,
                 'customer_id' => $fieldOrder->customer_id,
@@ -175,7 +134,7 @@ class DeliveryManagementController extends Controller
                 'city' => $fieldOrder->delivery_city,
                 'country' => $fieldOrder->delivery_country,
                 'status' => 'assigned',
-                'priority' => $request->priority ?? 'normal',
+                'priority' => 'normal',
                 'assigned_by' => Auth::id(),
                 'assigned_at' => now(),
             ]);

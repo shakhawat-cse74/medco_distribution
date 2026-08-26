@@ -3,7 +3,6 @@
 namespace Modules\DeliveryManagement\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Warehouse;
 
 class DeliveryManAssignment extends Model
 {

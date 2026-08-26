@@ -20,20 +20,6 @@ class DeliveryManagementModuleSeeder extends Seeder
         // Generate random data for deterministic test results
         $faker = \Faker\Factory::create();
 
-        // Create Delivery Man role if not exists
-        $deliveryManRole = DB::table('roles')->where('name', 'Delivery Man')->first();
-        if (!$deliveryManRole) {
-            $deliveryManRoleId = DB::table('roles')->insertGetId([
-                'name' => 'Delivery Man',
-                'description' => 'Delivery Man role for field operations',
-                'is_active'   => 1,
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ]);
-        } else {
-            $deliveryManRoleId = $deliveryManRole->id;
-        }
-
         // First, ensure we have a warehouse to assign deliveries
         $warehouse = DB::table('warehouses')->first() ?: $this->createTestWarehouse();
 
@@ -41,7 +27,7 @@ class DeliveryManagementModuleSeeder extends Seeder
         $deliveryMen = [];
         foreach (range(1, 5) as $i) {
             $email = 'delivery' . ($i + 1) . '@example.com';
-            $phone = '0179523259' . $i;
+            $phone = '1234567890' . $i;
 
             // Check if user already exists
             $existingUser = DB::table('users')->where('email', $email)->first();
@@ -49,12 +35,12 @@ class DeliveryManagementModuleSeeder extends Seeder
                 $userId = $existingUser->id;
             } else {
                 $userId = DB::table('users')->insertGetId([
-                    'name'       => 'Delivery Man ' . ($i + 1),
-                    'email'      => $email,
-                    'password'   => Hash::make('password123'),
-                    'phone'      => $phone,
-                    'role_id'    => $deliveryManRoleId,
-                    'is_active'  => 1,
+                    'name' => 'Delivery Man ' . ($i + 1),
+                    'email' => $email,
+                    'password' => Hash::make('password123'),
+                    'phone' => $phone,
+                    'role_id' => 3,
+                    'is_active' => 1,
                     'is_deleted' => 0,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -62,24 +48,34 @@ class DeliveryManagementModuleSeeder extends Seeder
             }
 
             // Check if delivery man already exists
-            $existingDM = DB::table('delivery_men')->where('user_id', $userId)->first();
+            $existingDM = DB::table('delivery_men')->where('email', $email)->first();
             if ($existingDM) {
                 $deliveryMen[] = $existingDM->id;
                 continue;
             }
 
             $deliveryMen[] = DB::table('delivery_men')->insertGetId([
-                'delivery_man_id'              => 'DLV-' . strtoupper(substr(md5($faker->name), 0, 8)),
-                'name'                         => 'Delivery Man ' . ($i + 1),
-                'address'                      => $faker->address,
-                'city'                         => $faker->city,
-                'country'                      => 'Country ' . $i,
-                'nid_number'                   => 'NID' . str_pad($i, 9, '0', STR_PAD_LEFT),
-                'image'                        => 'https://picsum.photos/seed/delivery{$i}/200/200.jpg',
-                'user_id'                      => $userId,
-                // 'is_active'                    => 1,
-                'created_at'                   => now(),
-                'updated_at'                   => now(),
+                'delivery_man_id' => 'DLV-' . strtoupper(substr(md5($faker->name), 0, 8)),
+                'name' => 'Delivery Man ' . ($i + 1),
+                'email' => $email,
+                'phone_number' => $phone,
+                'password' => Hash::make('password123'),
+                'address' => $faker->address,
+                'city' => $faker->city,
+                'country' => 'Country ' . $i,
+                'nid_number' => 'NID' . str_pad($i, 9, '0', STR_PAD_LEFT),
+                'license_number' => 'LIC' . str_pad($i, 8, '0', STR_PAD_LEFT),
+                'vehicle_type' => ['motorcycle', 'car', 'van', 'bicycle'][($i - 1) % 4],
+                'vehicle_number' => 'VH' . strtoupper(substr(md5('vehicle' . $i), 0, 8)),
+                'image' => 'https://picsum.photos/seed/delivery{$i}/200/200.jpg',
+                'user_id' => $userId,
+                'warehouse_id' => $warehouse->id,
+                'note' => $faker->optional()->text(100),
+                'is_active' => 1,
+                'last_login_at' => $faker->optional()->dateTimeBetween('-30 days'),
+                'fcm_token' => $faker->optional()->slug(10),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             // Create delivery man vehicle for each delivery man
@@ -301,14 +297,6 @@ class DeliveryManagementModuleSeeder extends Seeder
         }
 
         $this->command->info('Delivery Management module data seeded successfully!');
-
-        // Seed Delivery Settings
-        $this->seedDeliverySettings();
-
-        // Seed Delivery Man role permissions
-        $this->seedDeliveryManPermissions();
-
-        $this->command->info('Delivery Management settings seeded successfully!');
     }
 
     private function createTestWarehouse()
@@ -329,18 +317,20 @@ class DeliveryManagementModuleSeeder extends Seeder
     private function createDeliveryManVehicle($deliveryManId, $faker)
     {
         DB::table('delivery_man_vehicles')->insert([
-            'delivery_man_id'     => $deliveryManId,
-            'vehicle_type'        => ['motorcycle', 'car', 'van'][array_rand(range(0, 2))],
-            'vehicle_number'      => 'VH' . strtoupper(substr(md5('vehicle' . $faker->randomDigit), 0, 12)),
-            'brand'               => $faker->optional()->word,
-            'model'               => $faker->optional()->word,
-            'color'               => $faker->optional()->safeColorName,
+            'delivery_man_id' => $deliveryManId,
+            'vehicle_type' => ['motorcycle', 'car', 'van'][array_rand(range(0, 2))],
+            'vehicle_number' => 'VH' . strtoupper(substr(md5('vehicle' . $faker->randomDigit), 0, 12)),
+            'brand' => $faker->optional()->word,
+            'model' => $faker->optional()->word,
+            'color' => $faker->optional()->safeColorName,
             'registration_number' => $faker->optional()->bothify('??-####-??'),
-            'license_number'      => $faker->optional()->bothify('LIC-####'),
+            'license_number' => $faker->optional()->bothify('LIC-####'),
             'registration_expiry' => $faker->optional()->dateTimeBetween('+1 year', '+3 years'),
-            'image'               => $faker->optional()->imageUrl(400, 300, 'vehicle'),
-            'created_at'          => now(),
-            'updated_at'          => now(),
+            'insurance_expiry' => $faker->optional()->dateTimeBetween('+1 year', '+3 years'),
+            'image' => $faker->optional()->imageUrl(400, 300, 'vehicle'),
+            'note' => $faker->optional()->sentence,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 
@@ -422,10 +412,7 @@ class DeliveryManagementModuleSeeder extends Seeder
 
         // Add gift card field
         if ($paymentMethod === 'gift_card') {
-            $giftCard = DB::table('gift_cards')->inRandomOrder()->first();
-            if ($giftCard) {
-                $paymentData['gift_card_id'] = $giftCard->id;
-            }
+            $paymentData['gift_card_id'] = $faker->optional()->bothify('GC-????-????');
         }
 
         DB::table('field_payments')->insert($paymentData);
@@ -493,77 +480,6 @@ class DeliveryManagementModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-        }
-    }
-
-    private function seedDeliverySettings()
-    {
-        $settings = [
-            ['key' => 'auto_assign_orders', 'value' => '1', 'type' => 'general'],
-            ['key' => 'minimum_order_amount', 'value' => '0', 'type' => 'general'],
-            ['key' => 'offline_mode', 'value' => '0', 'type' => 'general'],
-            ['key' => 'cash_deposit_limit', 'value' => '10000', 'type' => 'general'],
-            ['key' => 'signature_mandatory', 'value' => '1', 'type' => 'general'],
-            ['key' => 'photo_mandatory', 'value' => '1', 'type' => 'general'],
-            ['key' => 'otp_verification', 'value' => '1', 'type' => 'general'],
-            ['key' => 'working_hours', 'value' => '09:00-18:00', 'type' => 'general'],
-            ['key' => 'commission_type', 'value' => 'percentage', 'type' => 'commission'],
-            ['key' => 'default_commission_rate', 'value' => '5', 'type' => 'commission'],
-            ['key' => 'minimum_orders_for_bonus', 'value' => '50', 'type' => 'commission'],
-            ['key' => 'bonus_rate', 'value' => '7', 'type' => 'commission'],
-            ['key' => 'default_route_optimization', 'value' => '1', 'type' => 'route'],
-            ['key' => 'max_stops_per_route', 'value' => '20', 'type' => 'route'],
-            ['key' => 'delivery_charge_type', 'value' => 'flat', 'type' => 'delivery_charge'],
-            ['key' => 'default_delivery_charge', 'value' => '0', 'type' => 'delivery_charge'],
-            ['key' => 'free_delivery_above', 'value' => '0', 'type' => 'delivery_charge'],
-            ['key' => 'enable_time_slots', 'value' => '1', 'type' => 'time_slot'],
-            ['key' => 'time_slot_interval', 'value' => '2', 'type' => 'time_slot'],
-            ['key' => 'first_delivery_time', 'value' => '09:00', 'type' => 'time_slot'],
-            ['key' => 'last_delivery_time', 'value' => '18:00', 'type' => 'time_slot'],
-        ];
-
-        foreach ($settings as $setting) {
-            DB::table('delivery_settings')->updateOrInsert(
-                ['key' => $setting['key']],
-                array_merge($setting, ['created_at' => now(), 'updated_at' => now()])
-            );
-        }
-    }
-
-    private function seedDeliveryManPermissions()
-    {
-        $deliveryManRole = DB::table('roles')->where('name', 'Delivery Man')->first();
-        if (!$deliveryManRole) {
-            return;
-        }
-
-        $permissionNames = [
-            'delivery-reports-index',
-            'delivery-man-delivery-index',
-        ];
-
-        $permissionIds = DB::table('permissions')
-            ->whereIn('name', $permissionNames)
-            ->pluck('id', 'name')
-            ->toArray();
-
-        $existingPermissions = DB::table('role_has_permissions')
-            ->where('role_id', $deliveryManRole->id)
-            ->pluck('permission_id')
-            ->toArray();
-
-        $insertData = [];
-        foreach ($permissionIds as $permissionName => $permissionId) {
-            if (!in_array($permissionId, $existingPermissions)) {
-                $insertData[] = [
-                    'permission_id' => $permissionId,
-                    'role_id' => $deliveryManRole->id,
-                ];
-            }
-        }
-
-        if (!empty($insertData)) {
-            DB::table('role_has_permissions')->insert($insertData);
         }
     }
 }

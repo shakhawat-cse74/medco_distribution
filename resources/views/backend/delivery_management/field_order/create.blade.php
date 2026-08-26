@@ -38,17 +38,12 @@
                             </div>
                             <div class="col-md-4 form-group">
                                 <label for="customer_id">Customer <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <select class="form-control selectpicker" id="customer_id" name="customer_id" data-live-search="true" required>
-                                        <option value="">Select Customer</option>
-                                        @foreach($lims_customers as $customer)
-                                            <option value="{{ $customer->id }}">{{ $customer->name }} - {{ $customer->phone_number }}</option>
-                                        @endforeach
-                                    </select>
-                                    <button type="button" class="btn btn-outline-primary" id="btn-add-customer" title="Add New Customer">
-                                        <i class="ti ti-plus"></i>
-                                    </button>
-                                </div>
+                                <select class="form-control selectpicker" id="customer_id" name="customer_id" data-live-search="true" required>
+                                    <option value="">Select Customer</option>
+                                    @foreach($lims_customers as $customer)
+                                        <option value="{{ $customer->id }}">{{ $customer->name }} - {{ $customer->phone_number }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-md-4 form-group">
                                 <label for="warehouse_id">Warehouse <span class="text-danger">*</span></label>
@@ -120,10 +115,6 @@
                                 <input type="text" class="form-control" id="shipping_cost" name="shipping_cost" value="0">
                             </div>
                             <div class="col-md-4 form-group">
-                                <label>Coupon Code</label>
-                                <input type="text" class="form-control" id="coupon_code" name="coupon_code" placeholder="Enter coupon code">
-                            </div>
-                            <div class="col-md-4 form-group">
                                 <label>Grand Total</label>
                                 <input type="text" class="form-control" id="grand_total" name="grand_total" style="font-weight: bold; background: #f8f9fa;" readonly>
                             </div>
@@ -140,44 +131,6 @@
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="quickCustomerModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New Customer</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form id="quickCustomerForm">
-                <div class="modal-body">
-                    @csrf
-                    <div class="form-group">
-                        <label>Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="name" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Phone Number <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="phone_number" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" class="form-control" name="email">
-                    </div>
-                    <div class="form-group">
-                        <label>Address</label>
-                        <textarea class="form-control" name="address" rows="2"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Customer</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -334,40 +287,5 @@ function calculateTotal() {
 }
 
 $('#discount_amount, #tax_amount, #shipping_cost').on('input', calculateTotal);
-
-$('#btn-add-customer').on('click', function() {
-    $('#quickCustomerModal').modal('show');
-});
-
-$('#quickCustomerForm').on('submit', function(e) {
-    e.preventDefault();
-    const $btn = $(this).find('button[type="submit"]');
-    const originalText = $btn.text();
-    $btn.prop('disabled', true).text('Saving...');
-
-    $.ajax({
-        url: '{{ route('field-orders.quickCreateCustomer') }}',
-        type: 'POST',
-        data: $(this).serialize(),
-        success: function(response) {
-            if (response.success) {
-                const newOption = new Option(response.customer.name + ' - ' + response.customer.phone_number, response.customer.id, true, true);
-                $('#customer_id').append(newOption).selectpicker('refresh');
-                $('#customer_id').val(response.customer.id);
-                $('#quickCustomerForm')[0].reset();
-                $('#quickCustomerModal').modal('hide');
-            } else {
-                alert(response.message || 'Failed to create customer');
-            }
-        },
-        error: function(xhr) {
-            const message = xhr.responseJSON?.message || 'Failed to create customer';
-            alert(message);
-        },
-        complete: function() {
-            $btn.prop('disabled', false).text(originalText);
-        }
-    });
-});
 </script>
 @endpush

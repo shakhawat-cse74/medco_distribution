@@ -31,7 +31,7 @@ class DeliveryManCommissionController extends Controller
                 $all_permission[] = 'dummy text';
 
             $lims_commission_list = DeliveryManCommission::with(['deliveryMan', 'fieldOrder'])->get();
-$lims_delivery_man_list = DeliveryMan::active()->get();
+            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
 
             return view('backend.delivery_management.delivery_man_commission.index', compact('lims_commission_list', 'lims_delivery_man_list', 'all_permission'));
         } else {
@@ -173,7 +173,7 @@ $lims_delivery_man_list = DeliveryMan::active()->get();
 
     public function newCustomerIncentives()
     {
-        $lims_delivery_man_list = DeliveryMan::active()->get();
+        $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
         $report = [];
 
         foreach ($lims_delivery_man_list as $deliveryMan) {
@@ -194,7 +194,7 @@ $lims_delivery_man_list = DeliveryMan::active()->get();
 
     public function dueCollectionIncentives()
     {
-        $lims_delivery_man_list = DeliveryMan::active()->get();
+        $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
         $report = [];
 
         foreach ($lims_delivery_man_list as $deliveryMan) {

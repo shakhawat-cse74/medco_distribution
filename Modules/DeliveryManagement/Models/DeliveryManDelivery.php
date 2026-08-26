@@ -2,7 +2,6 @@
 
 namespace Modules\DeliveryManagement\Models;
 
-use App\Models\Customer;
 use Illuminate\Database\Eloquent\Model;
 
 class DeliveryManDelivery extends Model

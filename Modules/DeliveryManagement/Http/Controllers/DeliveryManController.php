@@ -5,44 +5,27 @@ namespace Modules\DeliveryManagement\Http\Controllers;
 use App\Http\Controllers\Controller;
 
 use Modules\DeliveryManagement\Models\DeliveryMan;
-use Modules\DeliveryManagement\Models\FieldOrder;
-use Modules\DeliveryManagement\Models\FieldPayment;
-use App\Models\Customer;
 use App\Models\Warehouse;
 use App\Models\User;
 use Modules\DeliveryManagement\Models\DeliveryManAssignment;
 use Modules\DeliveryManagement\Models\DeliveryManVehicle;
+use Modules\DeliveryManagement\Models\FieldOrder;
 use Modules\DeliveryManagement\Models\DeliveryManCommission;
-use Modules\Ecommerce\Entities\DeliveryArea;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Modules\DeliveryManagement\Traits\LogsDeliveryActivity;
 
 class DeliveryManController extends Controller
 {
     use \App\Traits\CacheForget;
-    use LogsDeliveryActivity;
 
     public function index()
     {
         $role = Role::find(Auth::user()->role_id);
-
-        $isDeliveryMan = request()->is('delivery-man/*');
-
-        if ($isDeliveryMan) {
-            $deliveryMan = DeliveryMan::where('user_id', Auth::id())->first();
-            $lims_delivery_man_list = $deliveryMan ? DeliveryMan::with('user')->where('id', $deliveryMan->id)->get() : collect();
-            $lims_route_list = DeliveryArea::active()->get();
-
-            return view('backend.delivery_management.delivery_man.index', compact('lims_delivery_man_list', 'lims_route_list'));
-        }
-
         if ($role->hasPermissionTo('delivery-men-index')) {
             $permissions = Role::findByName($role->name)->permissions;
             foreach ($permissions as $permission)
@@ -50,12 +33,12 @@ class DeliveryManController extends Controller
             if (empty($all_permission))
                 $all_permission[] = 'dummy text';
 
-            $lims_delivery_man_list = DeliveryMan::with('user')->get();
-            $lims_route_list = DeliveryArea::active()->get();
+            $lims_delivery_man_list = DeliveryMan::with('warehouse')->get();
+            $lims_warehouse_list = Warehouse::where('is_active', true)->get();
 
-            return view('backend.delivery_management.delivery_man.index', compact('lims_delivery_man_list', 'lims_route_list', 'all_permission'));
+            return view('backend.delivery_management.delivery_man.index', compact('lims_delivery_man_list', 'lims_warehouse_list', 'all_permission'));
         } else {
-            return redirect()->back()->with('not_permitted', __('db Sorry! You are not allowed to access this module'));
+            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
     }
 
@@ -63,10 +46,12 @@ class DeliveryManController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('delivery-men-add')) {
-            $lims_route_list = DeliveryArea::active()->get();
-            return view('backend.delivery_management.delivery_man.create', compact('lims_route_list'));
+            $lims_warehouse_list = Warehouse::where('is_active', true)->get();
+            $lims_user_list = User::where('is_deleted', false)->where('is_active', true)->get();
+
+            return view('backend.delivery_management.delivery_man.create', compact('lims_warehouse_list', 'lims_user_list'));
         } else {
-            return redirect()->back()->with('not_permitted', __('db Sorry! You are not allowed to access this module'));
+            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
     }
 
@@ -81,7 +66,6 @@ class DeliveryManController extends Controller
             'name' => 'required|max:255',
             'phone_number' => 'required|max:255',
             'email' => 'nullable|email|max:255',
-            'image' => 'nullable|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();
@@ -89,32 +73,7 @@ class DeliveryManController extends Controller
         try {
             DB::beginTransaction();
 
-            if (empty($data['delivery_man_id'])) {
-                $data['delivery_man_id'] = 'DM-' . date('Ymd') . '-' . str_pad(DeliveryMan::count() + 1, 4, '0', STR_PAD_LEFT);
-            }
-
-            // Create or find Delivery Man role
-            $deliveryManRole = Role::where('name', 'Delivery Man')->first();
-            if (!$deliveryManRole) {
-                $deliveryManRole = Role::create([
-                    'name' => 'Delivery Man',
-                    'description' => 'Delivery Man role for field operations',
-                    'guard_name' => 'web',
-                ]);
-            }
-
-            // Create user for delivery man
-            $user = User::create([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => bcrypt($data['password'] ?? 'password123'),
-                'phone' => $data['phone_number'],
-                'role_id' => $deliveryManRole->id,
-                'is_active' => true,
-                'is_deleted' => false,
-            ]);
-
-            $data['user_id'] = $user->id;
+            $data['is_active'] = true;
 
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
@@ -134,53 +93,7 @@ class DeliveryManController extends Controller
                 $data['password'] = bcrypt($request->password);
             }
 
-            $deliveryMan = DeliveryMan::create(collect($data)->only([
-                'delivery_man_id', 'name', 'address', 'city', 'country', 'nid_number', 'image', 'user_id'
-            ])->toArray());
-
-            if (!empty($data['route_ids'])) {
-                foreach ($data['route_ids'] as $routeId) {
-                    DB::table('delivery_men_routes')->insert([
-                        'delivery_man_id' => $deliveryMan->id,
-                        'route_id' => $routeId,
-                        'is_primary' => false,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
-
-            if (!empty($data['vehicle_type'])) {
-                $vehicleData = [
-                    'delivery_man_id' => $deliveryMan->id,
-                    'vehicle_type' => $data['vehicle_type'],
-                    'vehicle_number' => $data['vehicle_number'] ?? null,
-                    'brand' => $data['brand'] ?? null,
-                    'model' => $data['model'] ?? null,
-                    'color' => $data['color'] ?? null,
-                    'registration_number' => $data['registration_number'] ?? null,
-                    'license_number' => $data['license_number'] ?? null,
-                    'registration_expiry' => $data['registration_expiry'] ?? null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-
-                if ($request->hasFile('vehicle_image')) {
-                    $vehicleImage = $request->file('vehicle_image');
-                    $ext = pathinfo($vehicleImage->getClientOriginalName(), PATHINFO_EXTENSION);
-                    $vehicleImageName = 'vehicle_' . date("Ymdhis") . '.' . $ext;
-                    if (!config('database.connections.saleprosaas_landlord')) {
-                        $vehicleImage->move(public_path('images/delivery_man_vehicle'), $vehicleImageName);
-                    } else {
-                        $vehicleImage->move(public_path('images/delivery_man_vehicle'), 'tenant_' . $vehicleImageName);
-                    }
-                    $vehicleData['image'] = $vehicleImageName;
-                }
-
-                DB::table('delivery_man_vehicles')->insert($vehicleData);
-            }
-
-            $this->logActivity('delivery_man_created', $deliveryMan->delivery_man_id, 'Delivery man created: ' . $deliveryMan->name);
+            $deliveryMan = DeliveryMan::create($data);
 
             DB::commit();
             $this->cacheForget('delivery_man_list');
@@ -198,14 +111,33 @@ class DeliveryManController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('delivery-men-edit')) {
-            $lims_delivery_man_data = DeliveryMan::with(['user', 'routes', 'vehicles'])->findOrFail($id);
-            $lims_route_list = DeliveryArea::active()->get();
-            $selected_routes = $lims_delivery_man_data->routes->pluck('id')->toArray();
-            $lims_vehicle_data = $lims_delivery_man_data->vehicles->first();
+            $lims_delivery_man_data = DeliveryMan::findOrFail($id);
+            $lims_warehouse_list = Warehouse::where('is_active', true)->get();
+            $lims_user_list = User::where('is_deleted', false)->where('is_active', true)->get();
 
-            return view('backend.delivery_management.delivery_man.edit', compact('lims_delivery_man_data', 'lims_route_list', 'selected_routes', 'lims_vehicle_data'));
+            $data = [
+                'id' => $lims_delivery_man_data->id,
+                'name' => $lims_delivery_man_data->name,
+                'email' => $lims_delivery_man_data->email,
+                'phone_number' => $lims_delivery_man_data->phone_number,
+                'address' => $lims_delivery_man_data->address,
+                'city' => $lims_delivery_man_data->city,
+                'country' => $lims_delivery_man_data->country,
+                'nid_number' => $lims_delivery_man_data->nid_number,
+                'license_number' => $lims_delivery_man_data->license_number,
+                'vehicle_type' => $lims_delivery_man_data->vehicle_type,
+                'vehicle_number' => $lims_delivery_man_data->vehicle_number,
+                'image' => $lims_delivery_man_data->image,
+                'user_id' => $lims_delivery_man_data->user_id,
+                'warehouse_id' => $lims_delivery_man_data->warehouse_id,
+                'note' => $lims_delivery_man_data->note,
+                'is_active' => $lims_delivery_man_data->is_active,
+                'fcm_token' => $lims_delivery_man_data->fcm_token,
+            ];
+
+            return $data;
         } else {
-            return redirect()->back()->with('not_permitted', __('db Sorry! You are not allowed to access this module'));
+            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
     }
 
@@ -220,7 +152,6 @@ class DeliveryManController extends Controller
             'name' => 'required|max:255',
             'phone_number' => 'required|max:255',
             'email' => 'nullable|email|max:255',
-            'image' => 'nullable|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();
@@ -228,19 +159,6 @@ class DeliveryManController extends Controller
 
         try {
             DB::beginTransaction();
-
-            // Update user table
-            $user = User::find($lims_delivery_man_data->user_id);
-            if ($user) {
-                $user->update([
-                    'name' => $data['name'],
-                    'email' => $data['email'],
-                    'phone' => $data['phone_number'],
-                ]);
-                if ($request->password) {
-                    $user->update(['password' => bcrypt($request->password)]);
-                }
-            }
 
             if ($request->hasFile('image')) {
                 $this->fileDelete(public_path('images/delivery_man/'), $lims_delivery_man_data->image);
@@ -257,57 +175,13 @@ class DeliveryManController extends Controller
                 $data['image'] = $imageName;
             }
 
-            $lims_delivery_man_data->update(collect($data)->only([
-                'name', 'address', 'city', 'country', 'nid_number', 'image'
-            ])->toArray());
-
-            // Update routes
-            DB::table('delivery_men_routes')->where('delivery_man_id', $lims_delivery_man_data->id)->delete();
-            if (!empty($data['route_ids'])) {
-                foreach ($data['route_ids'] as $routeId) {
-                    DB::table('delivery_men_routes')->insert([
-                        'delivery_man_id' => $lims_delivery_man_data->id,
-                        'route_id' => $routeId,
-                        'is_primary' => false,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
+            if ($request->password) {
+                $data['password'] = bcrypt($request->password);
+            } else {
+                unset($data['password']);
             }
 
-            // Update vehicle only if vehicle_type is provided
-            if (!empty($data['vehicle_type'])) {
-                DB::table('delivery_man_vehicles')->where('delivery_man_id', $lims_delivery_man_data->id)->delete();
-
-                $vehicleData = [
-                    'delivery_man_id' => $lims_delivery_man_data->id,
-                    'vehicle_type' => $data['vehicle_type'],
-                    'vehicle_number' => $data['vehicle_number'] ?? null,
-                    'brand' => $data['brand'] ?? null,
-                    'model' => $data['model'] ?? null,
-                    'color' => $data['color'] ?? null,
-                    'registration_number' => $data['registration_number'] ?? null,
-                    'license_number' => $data['license_number'] ?? null,
-                    'registration_expiry' => $data['registration_expiry'] ?? null,
-                    'updated_at' => now(),
-                ];
-
-                if ($request->hasFile('vehicle_image')) {
-                    $vehicleImage = $request->file('vehicle_image');
-                    $ext = pathinfo($vehicleImage->getClientOriginalName(), PATHINFO_EXTENSION);
-                    $vehicleImageName = 'vehicle_' . date("Ymdhis") . '.' . $ext;
-                    if (!config('database.connections.saleprosaas_landlord')) {
-                        $vehicleImage->move(public_path('images/delivery_man_vehicle'), $vehicleImageName);
-                    } else {
-                        $vehicleImage->move(public_path('images/delivery_man_vehicle'), 'tenant_' . $vehicleImageName);
-                    }
-                    $vehicleData['image'] = $vehicleImageName;
-                }
-
-                DB::table('delivery_man_vehicles')->insert($vehicleData);
-            }
-
-            $this->logActivity('delivery_man_updated', $lims_delivery_man_data->delivery_man_id, 'Delivery man updated: ' . $lims_delivery_man_data->name);
+            $lims_delivery_man_data->update($data);
 
             DB::commit();
             $this->cacheForget('delivery_man_list');
@@ -328,17 +202,8 @@ class DeliveryManController extends Controller
             try {
                 DB::beginTransaction();
                 $lims_delivery_man_data = DeliveryMan::findOrFail($id);
-                $lims_delivery_man_data->delete();
-
-                // Also deactivate the associated user
-                if ($lims_delivery_man_data->user_id) {
-                    $user = User::find($lims_delivery_man_data->user_id);
-                    if ($user) {
-                        $user->update(['is_deleted' => true, 'is_active' => false]);
-                    }
-                }
-
-                $this->logActivity('delivery_man_deleted', $lims_delivery_man_data->delivery_man_id, 'Delivery man deleted: ' . $lims_delivery_man_data->name);
+                $lims_delivery_man_data->is_active = false;
+                $lims_delivery_man_data->save();
 
                 DB::commit();
                 $this->cacheForget('delivery_man_list');
@@ -350,7 +215,7 @@ class DeliveryManController extends Controller
                 return redirect()->back()->with('not_permitted', 'Delivery man deletion failed: ' . $e->getMessage());
             }
         } else {
-            return redirect()->back()->with('not_permitted', __('db Sorry! You are not allowed to access this module'));
+            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
     }
 
@@ -363,17 +228,8 @@ class DeliveryManController extends Controller
                 $delivery_man_id = $request['deliveryManIdArray'];
                 foreach ($delivery_man_id as $id) {
                     $lims_delivery_man_data = DeliveryMan::find($id);
-                    $lims_delivery_man_data->delete();
-
-                    if ($lims_delivery_man_data->user_id) {
-                        $user = User::find($lims_delivery_man_data->user_id);
-                        if ($user) {
-                            $user->update(['is_deleted' => true, 'is_active' => false]);
-                        }
-                    }
-
-                DB::table('delivery_men_routes')->where('delivery_man_id', $id)->delete();
-                    DB::table('delivery_man_vehicles')->where('delivery_man_id', $id)->delete();
+                    $lims_delivery_man_data->is_active = false;
+                    $lims_delivery_man_data->save();
                 }
                 DB::commit();
                 $this->cacheForget('delivery_man_list');
@@ -393,9 +249,23 @@ class DeliveryManController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('delivery-men-index')) {
-            $lims_delivery_man_data = DeliveryMan::with(['routes', 'assignments.route', 'vehicles', 'fieldOrders.customer'])->findOrFail($id);
+            $lims_delivery_man_data = DeliveryMan::with(['warehouse', 'assignments.route', 'vehicles', 'fieldOrders.customer'])->findOrFail($id);
 
             return view('backend.delivery_management.delivery_man.view', compact('lims_delivery_man_data'));
+        } else {
+            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+        }
+    }
+
+    public function toggleStatus(Request $request)
+    {
+        $role = Role::find(Auth::user()->role_id);
+        if ($role->hasPermissionTo('delivery-men-edit')) {
+            $lims_delivery_man_data = DeliveryMan::findOrFail($request->id);
+            $lims_delivery_man_data->is_active = !$lims_delivery_man_data->is_active;
+            $lims_delivery_man_data->save();
+
+            return 'Delivery man status updated successfully';
         } else {
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
@@ -437,10 +307,9 @@ class DeliveryManController extends Controller
         $columns = array(
             0 => 'id',
             1 => 'name',
-            2 => 'email',
-            3 => 'phone_number',
-            4 => 'city',
-            5 => 'status',
+            2 => 'phone_number',
+            3 => 'warehouse_id',
+            4 => 'is_active',
         );
 
         $totalData = DeliveryMan::count();
@@ -454,16 +323,13 @@ class DeliveryManController extends Controller
         $order = $columns[$request->input('order.0.column')];
         $dir = $request->input('order.0.dir');
 
-        $query = DeliveryMan::with('user');
+        $query = DeliveryMan::query();
 
         if (!empty($request->input('search.value'))) {
             $search = $request->input('search.value');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhereHas('user', function ($q2) use ($search) {
-                      $q2->where('email', 'LIKE', "%{$search}%")
-                         ->orWhere('phone', 'LIKE', "%{$search}%");
-                  });
+                  ->orWhere('phone_number', 'LIKE', "%{$search}%");
             });
         }
 
@@ -480,42 +346,33 @@ class DeliveryManController extends Controller
                 $nestedData['id'] = $deliveryMan->id;
                 $nestedData['key'] = $key;
                 $nestedData['name'] = $deliveryMan->name;
-                $nestedData['email'] = $deliveryMan->user->email ?? 'N/A';
-                $nestedData['phone_number'] = $deliveryMan->user->phone ?? 'N/A';
-                $nestedData['city'] = $deliveryMan->city ?? 'N/A';
-                $nestedData['status'] = $deliveryMan->user && $deliveryMan->user->is_active == 1
-                    ? '<span class="badge badge-success">Active</span>'
-                    : '<span class="badge badge-danger">Inactive</span>';
+                $nestedData['phone_number'] = $deliveryMan->phone_number;
+                $nestedData['warehouse_id'] = $deliveryMan->warehouse ? $deliveryMan->warehouse->name : 'N/A';
+                $nestedData['is_active'] = '<span class="badge badge-'.($deliveryMan->is_active ? 'success' : 'danger').'">'.($deliveryMan->is_active ? __('db.Active') : __('db.Inactive')).'</span>';
+                $nestedData['performance'] = '<a href="'.route('delivery-men.performance', $deliveryMan->id).'" class="btn btn-sm btn-info" target="_blank"><i class="ti ti-chart-bar"></i> '.__('db.Performance').'</a>';
                 $nestedData['options'] = '<div class="btn-group">
-                             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.__("db.action").'
-                               <span class="caret"></span>
-                               <span class="sr-only">Toggle Dropdown</span>
-                             </button>
-                              <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
-                                  <li>
-                                      <a href="' . route("delivery-men.show", $deliveryMan->id) . '" class="btn btn-link"><i class="ti ti-eye"></i> '.__("db.View").'</a>
-                                  </li>
-                                  <li>
-                                      <a href="' . route("delivery-men.edit", $deliveryMan->id) . '" class="btn btn-link"><i class="ti ti-edit"></i> '.__("db.edit").'</a>
-                                  </li>
-                                  <li class="divider"></li>
-                                  <li>
-                                       <a href="' . route("delivery-man-routes.index") . '?delivery_man_id=' . $deliveryMan->id . '" class="btn btn-link"><i class="ti ti-route"></i> '.__("db.view_routes").'</a>
-                                  </li>
-                                   <li>
-                                       <a href="' . route("delivery-man-routes.index") . '?delivery_man_id=' . $deliveryMan->id . '" class="btn btn-link"><i class="ti ti-plus"></i> '.__("db.Assign Route").'</a>
-                                  </li>
-                                  <li class="divider"></li>
-                                  <li>
-                                      <button type="button" class="toggle-status btn btn-link" data-id="'.$deliveryMan->id.'"><i class="ti ti-toggle-left"></i> '.__("db.Toggle Status").'</button>
-                                  </li>
-                                  <li class="divider"></li>
-                                  <form action="' . route("delivery-men.delete", $deliveryMan->id) . '" method="POST">'.csrf_field().'' . method_field("POST") . '
-                                  <li>
-                                    <button type="submit" class="btn btn-link confirm-delete-btn" data-id="'.$deliveryMan->id.'" data-name="'.$deliveryMan->name.'"><i class="ti ti-trash"></i> '.__("db.delete").'</button>
-                                  </li></form>
-                              </ul>
-                          </div>';
+                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.__("db.action").'
+                              <span class="caret"></span>
+                              <span class="sr-only">Toggle Dropdown</span>
+                            </button>
+                            <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
+                                <li>
+                                    <a href="' . route("delivery-men.show", $deliveryMan->id) . '" class="btn btn-link"><i class="ti ti-eye"></i> '.__("db.View").'</a>
+                                </li>
+                                <li>
+                                    <button type="button" data-id="'.$deliveryMan->id.'" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> '.__("db.edit").'</button>
+                                </li>
+                                <li class="divider"></li>
+                                <li>
+                                    <button type="button" class="toggle-status btn btn-link" data-id="'.$deliveryMan->id.'"><i class="ti ti-toggle-left"></i> '.__("db.Toggle Status").'</button>
+                                </li>
+                                <li class="divider"></li>
+                                <form action="' . route("delivery-men.delete", $deliveryMan->id) . '" method="POST">'.csrf_field().'' . method_field("POST") . '
+                                <li>
+                                  <button type="submit" class="btn btn-link confirm-delete-btn" data-id="'.$deliveryMan->id.'" data-name="'.$deliveryMan->name.'"><i class="ti ti-trash"></i> '.__("db.delete").'</button>
+                                </li></form>
+                            </ul>
+                        </div>';
                 $data[] = $nestedData;
             }
         }
@@ -552,107 +409,6 @@ class DeliveryManController extends Controller
             return response()->json(['success' => false, 'message' => 'No image uploaded']);
         } else {
             return response()->json(['error' => 'Not permitted'], 403);
-        }
-    }
-
-    public function assignedCustomers($id)
-    {
-        $role = Role::find(Auth::user()->role_id);
-        if (!$role->hasPermissionTo('delivery-men-index')) {
-            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
-        }
-
-        $lims_delivery_man_data = DeliveryMan::findOrFail($id);
-        $customers = Customer::whereHas('fieldOrders', function ($query) use ($id) {
-            $query->where('delivery_man_id', $id);
-        })->with(['fieldOrders' => function ($query) use ($id) {
-            $query->where('delivery_man_id', $id)->orderByDesc('created_at');
-        }])->get();
-
-        return view('backend.delivery_management.delivery_man.customers', compact('lims_delivery_man_data', 'customers'));
-    }
-
-    public function customerOrderHistory($delivery_man_id, $customer_id)
-    {
-        $role = Role::find(Auth::user()->role_id);
-        if (!$role->hasPermissionTo('delivery-men-index')) {
-            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
-        }
-
-        $lims_delivery_man_data = DeliveryMan::findOrFail($delivery_man_id);
-        $customer = Customer::findOrFail($customer_id);
-        $orders = FieldOrder::where('delivery_man_id', $delivery_man_id)
-            ->where('customer_id', $customer_id)
-            ->orderByDesc('created_at')
-            ->get();
-
-        return view('backend.delivery_management.delivery_man.customer_orders', compact('lims_delivery_man_data', 'customer', 'orders'));
-    }
-
-    public function customerLedger($delivery_man_id, $customer_id)
-    {
-        $role = Role::find(Auth::user()->role_id);
-        if (!$role->hasPermissionTo('delivery-men-index')) {
-            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
-        }
-
-        $lims_delivery_man_data = DeliveryMan::findOrFail($delivery_man_id);
-        $customer = Customer::findOrFail($customer_id);
-        $orders = FieldOrder::where('delivery_man_id', $delivery_man_id)
-            ->where('customer_id', $customer_id)
-            ->orderByDesc('created_at')
-            ->get();
-
-        $totalOrders = $orders->count();
-        $totalOrderAmount = $orders->sum('grand_total');
-        $totalPaid = $orders->sum('paid_amount');
-        $totalDue = $orders->sum('due_amount');
-
-        return view('backend.delivery_management.delivery_man.customer_ledger', compact(
-            'lims_delivery_man_data', 'customer', 'orders', 'totalOrders', 'totalOrderAmount', 'totalPaid', 'totalDue'
-        ));
-    }
-
-    public function collectDuePayment(Request $request, $delivery_man_id, $customer_id)
-    {
-        $role = Role::find(Auth::user()->role_id);
-        if (!$role->hasPermissionTo('delivery-men-edit')) {
-            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
-        }
-
-        $this->validate($request, [
-            'field_order_id' => 'required|exists:field_orders,id',
-            'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|string|max:255',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $fieldOrder = FieldOrder::where('delivery_man_id', $delivery_man_id)
-                ->where('customer_id', $customer_id)
-                ->findOrFail($request->field_order_id);
-
-            $payment = FieldPayment::create([
-                'field_order_id' => $fieldOrder->id,
-                'payment_method' => $request->payment_method,
-                'amount' => $request->amount,
-                'reference_no' => 'PAY-' . date('Ymd') . '-' . str_pad(mt_rand(1, 9999), 6, '0', STR_PAD_LEFT),
-                'note' => $request->note ?? null,
-                'created_by' => Auth::id(),
-            ]);
-
-            $fieldOrder->paid_amount += $request->amount;
-            $fieldOrder->due_amount = $fieldOrder->grand_total - $fieldOrder->paid_amount;
-            $fieldOrder->save();
-
-            DB::commit();
-
-            return redirect()->back()->with('message', __('db.Payment collected successfully'));
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Due payment collection failed: ' . $e->getMessage());
-            return redirect()->back()->with('not_permitted', 'Payment collection failed: ' . $e->getMessage());
         }
     }
 }

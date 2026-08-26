@@ -1,6 +1,6 @@
 @extends('backend.layout.main')
 
-@section('content')
+ @section('content')
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
@@ -11,6 +11,7 @@
             <div class="col-12">
                 <h3 class="page-title">{{__('db.add_delivery_man')}}</h3>
                 <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti ti-home"></i> Dashboard</a></li>
                     <li class="breadcrumb-item"><a href="{{ route('delivery-men.index') }}">{{__('db.delivery_men_list')}}</a></li>
                     <li class="breadcrumb-item active">{{__('db.add_delivery_man')}}</li>
                 </ul>
@@ -64,17 +65,8 @@
                                 <input type="text" class="form-control" id="nid_number" name="nid_number">
                             </div>
                             <div class="col-md-6 form-group">
-                                <label for="routes">{{__('db.Routes')}}</label>
-                                <select class="form-control" id="routes" name="route_ids[]" multiple size="5">
-                                    @if(isset($lims_route_list) && $lims_route_list->count() > 0)
-                                        @foreach($lims_route_list as $route)
-                                            <option value="{{ $route->id }}">{{ $route->name }} - {{ $route->city }}</option>
-                                        @endforeach
-                                    @else
-                                        <option value="" disabled>{{__('db.No routes available')}}</option>
-                                    @endif
-                                </select>
-                                <small class="form-text text-muted">{{__('db.Hold Ctrl/Cmd to select multiple routes')}}</small>
+                                <label for="license_number">{{__('db.License Number')}}</label>
+                                <input type="text" class="form-control" id="license_number" name="license_number">
                             </div>
                             <div class="col-md-6 form-group">
                                 <label for="vehicle_type">{{__('db.Vehicle Type')}}</label>
@@ -91,36 +83,36 @@
                                 <input type="text" class="form-control" id="vehicle_number" name="vehicle_number">
                             </div>
                             <div class="col-md-6 form-group">
-                                <label for="brand">{{__('db.Brand')}}</label>
-                                <input type="text" class="form-control" id="brand" name="brand">
+                                <label for="warehouse_id">{{__('db.Warehouse')}}</label>
+                                <select class="form-control" id="warehouse_id" name="warehouse_id">
+                                    <option value="">{{__('db.Select Warehouse')}}</option>
+                                    @foreach($lims_warehouse_list as $warehouse)
+                                        <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-md-6 form-group">
-                                <label for="model">{{__('db.Model')}}</label>
-                                <input type="text" class="form-control" id="model" name="model">
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <label for="color">{{__('db.Color')}}</label>
-                                <input type="text" class="form-control" id="color" name="color">
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <label for="registration_number">{{__('db.Registration Number')}}</label>
-                                <input type="text" class="form-control" id="registration_number" name="registration_number">
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <label for="license_number">{{__('db.License Number')}}</label>
-                                <input type="text" class="form-control" id="license_number" name="license_number">
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <label for="registration_expiry">{{__('db.Registration Expiry')}}</label>
-                                <input type="date" class="form-control" id="registration_expiry" name="registration_expiry">
+                                <label for="user_id">{{__('db.User')}}</label>
+                                <select class="form-control" id="user_id" name="user_id">
+                                    <option value="">{{__('db.Select User')}}</option>
+                                    @foreach($lims_user_list as $user)
+                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-md-12 form-group">
                                 <label for="image">{{__('db.Photo')}}</label>
                                 <input type="file" class="form-control" id="image" name="image">
                             </div>
                             <div class="col-md-12 form-group">
-                                <label for="vehicle_image">{{__('db.Vehicle Image')}}</label>
-                                <input type="file" class="form-control" id="vehicle_image" name="vehicle_image">
+                                <label for="note">{{__('db.Note')}}</label>
+                                <textarea class="form-control" id="note" name="note" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-12 form-group">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="is_active" name="is_active" value="1" checked>
+                                    <label class="custom-control-label" for="is_active">{{__('db.Active')}}</label>
+                                </div>
                             </div>
                         </div>
 

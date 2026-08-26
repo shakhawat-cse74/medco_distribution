@@ -13,7 +13,7 @@
             <div class="col-12">
                 <h3 class="page-title">{{__('db.delivery_men_list')}}</h3>
                 <ul class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('delivery-reports.index') }}"><i class="ti ti-home"></i> Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti ti-home"></i> Dashboard</a></li>
                     <li class="breadcrumb-item active">{{__('db.delivery_management')}}</li>
                 </ul>
             </div>
@@ -38,10 +38,10 @@
                                 <tr>
                                     <th class="not-exported"></th>
                                     <th>{{__('db.name')}}</th>
-                                    <th>{{__('db.Email')}}</th>
                                     <th>{{__('db.Phone')}}</th>
-                                    <th>{{__('db.City')}}</th>
+                                    <th>{{__('db.Warehouse')}}</th>
                                     <th>{{__('db.status')}}</th>
+                                    <th>{{__('db.Performance')}}</th>
                                     <th class="not-exported">{{__('db.action')}}</th>
                                 </tr>
                             </thead>
@@ -53,7 +53,101 @@
     </div>
 </div>
 
+<!-- Edit Delivery Man Modal -->
+<div id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{{ route('delivery-men.update') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-header">
+                    <h5 id="editModalLabel" class="modal-title">{{__('db.edit')}} {{__('db.delivery_men_list')}}</h5>
+                    <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="ti ti-x"></i></span></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="edit_id">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.name')}} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" id="edit_name" required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Phone')}} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="phone_number" id="edit_phone_number" required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Email')}}</label>
+                            <input type="email" class="form-control" name="email" id="edit_email">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Password')}}</label>
+                            <input type="password" class="form-control" name="password">
+                            <small class="text-muted">{{__('db.Leave blank to keep current')}}</small>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Address')}}</label>
+                            <textarea class="form-control" name="address" id="edit_address" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.City')}}</label>
+                            <input type="text" class="form-control" name="city" id="edit_city">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Country')}}</label>
+                            <input type="text" class="form-control" name="country" id="edit_country">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.NID Number')}}</label>
+                            <input type="text" class="form-control" name="nid_number" id="edit_nid_number">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.License Number')}}</label>
+                            <input type="text" class="form-control" name="license_number" id="edit_license_number">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Vehicle Type')}}</label>
+                            <select class="form-control" name="vehicle_type" id="edit_vehicle_type">
+                                <option value="">{{__('db.Select Vehicle Type')}}</option>
+                                <option value="Motorcycle">Motorcycle</option>
+                                <option value="Car">Car</option>
+                                <option value="Van">Van</option>
+                                <option value="Truck">Truck</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Vehicle Number')}}</label>
+                            <input type="text" class="form-control" name="vehicle_number" id="edit_vehicle_number">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Warehouse')}}</label>
+                            <select class="form-control" name="warehouse_id" id="edit_warehouse_id">
+                                <option value="">{{__('db.Select Warehouse')}}</option>
+                                @foreach($lims_warehouse_list as $warehouse)
+                                    <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label>{{__('db.Note')}}</label>
+                            <textarea class="form-control" name="note" id="edit_note" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="edit_is_active" name="is_active" value="1">
+                                <label class="custom-control-label" for="edit_is_active">{{__('db.Active')}}</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{__('db.close')}}</button>
+                    <button type="submit" class="btn btn-primary">{{__('db.update')}}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
+@endsection
 
 @push('scripts')
     @include('backend.layout.partials.datatable_js')
@@ -68,6 +162,36 @@
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
+    $(document).on("click", ".open-EditCategoryDialog", function() {
+        var id = $(this).data('id').toString();
+        $.get('delivery-men/' + id + '/edit', function(data) {
+            $('#edit_id').val(data.id);
+            $('#edit_name').val(data.name);
+            $('#edit_email').val(data.email);
+            $('#edit_phone_number').val(data.phone_number);
+            $('#edit_address').val(data.address);
+            $('#edit_city').val(data.city);
+            $('#edit_country').val(data.country);
+            $('#edit_nid_number').val(data.nid_number);
+            $('#edit_license_number').val(data.license_number);
+            $('#edit_vehicle_type').val(data.vehicle_type);
+            $('#edit_vehicle_number').val(data.vehicle_number);
+            $('#edit_warehouse_id').val(data.warehouse_id);
+            $('#edit_user_id').val(data.user_id);
+            $('#edit_note').val(data.note);
+            $('#edit_is_active').prop('checked', data.is_active == true);
+        });
+    });
+
+    $(document).on("click", ".toggle-status", function() {
+        var id = $(this).data('id').toString();
+        if (confirm("{{__('db.Are you sure you want to toggle status?')}}")) {
+            $.post('delivery-men/toggle-status', { id: id }, function() {
+                location.reload();
+            });
         }
     });
 
@@ -106,10 +230,10 @@
         "columns": [
             {"data": "key"},
             {"data": "name"},
-            {"data": "email"},
             {"data": "phone_number"},
-            {"data": "city"},
-            {"data": "status"},
+            {"data": "warehouse_id"},
+            {"data": "is_active"},
+            {"data": "performance"},
             {"data": "options"},
         ],
         'language': {
@@ -224,4 +348,3 @@
 
 </script>
 @endpush
-@endsection

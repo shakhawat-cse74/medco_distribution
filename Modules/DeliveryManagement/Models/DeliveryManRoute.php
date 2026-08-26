@@ -6,14 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class DeliveryManRoute extends Model
 {
-    protected $table = 'delivery_areas';
-
     protected $fillable = [
-        'name', 'city', 'zone', 'delivery_charge', 'estimated_days', 'is_active', 'note'
+        'name', 'code', 'warehouse_id', 'area_ids', 'customer_ids',
+        'description', 'is_active', 'created_by'
     ];
 
-    protected $casts = [
-        'is_active'       => 'boolean',
-        'delivery_charge' => 'decimal:2',
-    ];
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    public function assignments()
+    {
+        return $this->hasMany(DeliveryManAssignment::class);
+    }
 }

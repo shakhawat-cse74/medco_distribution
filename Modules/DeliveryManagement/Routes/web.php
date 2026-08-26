@@ -32,10 +32,6 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::post('toggle-status', 'toggleStatus')->name('toggleStatus');
         Route::get('performance/{id}', 'performance')->name('performance');
         Route::post('upload-photo', 'uploadPhoto')->name('uploadPhoto');
-        Route::get('{id}/customers', 'assignedCustomers')->name('assignedCustomers');
-        Route::get('{delivery_man_id}/customers/{customer_id}/orders', 'customerOrderHistory')->name('customerOrderHistory');
-        Route::get('{delivery_man_id}/customers/{customer_id}/ledger', 'customerLedger')->name('customerLedger');
-        Route::post('{delivery_man_id}/customers/{customer_id}/collect-payment', 'collectDuePayment')->name('collectDuePayment');
     });
 
     Route::controller(DeliveryManAssignmentController::class)->prefix('delivery-man-assignments')->name('delivery-man-assignments.')->group(function () {
@@ -76,7 +72,6 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::post('cancel/{id}', 'cancel')->name('cancel');
         Route::get('products/search', 'searchProducts');
         Route::get('customers/search', 'searchCustomers');
-        Route::post('customers/quick-create', 'quickCreateCustomer')->name('quickCreateCustomer');
         Route::post('validate-stock', 'validateStock');
         Route::get('invoice/{id}', 'genInvoice')->name('invoice');
         Route::post('send-whatsapp/{id}', 'sendWhatsApp')->name('sendWhatsApp');
@@ -193,7 +188,6 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
 
     Route::controller(DeliveryReportController::class)->prefix('delivery-reports')->name('delivery-reports.')->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::post('dashboard-data', 'dashboardData')->name('dashboardData');
         Route::get('delivery-man-wise-order', 'deliveryManWiseOrder')->name('deliveryManWiseOrder');
         Route::get('delivery-man-wise-collection', 'deliveryManWiseCollection')->name('deliveryManWiseCollection');
         Route::get('delivery-man-wise-due', 'deliveryManWiseDue')->name('deliveryManWiseDue');

@@ -9072,7 +9072,7 @@ return [
     ],
     [
         'key' => 'delivery_men_list',
-        'value' => 'Delivery Men',
+        'value' => 'Delivery Men List',
     ],
     [
         'key' => 'add_delivery_man',
@@ -9133,10 +9133,6 @@ return [
     [
         'key' => 'delivery_management',
         'value' => 'Delivery Management',
-    ],
-    [
-        'key'   => 'manage_delivery',
-        'value' => 'Management Delivery',
     ],
     [
         'key' => 'assignment_man_assignments',

@@ -34,7 +34,7 @@ class CashDepositController extends Controller
             $lims_cash_deposits = CashDeposit::with(['deliveryMan', 'verifiedBy'])
                 ->latest()
                 ->paginate(20);
-            $lims_delivery_men = DeliveryMan::active()->get();
+            $lims_delivery_men = DeliveryMan::where('is_active', true)->get();
             $lims_warehouses = Warehouse::where('is_active', true)->get();
             return view('backend.delivery_management.cash_deposit.index', compact(
                 'lims_cash_deposits', 'lims_delivery_men', 'lims_warehouses'
@@ -47,7 +47,7 @@ class CashDepositController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('cash-deposits-add')) {
-            $lims_delivery_men = DeliveryMan::active()->get();
+            $lims_delivery_men = DeliveryMan::where('is_active', true)->get();
             return view('backend.delivery_management.cash_deposit.create', compact('lims_delivery_men'));
         }
         return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));

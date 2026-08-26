@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <h6>{{__('db.order_details')}}</h6>
-                                <p><strong>Order Ref:</strong> #{{ $lims_field_order_data->reference_no }}</p>
+                                <p><strong>Order Ref:</strong> #{{ $lims_field_order_data->order_number }}</p>
                                 <p><strong>Customer:</strong> {{ $lims_field_order_data->customer->name }}</p>
                                 <p><strong>Delivery Man:</strong> {{ $lims_field_order_data->deliveryMan->name }}</p>
                                 <p><strong>Grand Total:</strong> {{ number_format($lims_field_order_data->grand_total, 2) }}</p>

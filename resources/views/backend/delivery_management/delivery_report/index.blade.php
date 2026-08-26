@@ -5,10 +5,10 @@
     <div class="page-block">
         <div class="row align-items-center">
             <div class="col-12">
-                <h3 class="page-title">{{__('db.Delivery Dashboard')}}</h3>
+                <h3 class="page-title">Delivery Reports & Analytics</h3>
                 <ul class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti ti-home"></i> Dashboard</a></li>
-                    <li class="breadcrumb-item active">{{__('db.Delivery Management')}}</li>
+                    <li class="breadcrumb-item active">Delivery Reports</li>
                 </ul>
             </div>
         </div>
@@ -16,56 +16,31 @@
 </div>
 
 <div class="page-block">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'today' ? 'active' : '' }}" data-period="today">Today</button>
-                            <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'week' ? 'active' : '' }}" data-period="week">Weekly</button>
-                            <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'month' ? 'active' : '' }}" data-period="month">Monthly</button>
-                            <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'custom' ? 'active' : '' }}" data-period="custom">Custom</button>
-                        </div>
-                        @if(!isset($isDeliveryMan) || !$isDeliveryMan)
-                        <select class="form-select" id="delivery_man_filter" style="width: auto; min-width: 180px;">
-                            <option value="">{{__('db.All Delivery Men')}}</option>
-                            @foreach($lims_delivery_man_list as $dm)
-                                <option value="{{ $dm->id }}" {{ ($selectedDeliveryManId ?? '') == $dm->id ? 'selected' : '' }}>{{ $dm->name }}</option>
-                            @endforeach
-                        </select>
-                        @endif
-                    </div>
-                    <div class="row g-2 d-none" id="custom-date-row">
-                        <div class="col-md-4">
-                            <input type="text" class="form-control datepicker" id="start_date" value="{{ $startDate }}" placeholder="Start date">
-                        </div>
-                        <div class="col-md-4">
-                            <input type="text" class="form-control datepicker" id="end_date" value="{{ $endDate }}" placeholder="End date">
-                        </div>
-                        <div class="col-md-4">
-                            <button type="button" class="btn btn-primary w-100" id="applyFilter">Apply</button>
-                        </div>
-                    </div>
-                    <div id="filter-loading" class="d-none mt-3">
-                        <div class="d-flex align-items-center text-muted">
-                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                            <span>Loading dashboard data...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row" id="stats-container">
+    <div class="row">
+        <!-- Quick Stats Cards -->
         <div class="col-md-3">
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-1">{{__('db.Total Orders')}}</h6>
-                            <h3 class="mb-0" id="total_orders">{{ $stats['total_orders'] }}</h3>
+                            <h6 class="mb-1">Total Delivery Men</h6>
+                            <h3 class="mb-0">{{ $lims_delivery_man_list->count() }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="ti ti-users bg-primary rounded-circle p-2 text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">Total Orders Today</h6>
+                            <h3 class="mb-0">{{ $lims_delivery_man_list->sum(function($dm) { return $dm->fieldOrders()->whereDate('created_at', today())->count(); }) }}</h3>
                         </div>
                         <div class="ms-3">
                             <i class="ti ti-shopping-cart bg-success rounded-circle p-2 text-white"></i>
@@ -80,8 +55,8 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-1">{{__('db.Total Collection')}}</h6>
-                            <h3 class="mb-0" id="total_collection">{{ number_format($stats['total_collection'], 2) }}</h3>
+                            <h6 class="mb-1">Total Collection Today</h6>
+                            <h3 class="mb-0">{{ $lims_delivery_man_list->sum(function($dm) { return $dm->fieldOrders()->whereDate('created_at', today())->sum('paid_amount'); }) }}</h3>
                         </div>
                         <div class="ms-3">
                             <i class="ti ti-money bg-warning rounded-circle p-2 text-white"></i>
@@ -96,27 +71,11 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-1">{{__('db.Completed Orders')}}</h6>
-                            <h3 class="mb-0" id="completed_orders">{{ $stats['completed_orders'] }}</h3>
+                            <h6 class="mb-1">Pending Deliveries</h6>
+                            <h3 class="mb-0">{{ $lims_delivery_man_list->sum(function($dm) { return $dm->deliveries()->where('status', 'assigned')->count(); }) }}</h3>
                         </div>
                         <div class="ms-3">
-                            <i class="ti ti-check bg-primary rounded-circle p-2 text-white"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">{{__('db.Pending Orders')}}</h6>
-                            <h3 class="mb-0" id="pending_orders">{{ $stats['pending_orders'] }}</h3>
-                        </div>
-                        <div class="ms-3">
-                            <i class="ti ti-alert-triangle bg-danger rounded-circle p-2 text-white"></i>
+                            <i class="ti ti-clock bg-danger rounded-circle p-2 text-white"></i>
                         </div>
                     </div>
                 </div>
@@ -124,340 +83,137 @@
         </div>
     </div>
 
+    <!-- Report Cards Grid -->
     <div class="row mt-4">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">{{__('db.Cancelled Orders')}}</h6>
-                            <h3 class="mb-0" id="cancelled_orders">{{ $stats['cancelled_orders'] }}</h3>
-                        </div>
-                        <div class="ms-3">
-                            <i class="ti ti-x bg-secondary rounded-circle p-2 text-white"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">{{__('db.Total Due')}}</h6>
-                            <h3 class="mb-0" id="total_due">{{ number_format($stats['total_due'], 2) }}</h3>
-                        </div>
-                        <div class="ms-3">
-                            <i class="ti ti-credit-card bg-danger rounded-circle p-2 text-white"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">{{__('db.Total Delivery Men')}}</h6>
-                            <h3 class="mb-0" id="total_delivery_men">{{ $stats['total_delivery_men'] }}</h3>
-                        </div>
-                        <div class="ms-3">
-                            <i class="ti ti-users bg-info rounded-circle p-2 text-white"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">{{__('db.Pending Deliveries')}}</h6>
-                            <h3 class="mb-0" id="pending_deliveries">{{ $stats['pending_deliveries'] }}</h3>
-                        </div>
-                        <div class="ms-3">
-                            <i class="ti ti-clock bg-warning rounded-circle p-2 text-white"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="m-b-0">{{__('db.Orders & Collection Trend')}}</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="ordersChart" height="80"></canvas>
-                </div>
-            </div>
-        </div>
+        <!-- Individual Delivery Man Dashboard -->
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="m-b-0">{{__('db.Order Status')}}</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="statusChart" height="200"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="m-b-0">{{__('db.Delivery Man Performance')}}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped" id="deliveryManTable">
-                            <thead>
-                                <tr>
-                                    <th>{{__('db.Delivery Man')}}</th>
-                                    <th>{{__('db.Total Orders')}}</th>
-                                    <th>{{__('db.Completed')}}</th>
-                                    <th>{{__('db.Pending')}}</th>
-                                    <th>{{__('db.Cancelled')}}</th>
-                                    <th>{{__('db.Collection')}}</th>
-                                    <th>{{__('db.Due')}}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($deliveryManStats as $dm)
-                                <tr>
-                                    <td>{{ $dm['delivery_man']->name }}</td>
-                                    <td>{{ $dm['total_orders'] }}</td>
-                                    <td>{{ $dm['completed_orders'] }}</td>
-                                    <td>{{ $dm['pending_orders'] }}</td>
-                                    <td>{{ $dm['cancelled_orders'] }}</td>
-                                    <td>{{ number_format($dm['total_collection'], 2) }}</td>
-                                    <td>{{ number_format($dm['total_due'], 2) }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+            <a href="{{ route('delivery-men.index') }}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="ti ti-user-check bg-primary rounded-circle p-3 text-white mb-3"></i>
+                        <h5>Individual Delivery Man Dashboard</h5>
+                        <p class="text-muted small">View individual delivery performance and analytics</p>
                     </div>
                 </div>
-            </div>
+            </a>
+        </div>
+
+        <!-- Delivery Man Wise Order Report -->
+        <div class="col-md-4">
+            <a href="{{ route('delivery-report.delivery-man-wise-order') }}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="ti ti-report bg-success rounded-circle p-3 text-white mb-3"></i>
+                        <h5>Delivery Man Wise Order Report</h5>
+                        <p class="text-muted small">Analyze order distribution by delivery man</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Delivery Man Wise Collection Report -->
+        <div class="col-md-4">
+            <a href="{{ route('delivery-report.delivery-man-wise-collection') }}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="ti ti-cash bg-warning rounded-circle p-3 text-white mb-3"></i>
+                        <h5>Delivery Man Wise Collection Report</h5>
+                        <p class="text-muted small">Track collections and dues by delivery man</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Delivery Performance Report -->
+        <div class="col-md-4">
+            <a href="{{ route('delivery-report.delivery-performance') }}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="ti ti-chart-bar bg-info rounded-circle p-3 text-white mb-3"></i>
+                        <h5>Delivery Performance Report</h5>
+                        <p class="text-muted small">Analyze delivery efficiency and completion rates</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Area Wise Sales Report -->
+        <div class="col-md-4">
+            <a href="{{ route('delivery-report.area-wise-sales') }}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="ti ti-map bg-danger rounded-circle p-3 text-white mb-3"></i>
+                        <h5>Area Wise Sales Report</h5>
+                        <p class="text-muted small">Analyze sales by geographical areas</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Commission Report -->
+        <div class="col-md-4">
+            <a href="{{ route('delivery-report.commission-report') }}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="ti ti-coin bg-primary rounded-circle p-3 text-white mb-3"></i>
+                        <h5>Commission Report</h5>
+                        <p class="text-muted small">Track delivery man commissions</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Cash Reconciliation -->
+        <div class="col-md-4">
+            <a href="{{ route('delivery-report.cash-reconciliation') }}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="ti ti-balance bg-success rounded-circle p-3 text-white mb-3"></i>
+                        <h5>Cash Reconciliation</h5>
+                        <p class="text-muted small">Reconcile cash collections and deposits</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Customer Visit Report -->
+        <div class="col-md-4">
+            <a href="{{ route('delivery-report.customer-visit-report') }}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="ti ti-map-pin bg-warning rounded-circle p-3 text-white mb-3"></i>
+                        <h5>Customer Visit Report</h5>
+                        <p class="text-muted small">Track customer visit patterns</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Product Wise Field Sale -->
+        <div class="col-md-4">
+            <a href="{{ route('delivery-report.product-wise-field-sale') }}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="ti ti-package bg-info rounded-circle p-3 text-white mb-3"></i>
+                        <h5>Product Wise Field Sale</h5>
+                        <p class="text-muted small">Analyze product sales in field operations</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Commission Payout -->
+        <div class="col-md-4">
+            <a href="{{ route('delivery-report.commission-payout') }}" class="text-decoration-none">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="ti ti-credit-card bg-danger rounded-circle p-3 text-white mb-3"></i>
+                        <h5>Commission Payout</h5>
+                        <p class="text-muted small">Process pending commission payouts</p>
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script type="text/javascript">
-$(document).ready(function() {
-    let chartData = @json($chartData);
-    let stats = @json($stats);
-    let ordersChartInstance = null;
-    let statusChartInstance = null;
-
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd',
-        autoclose: true,
-        todayHighlight: true
-    });
-
-    function initCharts() {
-        const ordersCanvas = document.getElementById('ordersChart');
-        if (ordersCanvas) {
-            const ordersCtx = ordersCanvas.getContext('2d');
-            if (ordersChartInstance) ordersChartInstance.destroy();
-            ordersChartInstance = new Chart(ordersCtx, {
-                type: 'bar',
-                data: {
-                    labels: (chartData && chartData.labels) ? chartData.labels : [],
-                    datasets: [
-                        {
-                            label: 'Orders',
-                            data: (chartData && chartData.orders) ? chartData.orders : [],
-                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1,
-                            yAxisID: 'y',
-                        },
-                        {
-                            label: 'Collection',
-                            data: (chartData && chartData.collection) ? chartData.collection : [],
-                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1,
-                            type: 'line',
-                            yAxisID: 'y1',
-                        },
-                        {
-                            label: 'Due',
-                            data: (chartData && chartData.due) ? chartData.due : [],
-                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            borderWidth: 1,
-                            type: 'line',
-                            yAxisID: 'y1',
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Orders' } },
-                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Amount' }, grid: { drawOnChartArea: false } }
-                    }
-                }
-            });
-        }
-
-        const statusCanvas = document.getElementById('statusChart');
-        if (statusCanvas) {
-            const statusCtx = statusCanvas.getContext('2d');
-            if (statusChartInstance) statusChartInstance.destroy();
-            statusChartInstance = new Chart(statusCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Completed', 'Pending', 'Cancelled'],
-                    datasets: [{
-                        data: [
-                            (stats && stats.completed_orders) ? stats.completed_orders : 0,
-                            (stats && stats.pending_orders) ? stats.pending_orders : 0,
-                            (stats && stats.cancelled_orders) ? stats.cancelled_orders : 0
-                        ],
-                        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '65%',
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-        }
-    }
-
-    initCharts();
-
-    function loadDashboardData(period, startDate, endDate, deliveryManId) {
-        $('#filter-loading').removeClass('d-none');
-        $.ajax({
-            url: '{{ route('delivery-reports.dashboardData') }}',
-            type: 'POST',
-            data: {
-                period: period,
-                start_date: startDate,
-                end_date: endDate,
-                delivery_man_id: deliveryManId,
-                _token: '{{ csrf_token() }}'
-            },
-            success: function(response) {
-                if (response.success) {
-                    stats = response.stats;
-                    $('#total_orders').text(stats.total_orders);
-                    $('#total_collection').text(parseFloat(stats.total_collection).toFixed(2));
-                    $('#completed_orders').text(stats.completed_orders);
-                    $('#pending_orders').text(stats.pending_orders);
-                    $('#cancelled_orders').text(stats.cancelled_orders);
-                    $('#total_due').text(parseFloat(stats.total_due).toFixed(2));
-                    $('#pending_deliveries').text(stats.pending_deliveries);
-                    $('#total_delivery_men').text(stats.total_delivery_men);
-
-                    chartData = response.chartData;
-                    initCharts();
-
-                    if (response.deliveryManStats && response.deliveryManStats.length > 0) {
-                        let rows = '';
-                        $.each(response.deliveryManStats, function(index, dm) {
-                            rows += '<tr>' +
-                                '<td>' + (dm.delivery_man?.name || '-') + '</td>' +
-                                '<td>' + (dm.total_orders || 0) + '</td>' +
-                                '<td>' + (dm.completed_orders || 0) + '</td>' +
-                                '<td>' + (dm.pending_orders || 0) + '</td>' +
-                                '<td>' + (dm.cancelled_orders || 0) + '</td>' +
-                                '<td>' + parseFloat(dm.total_collection || 0).toFixed(2) + '</td>' +
-                                '<td>' + parseFloat(dm.total_due || 0).toFixed(2) + '</td>' +
-                                '</tr>';
-                        });
-                        $('#deliveryManTable tbody').html(rows);
-                    } else {
-                        $('#deliveryManTable tbody').html('<tr><td colspan="7" class="text-center">No data available</td></tr>');
-                    }
-                }
-            },
-            error: function() {
-                alert('Failed to load dashboard data');
-            },
-            complete: function() {
-                $('#filter-loading').addClass('d-none');
-            }
-        });
-    }
-
-    $('.period-tab').on('click', function() {
-        const period = $(this).data('period');
-        $('.period-tab').removeClass('active');
-        $(this).addClass('active');
-        if (period === 'custom') {
-            $('#custom-date-row').removeClass('d-none');
-            $('#start_date').focus();
-            return;
-        }
-        $('#custom-date-row').addClass('d-none');
-        const deliveryManId = $('#delivery_man_filter').val();
-        loadDashboardData(period, '', '', deliveryManId);
-    });
-
-    $('#applyFilter').on('click', function() {
-        const period = $('.period-tab.active').data('period') || 'today';
-        const startDate = $('#start_date').val();
-        const endDate = $('#end_date').val();
-        const deliveryManId = $('#delivery_man_filter').val();
-        
-        if (period === 'custom' && (!startDate || !endDate)) {
-            alert('Please select both start and end dates');
-            return;
-        }
-        
-        loadDashboardData(period, startDate, endDate, deliveryManId);
-    });
-
-    $('#delivery_man_filter').on('change', function() {
-        const period = $('.period-tab.active').data('period') || 'today';
-        const startDate = $('#start_date').val();
-        const endDate = $('#end_date').val();
-        const deliveryManId = $(this).val();
-        
-        if (period === 'custom') {
-            loadDashboardData(period, startDate, endDate, deliveryManId);
-        } else {
-            loadDashboardData(period, '', '', deliveryManId);
-        }
-    });
-
-    $('#start_date, #end_date').on('change', function() {
-        const period = $('.period-tab.active').data('period') || 'today';
-        if (period === 'custom') {
-            const startDate = $('#start_date').val();
-            const endDate = $('#end_date').val();
-            if (startDate && endDate) {
-                const deliveryManId = $('#delivery_man_filter').val();
-                loadDashboardData(period, startDate, endDate, deliveryManId);
-            }
-        }
-    });
-});
-</script>
-@endpush

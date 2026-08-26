@@ -2126,58 +2126,6 @@ class TenantDatabaseSeeder extends Seeder
                 'name' => 'delivery_notifications-create',
                 'guard_name' => 'web',
             ],
-            [
-                'name' => 'delivery-reports-index',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'delivery-man-routes-index',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'delivery-man-routes-add',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'delivery-man-routes-edit',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'delivery-man-routes-delete',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'warehouse-products-index',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'warehouse-products-add',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'warehouse-products-edit',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'warehouse-products-delete',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'warehouse-index',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'warehouse-add',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'warehouse-edit',
-                'guard_name' => 'web',
-            ],
-            [
-                'name' => 'warehouse-delete',
-                'guard_name' => 'web',
-            ],
         ];
 
         $insertData = [];
@@ -5232,44 +5180,6 @@ class TenantDatabaseSeeder extends Seeder
                     'address' => 'Test address',
                     'is_active' => 1,
                 ]
-            ]);
-        }
-
-        if (!DB::table('delivery_areas')->count()) {
-            DB::table('delivery_areas')->insert([
-                [
-                    'name' => 'Dhaka Central',
-                    'city' => 'Dhaka',
-                    'zone' => 'Central',
-                    'delivery_charge' => 50.00,
-                    'estimated_days' => 1,
-                    'is_active' => 1,
-                    'note' => 'Main city area',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'name' => 'Dhaka North',
-                    'city' => 'Dhaka',
-                    'zone' => 'North',
-                    'delivery_charge' => 60.00,
-                    'estimated_days' => 1,
-                    'is_active' => 1,
-                    'note' => 'Northern suburbs',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'name' => 'Chittagong',
-                    'city' => 'Chittagong',
-                    'zone' => 'Port',
-                    'delivery_charge' => 80.00,
-                    'estimated_days' => 2,
-                    'is_active' => 1,
-                    'note' => 'Port city area',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
             ]);
         }
 

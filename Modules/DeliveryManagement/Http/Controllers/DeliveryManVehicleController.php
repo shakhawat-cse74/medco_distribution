@@ -26,7 +26,7 @@ class DeliveryManVehicleController extends Controller
                 $all_permission[] = 'dummy text';
 
             $lims_vehicle_list = DeliveryManVehicle::with('deliveryMan')->get();
-            $lims_delivery_man_list = DeliveryMan::active()->get();
+            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
 
             return view('backend.delivery_management.delivery_man_vehicle.index', compact('lims_vehicle_list', 'lims_delivery_man_list', 'all_permission'));
         } else {
@@ -84,7 +84,13 @@ class DeliveryManVehicleController extends Controller
         }
 
         $lims_vehicle_data = DeliveryManVehicle::findOrFail($id);
-        $data = $request->validated();
+        $data = request()->all();
+
+        $this->validate(request(), [
+            'delivery_man_id' => 'required|exists:delivery_men,id',
+            'vehicle_type' => 'required|max:255',
+            'vehicle_number' => 'required|max:255',
+        ]);
 
         if ($request->hasFile('image')) {
             $this->fileDelete(public_path('images/delivery_man_vehicle/'), $lims_vehicle_data->image);

@@ -29,7 +29,7 @@ class CustomerVisitController extends Controller
                 $all_permission[] = 'dummy text';
 
             $lims_visit_list = CustomerVisit::with(['deliveryMan', 'customer'])->get();
-            $lims_delivery_man_list = DeliveryMan::active()->get();
+            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
             $lims_customer_list = Customer::where('is_active', true)->get();
 
             return view('backend.delivery_management.customer_visit.index', compact('lims_visit_list', 'lims_delivery_man_list', 'lims_customer_list', 'all_permission'));

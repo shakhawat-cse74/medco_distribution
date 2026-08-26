@@ -4,32 +4,22 @@ namespace Modules\DeliveryManagement\Models;
 
 use App\Models\User;
 use App\Models\Warehouse;
-use Modules\Ecommerce\Entities\DeliveryArea;
-use Illuminate\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 
-class DeliveryMan extends Model implements AuthenticatableContract
+class DeliveryMan extends Model
 {
-    use Authenticatable;
     use SoftDeletes;
 
     protected $fillable = [
-        'delivery_man_id', 'name', 'address', 'city', 'country',
-        'nid_number', 'image', 'user_id', 'last_login_at'
+        'name', 'email', 'phone_number', 'password', 'address', 'city', 'country',
+        'nid_number', 'license_number', 'vehicle_type', 'vehicle_number', 'image',
+        'user_id', 'warehouse_id', 'note', 'is_active', 'last_login_at', 'fcm_token'
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->whereHas('user', function ($q) {
-            $q->where('is_active', true);
-        });
     }
 
     public function warehouse()
@@ -40,11 +30,6 @@ class DeliveryMan extends Model implements AuthenticatableContract
     public function assignments()
     {
         return $this->hasMany(DeliveryManAssignment::class);
-    }
-
-    public function routes()
-    {
-        return $this->belongsToMany(DeliveryArea::class, 'delivery_men_routes', 'delivery_man_id', 'route_id');
     }
 
     public function vehicles()

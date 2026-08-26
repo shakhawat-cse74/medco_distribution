@@ -83,10 +83,8 @@ return [
     | Manage assignments of delivery men to their respective tasks/orders.
     |
     */
-        "delivery-man-assignments-index" => "Delivery Man Assignments",
-        "delivery-man-assignments-add"   => "Assign Delivery Man",
-        "delivery-man-assignments-edit"  => "Edit Assignment",
-        "delivery-man-assignments-delete" => "Delete Assignment",
+        "delivery-men-assign-index" => "Delivery Man Assignments",
+        "delivery-men-assign-add"   => "Assign Delivery Man",
 
     /*
     |--------------------------------------------------------------------------
@@ -96,14 +94,8 @@ return [
     | Manage delivery routes and vehicles used by delivery men.
     |
     */
-        "delivery-man-routes-index"   => "Delivery Routes",
-        "delivery-man-routes-add"     => "Add Route",
-        "delivery-man-routes-edit"    => "Edit Route",
-        "delivery-man-routes-delete"  => "Delete Route",
-        "delivery-man-vehicles-index" => "Vehicle Management",
-        "delivery-man-vehicles-add"   => "Add Vehicle",
-        "delivery-man-vehicles-edit"  => "Edit Vehicle",
-        "delivery-man-vehicles-delete" => "Delete Vehicle",
+        "delivery-men-route-index"   => "Delivery Routes",
+        "delivery-men-vehicle-index" => "Vehicle Management",
 
     /*
     |--------------------------------------------------------------------------
@@ -155,8 +147,6 @@ return [
     */
         "delivery-proofs-index" => "Delivery Proofs",
         "delivery-proofs-add"   => "Capture Proof",
-        "delivery-proofs-edit"  => "Edit Proof",
-        "delivery-proofs-delete" => "Delete Proof",
 
     /*
     |--------------------------------------------------------------------------
@@ -168,8 +158,6 @@ return [
     */
         "delivery-man-commissions-index" => "Commission Management",
         "delivery-man-commissions-add"   => "Calculate Commission",
-        "delivery-man-commissions-edit"  => "Edit Commission",
-        "delivery-man-commissions-delete" => "Delete Commission",
 
     /*
     |--------------------------------------------------------------------------
@@ -181,8 +169,6 @@ return [
     */
         "cash-deposits-index" => "Cash Deposits",
         "cash-deposits-add"   => "Record Deposit",
-        "cash-deposits-edit"  => "Edit Deposit",
-        "cash-deposits-delete" => "Delete Deposit",
 
     /*
     |--------------------------------------------------------------------------
@@ -194,8 +180,6 @@ return [
     */
         "field-returns-index" => "Field Returns",
         "field-returns-add"   => "Initiate Return",
-        "field-returns-edit"  => "Edit Return",
-        "field-returns-delete" => "Delete Return",
 
     /*
     |--------------------------------------------------------------------------
@@ -207,8 +191,6 @@ return [
     */
         "customer-visits-index" => "Customer Visits",
         "customer-visits-add"   => "Check Customer In",
-        "customer-visits-edit"  => "Edit Visit",
-        "customer-visits-delete" => "Delete Visit",
 
     /*
     |--------------------------------------------------------------------------
@@ -219,9 +201,6 @@ return [
     |
     */
         "delivery-man-schedules-index" => "Delivery Schedules",
-        "delivery-man-schedules-add"   => "Add Schedule",
-        "delivery-man-schedules-edit"  => "Edit Schedule",
-        "delivery-man-schedules-delete" => "Delete Schedule",
 
     /*
     |--------------------------------------------------------------------------
@@ -243,8 +222,6 @@ return [
     |
     */
         "delivery-notifications-index" => "Delivery Notifications",
-        "delivery-notifications-edit"  => "Edit Notification",
-        "delivery-notifications-delete" => "Delete Notification",
 
     /*
     |--------------------------------------------------------------------------
@@ -254,45 +231,6 @@ return [
     | Access delivery-related reports and analytics.
     |
     */
-        "delivery-reports-index" => "Delivery Dashboard",
-
-    /*
-    |--------------------------------------------------------------------------
-    | Warehouse Products
-    |--------------------------------------------------------------------------
-    |
-    | Manage product stock and pricing across warehouses.
-    |
-    */
-        "warehouse-products-index"  => "Warehouse Products",
-        "warehouse-products-add"    => "Add Warehouse Product",
-        "warehouse-products-edit"   => "Edit Warehouse Product",
-        "warehouse-products-delete" => "Delete Warehouse Product",
-
-    /*
-    |--------------------------------------------------------------------------
-    | Warehouse
-    |--------------------------------------------------------------------------
-    |
-    | Manage warehouses master data.
-    |
-    */
-        "warehouse-index"  => "Warehouse List",
-        "warehouse-add"    => "Add Warehouse",
-        "warehouse-edit"   => "Edit Warehouse",
-        "warehouse-delete" => "Delete Warehouse",
-
-    /*
-    |--------------------------------------------------------------------------
-    | Delivery Man Routes
-    |--------------------------------------------------------------------------
-    |
-    | Manage delivery routes assigned to delivery men.
-    |
-    */
-        "delivery-man-routes-index"  => "Delivery Routes",
-        "delivery-man-routes-add"    => "Add Route",
-        "delivery-man-routes-edit"   => "Edit Route",
-        "delivery-man-routes-delete" => "Delete Route",
+        "delivery-reports-index" => "Delivery Reports",
     ],
 ];
