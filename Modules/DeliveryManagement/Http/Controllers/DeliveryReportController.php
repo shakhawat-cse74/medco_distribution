@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Log;
 
 class DeliveryReportController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('delivery-reports-index')) {
@@ -33,7 +33,44 @@ class DeliveryReportController extends Controller
             $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
             $lims_route_list = DeliveryManRoute::where('is_active', true)->get();
 
-            return view('backend.delivery_management.delivery_report.index', compact('lims_delivery_man_list', 'lims_route_list', 'all_permission'));
+            $period = $request->input('period', 'today');
+            $startDate = $request->input('start_date', date('Y-m-d'));
+            $endDate = $request->input('end_date', date('Y-m-d'));
+
+            switch ($period) {
+                case 'week':
+                    $startDate = date('Y-m-d', strtotime('monday this week'));
+                    $endDate = date('Y-m-d', strtotime('sunday this week'));
+                    break;
+                case 'month':
+                    $startDate = date('Y-m-01');
+                    $endDate = date('Y-m-t');
+                    break;
+                case 'custom':
+                    if (!$request->filled('start_date') || !$request->filled('end_date')) {
+                        $startDate = date('Y-m-d');
+                        $endDate = date('Y-m-d');
+                    }
+                    break;
+                default:
+                    $startDate = date('Y-m-d');
+                    $endDate = date('Y-m-d');
+            }
+
+            $stats = [
+                'total_delivery_men' => $lims_delivery_man_list->count(),
+                'total_orders' => FieldOrder::whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])->count(),
+                'total_collection' => FieldOrder::whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])->sum('paid_amount'),
+                'pending_deliveries' => DeliveryManDelivery::where('status', 'assigned')->count(),
+                'completed_orders' => FieldOrder::whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])->where('status', 'completed')->count(),
+                'pending_orders' => FieldOrder::whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])->where('status', 'pending')->count(),
+                'total_due' => FieldOrder::whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])->sum('due_amount'),
+            ];
+
+            return view('backend.delivery_management.delivery_report.index', compact(
+                'lims_delivery_man_list', 'lims_route_list', 'all_permission',
+                'period', 'startDate', 'endDate', 'stats'
+            ));
         } else {
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }

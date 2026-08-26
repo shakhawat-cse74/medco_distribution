@@ -4,11 +4,14 @@ namespace Modules\DeliveryManagement\Models;
 
 use App\Models\User;
 use App\Models\Warehouse;
+use Illuminate\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 
-class DeliveryMan extends Model
+class DeliveryMan extends Model implements AuthenticatableContract
 {
+    use Authenticatable;
     use SoftDeletes;
 
     protected $fillable = [

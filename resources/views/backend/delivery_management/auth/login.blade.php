@@ -80,7 +80,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('delivery-man.login.post') }}">
+            <form method="POST" action="{{ route('delivery-man.login') }}">
                 @csrf
                 <div class="form-group">
                     <label>Email Address</label>
