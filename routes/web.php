@@ -984,6 +984,15 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
     });
 
     // Delivery Management Module Routes
+    Route::prefix('delivery-man')->name('delivery-man.')->group(function () {
+        Route::get('login', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'showLogin'])->name('login');
+        Route::post('login', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'login']);
+        Route::middleware('delivery.man.auth')->group(function () {
+            Route::get('dashboard', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'dashboard'])->name('dashboard');
+            Route::post('logout', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'logout'])->name('logout');
+        });
+    });
+
     Route::prefix('delivery-men')->name('delivery-men.')->group(function () {
         Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'index'])->name('index');
         Route::get('create', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'create'])->name('create');
@@ -1050,7 +1059,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::post('store', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'store'])->name('store');
         Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'show'])->name('show');
         Route::get('{id}/edit', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'edit'])->name('edit');
-        Route::post('update/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'update'])->name('update');
+        Route::put('update/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'update'])->name('update');
         Route::delete('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'destroy'])->name('destroy');
         Route::get('receipt/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'receipt'])->name('receipt');
         Route::post('split-payment/{order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'splitPayment'])->name('splitPayment');

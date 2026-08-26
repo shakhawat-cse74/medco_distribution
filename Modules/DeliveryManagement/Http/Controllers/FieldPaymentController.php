@@ -208,24 +208,10 @@ class FieldPaymentController extends Controller
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('field-payments-edit')) {
             $lims_payment_data = FieldPayment::with('fieldOrder')->findOrFail($id);
+            $lims_field_order_data = $lims_payment_data->fieldOrder;
+            $lims_gift_card_list = \App\Models\GiftCard::where('is_active', true)->get();
 
-            $data = [
-                'id' => $lims_payment_data->id,
-                'field_order_id' => $lims_payment_data->field_order_id,
-                'payment_method' => $lims_payment_data->payment_method,
-                'amount' => $lims_payment_data->amount,
-                'reference_no' => $lims_payment_data->reference_no,
-                'cheque_no' => $lims_payment_data->cheque_no,
-                'bank_name' => $lims_payment_data->bank_name,
-                'cheque_date' => $lims_payment_data->cheque_date,
-                'card_type' => $lims_payment_data->card_type,
-                'card_last_four' => $lims_payment_data->card_last_four,
-                'approval_code' => $lims_payment_data->approval_code,
-                'gift_card_id' => $lims_payment_data->gift_card_id,
-                'note' => $lims_payment_data->note,
-            ];
-
-            return $data;
+            return view('backend.delivery_management.field_payment.edit', compact('lims_payment_data', 'lims_field_order_data', 'lims_gift_card_list'));
         } else {
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }

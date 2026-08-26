@@ -412,7 +412,10 @@ class DeliveryManagementModuleSeeder extends Seeder
 
         // Add gift card field
         if ($paymentMethod === 'gift_card') {
-            $paymentData['gift_card_id'] = $faker->optional()->bothify('GC-????-????');
+            $giftCard = DB::table('gift_cards')->inRandomOrder()->first();
+            if ($giftCard) {
+                $paymentData['gift_card_id'] = $giftCard->id;
+            }
         }
 
         DB::table('field_payments')->insert($paymentData);
