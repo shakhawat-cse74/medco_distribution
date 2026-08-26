@@ -1073,7 +1073,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
 
     Route::prefix('delivery-man-delivery')->name('delivery-man-delivery.')->group(function () {
         Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'index'])->name('index');
-        Route::get('delivery-list-data', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'deliveryListData']);
+        Route::get('delivery-list-data', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'deliveryListData'])->name('deliveryListData');
         Route::post('assign', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'assign'])->name('assign');
         Route::post('auto-assign', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'autoAssign'])->name('autoAssign');
         Route::post('update-status/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'updateStatus'])->name('updateStatus');

@@ -43,7 +43,7 @@
                     </div>
                     
                     <div class="table-responsive">
-                        <table class="table table-striped" id="fieldPaymentTable">
+                        <table id="fieldPaymentTable" class="table" style="width: 100%">
                             <thead>
                                 <tr>
                                     <th>{{__('db.reference')}}</th>
