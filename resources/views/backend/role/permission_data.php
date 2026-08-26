@@ -254,6 +254,17 @@ return [
     | Access delivery-related reports and analytics.
     |
     */
-        "delivery-reports-index" => "Delivery Reports",
+    /*
+    |--------------------------------------------------------------------------
+    | Warehouse Products
+    |--------------------------------------------------------------------------
+    |
+    | Manage product stock and pricing across warehouses.
+    |
+    */
+        "warehouse-products-index" => "Warehouse Products",
+        "warehouse-products-add" => "Add Warehouse Product",
+        "warehouse-products-edit" => "Edit Warehouse Product",
+        "warehouse-products-delete" => "Delete Warehouse Product",
     ],
 ];
