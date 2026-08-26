@@ -35,9 +35,12 @@
     <li>
         <a href="#delivery-management" aria-expanded="false" data-toggle="collapse">
             <i class="ti ti-truck"></i>
-            <span>{{ __('db.Delivery Management') }}</span>
+            <span>{{ __('db.delivery_management') }}</span>
         </a>
         <ul id="delivery-management" class="collapse list-unstyled">
+            @can('delivery-reports-index')
+            <li id="delivery-reports-menu"><a class="{{ request()->is('delivery-reports') ? 'active' : '' }}" href="{{route('delivery-reports.index')}}">{{ __('db.Delivery Dashboard') }}</a></li>
+            @endcan
             @can('delivery-men-index')
             <li id="delivery-men-menu"><a class="{{ request()->is('delivery-men') ? 'active' : '' }}" href="{{route('delivery-men.index')}}">{{ __('db.delivery_men_list') }}</a></li>
             @endcan

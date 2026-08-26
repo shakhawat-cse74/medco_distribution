@@ -1176,6 +1176,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
 
     Route::prefix('delivery-reports')->name('delivery-reports.')->group(function () {
         Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'index'])->name('index');
+        Route::post('dashboard-data', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'dashboardData'])->name('dashboardData');
         Route::get('delivery-man-wise-order', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'deliveryManWiseOrder'])->name('deliveryManWiseOrder');
         Route::get('delivery-man-wise-collection', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'deliveryManWiseCollection'])->name('deliveryManWiseCollection');
         Route::get('delivery-man-wise-due', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'deliveryManWiseDue'])->name('deliveryManWiseDue');

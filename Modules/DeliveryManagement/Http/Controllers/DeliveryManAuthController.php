@@ -43,14 +43,43 @@ class DeliveryManAuthController extends Controller
         return redirect()->back()->with('not_permitted', __('db.Invalid email or password'));
     }
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $deliveryMan = Auth::guard('delivery_man')->user();
 
-        $totalOrders = $deliveryMan->fieldOrders()->count();
-        $completedOrders = $deliveryMan->fieldOrders()->where('status', 'completed')->count();
-        $pendingOrders = $deliveryMan->fieldOrders()->where('status', 'pending')->count();
-        $cancelledOrders = $deliveryMan->fieldOrders()->where('status', 'cancelled')->count();
+        $period = $request->input('period', 'today');
+        $startDate = $request->input('start_date', date('Y-m-d'));
+        $endDate = $request->input('end_date', date('Y-m-d'));
+
+        switch ($period) {
+            case 'week':
+                $startDate = date('Y-m-d', strtotime('monday this week'));
+                $endDate = date('Y-m-d', strtotime('sunday this week'));
+                break;
+            case 'month':
+                $startDate = date('Y-m-01');
+                $endDate = date('Y-m-t');
+                break;
+            case 'custom':
+                if (!$request->filled('start_date') || !$request->filled('end_date')) {
+                    $startDate = date('Y-m-d');
+                    $endDate = date('Y-m-d');
+                }
+                break;
+            default:
+                $startDate = date('Y-m-d');
+                $endDate = date('Y-m-d');
+        }
+
+        $startDateTime = $startDate . ' 00:00:00';
+        $endDateTime = $endDate . ' 23:59:59';
+
+        $baseQuery = $deliveryMan->fieldOrders()->whereBetween('created_at', [$startDateTime, $endDateTime]);
+
+        $totalOrders = $baseQuery->count();
+        $completedOrders = $baseQuery->where('status', 'completed')->count();
+        $pendingOrders = $baseQuery->where('status', 'pending')->count();
+        $cancelledOrders = $baseQuery->where('status', 'cancelled')->count();
 
         $todayOrders = $deliveryMan->fieldOrders()->whereDate('created_at', today())->count();
         $todayCollection = $deliveryMan->fieldOrders()->whereDate('created_at', today())->sum('paid_amount');
@@ -67,6 +96,11 @@ class DeliveryManAuthController extends Controller
 
         $recentOrders = $deliveryMan->fieldOrders()->latest()->take(10)->get();
 
+        $totalDeliveries = $deliveryMan->deliveries()->count();
+        $totalCommission = $deliveryMan->commissions()->sum('commission_amount');
+
+        $chartData = $this->getDeliveryManChartData($period, $startDate, $endDate, $deliveryMan->id);
+
         return view('backend.delivery_management.delivery_man.dashboard', compact(
             'deliveryMan',
             'totalOrders',
@@ -82,8 +116,70 @@ class DeliveryManAuthController extends Controller
             'monthCollection',
             'totalCollection',
             'totalDue',
-            'recentOrders'
+            'recentOrders',
+            'totalDeliveries',
+            'totalCommission',
+            'chartData',
+            'period'
         ));
+    }
+
+    private function getDeliveryManChartData($period, $startDate, $endDate, $deliveryManId)
+    {
+        $labels = [];
+        $ordersData = [];
+        $collectionData = [];
+        $dueData = [];
+
+        $query = FieldOrder::query()->where('delivery_man_id', $deliveryManId);
+
+        if ($period === 'today') {
+            for ($i = 0; $i < 24; $i++) {
+                $labels[] = date('h A', mktime($i, 0, 0));
+                $ordersData[] = (clone $query)->whereDate('created_at', date('Y-m-d'))
+                    ->whereRaw('HOUR(created_at) = ?', [$i])
+                    ->count();
+                $collectionData[] = (clone $query)->whereDate('created_at', date('Y-m-d'))
+                    ->whereRaw('HOUR(created_at) = ?', [$i])
+                    ->sum('paid_amount');
+                $dueData[] = (clone $query)->whereDate('created_at', date('Y-m-d'))
+                    ->whereRaw('HOUR(created_at) = ?', [$i])
+                    ->sum('due_amount');
+            }
+        } elseif ($period === 'week') {
+            $start = new \DateTime($startDate);
+            $end = new \DateTime($endDate);
+            $interval = new \DateInterval('P1D');
+            $daterange = new \DatePeriod($start, $interval, $end);
+
+            foreach ($daterange as $date) {
+                $labels[] = $date->format('D');
+                $dateStr = $date->format('Y-m-d');
+                $ordersData[] = (clone $query)->whereDate('created_at', $dateStr)->count();
+                $collectionData[] = (clone $query)->whereDate('created_at', $dateStr)->sum('paid_amount');
+                $dueData[] = (clone $query)->whereDate('created_at', $dateStr)->sum('due_amount');
+            }
+        } else {
+            $start = new \DateTime($startDate);
+            $end = new \DateTime($endDate);
+            $interval = new \DateInterval('P1D');
+            $daterange = new \DatePeriod($start, $interval, $end);
+
+            foreach ($daterange as $date) {
+                $labels[] = $date->format('d M');
+                $dateStr = $date->format('Y-m-d');
+                $ordersData[] = (clone $query)->whereDate('created_at', $dateStr)->count();
+                $collectionData[] = (clone $query)->whereDate('created_at', $dateStr)->sum('paid_amount');
+                $dueData[] = (clone $query)->whereDate('created_at', $dateStr)->sum('due_amount');
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'orders' => $ordersData,
+            'collection' => $collectionData,
+            'due' => $dueData,
+        ];
     }
 
     public function logout(Request $request)
