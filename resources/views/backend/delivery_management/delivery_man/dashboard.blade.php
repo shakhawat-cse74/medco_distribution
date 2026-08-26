@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
     <link rel="stylesheet" href="{{ asset('vendor/bootstrap/css/bootstrap-datepicker.min.css') }}" type="text/css">
     <link rel="stylesheet" href="{{ asset('css/style.default.css') }}" type="text/css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="page">
@@ -32,17 +33,14 @@
         </header>
 
         <div class="page-block">
-            <div class="row">
+            <div class="row mb-4">
                 <div class="col-12">
-                    <div class="page-header">
-                        <div class="page-block">
-                            <div class="row align-items-center">
-                                <div class="col-12">
-                                    <h3 class="page-title">My Dashboard</h3>
-                                    <ul class="breadcrumb">
-                                        <li class="breadcrumb-item"><a href="{{ route('delivery-man.dashboard') }}"><i class="ti ti-home"></i> Dashboard</a></li>
-                                    </ul>
-                                </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary period-tab active" data-period="today">Today</button>
+                                <button type="button" class="btn btn-outline-primary period-tab" data-period="week">Weekly</button>
+                                <button type="button" class="btn btn-outline-primary period-tab" data-period="month">Monthly</button>
                             </div>
                         </div>
                     </div>
@@ -57,7 +55,7 @@
                                 <i class="ti ti-shopping-cart bg-success rounded-circle p-3 text-white me-3"></i>
                                 <div>
                                     <h6>Total Orders</h6>
-                                    <h3>{{ $totalOrders }}</h3>
+                                    <h3 id="total_orders">{{ $totalOrders }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -71,7 +69,7 @@
                                 <i class="ti ti-check bg-primary rounded-circle p-3 text-white me-3"></i>
                                 <div>
                                     <h6>Completed</h6>
-                                    <h3>{{ $completedOrders }}</h3>
+                                    <h3 id="completed_orders">{{ $completedOrders }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -85,7 +83,7 @@
                                 <i class="ti ti-clock bg-warning rounded-circle p-3 text-white me-3"></i>
                                 <div>
                                     <h6>Pending</h6>
-                                    <h3>{{ $pendingOrders }}</h3>
+                                    <h3 id="pending_orders">{{ $pendingOrders }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -99,7 +97,7 @@
                                 <i class="ti ti-x bg-danger rounded-circle p-3 text-white me-3"></i>
                                 <div>
                                     <h6>Cancelled</h6>
-                                    <h3>{{ $cancelledOrders }}</h3>
+                                    <h3 id="cancelled_orders">{{ $cancelledOrders }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -108,28 +106,14 @@
             </div>
 
             <div class="row mt-4">
-                <div class="col-md-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <i class="ti ti-calendar bg-info rounded-circle p-3 text-white me-3"></i>
-                                <div>
-                                    <h6>Today Orders</h6>
-                                    <h3>{{ $todayOrders }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="col-md-3">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <i class="ti ti-money bg-success rounded-circle p-3 text-white me-3"></i>
                                 <div>
-                                    <h6>Today Collection</h6>
-                                    <h3>{{ number_format($todayCollection, 2) }}</h3>
+                                    <h6>Total Collection</h6>
+                                    <h3 id="total_collection">{{ number_format($totalCollection, 2) }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -140,10 +124,10 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
-                                <i class="ti ti-report bg-primary rounded-circle p-3 text-white me-3"></i>
+                                <i class="ti ti-credit-card bg-danger rounded-circle p-3 text-white me-3"></i>
                                 <div>
-                                    <h6>Week Orders</h6>
-                                    <h3>{{ $weekOrders }}</h3>
+                                    <h6>Total Due</h6>
+                                    <h3 id="total_due">{{ number_format($totalDue, 2) }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -154,10 +138,24 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
-                                <i class="ti ti-chart-bar bg-warning rounded-circle p-3 text-white me-3"></i>
+                                <i class="ti ti-chart-bar bg-info rounded-circle p-3 text-white me-3"></i>
                                 <div>
-                                    <h6>Month Orders</h6>
-                                    <h3>{{ $monthOrders }}</h3>
+                                    <h6>Total Deliveries</h6>
+                                    <h3>{{ $totalDeliveries }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="ti ti-cash bg-warning rounded-circle p-3 text-white me-3"></i>
+                                <div>
+                                    <h6>Total Commission</h6>
+                                    <h3>{{ number_format($totalCommission, 2) }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -166,84 +164,33 @@
             </div>
 
             <div class="row mt-4">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>My Profile</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="text-center mb-3">
-                                @if($deliveryMan->image)
-                                    <img src="{{ asset('images/delivery_man/' . $deliveryMan->image) }}" class="rounded-circle" width="100" height="100">
-                                @else
-                                    <i class="ti ti-user bg-secondary rounded-circle p-3 text-white" style="width: 100px; height: 100px;"></i>
-                                @endif
-                                <h5 class="mt-3">{{ $deliveryMan->name }}</h5>
-                                <p class="text-muted">{{ $deliveryMan->phone_number }}</p>
-                            </div>
-                            <ul class="list-group">
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span>Email:</span>
-                                    <span>{{ $deliveryMan->email }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span>Vehicle:</span>
-                                    <span>{{ $deliveryMan->vehicle_type ?? 'N/A' }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span>Warehouse:</span>
-                                    <span>{{ $deliveryMan->warehouse->name ?? 'N/A' }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span>Status:</span>
-                                    <span class="badge bg-{{ $deliveryMan->is_active ? 'success' : 'danger' }}">{{ $deliveryMan->is_active ? 'Active' : 'Inactive' }}</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="col-md-8">
                     <div class="card">
                         <div class="card-header">
-                            <h5>Financial Summary</h5>
+                            <h5 class="m-b-0">Orders & Collection Trend</h5>
                         </div>
                         <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between">
-                                            <span>Total Collection:</span>
-                                            <strong>{{ number_format($totalCollection, 2) }}</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span>Total Due:</span>
-                                            <strong class="text-danger">{{ number_format($totalDue, 2) }}</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span>Week Collection:</span>
-                                            <strong>{{ number_format($weekCollection, 2) }}</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span>Month Collection:</span>
-                                            <strong>{{ number_format($monthCollection, 2) }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="alert alert-info">
-                                        <h6>Status Overview</h6>
-                                        <p class="mb-1">Today: {{ $todayOrders }} orders, Collection: {{ number_format($todayCollection, 2) }}, Due: {{ number_format($todayDue, 2) }}</p>
-                                        <p class="mb-0">You have {{ $pendingOrders }} pending orders to complete.</p>
-                                    </div>
-                                </div>
-                            </div>
+                            <canvas id="ordersChart" height="80"></canvas>
                         </div>
                     </div>
-
-                    <div class="card mt-4">
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
                         <div class="card-header">
-                            <h5>Recent Orders</h5>
+                            <h5 class="m-b-0">Order Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="statusChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="m-b-0">Recent Orders</h5>
                         </div>
                         <div class="card-body">
                             @if($recentOrders->count() > 0)
@@ -284,5 +231,92 @@
             </div>
         </div>
     </div>
+
+    <script type="text/javascript">
+    $(document).ready(function() {
+        const chartData = @json($chartData);
+        let ordersChartInstance = null;
+        let statusChartInstance = null;
+
+        function initCharts() {
+            const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+            if (ordersChartInstance) ordersChartInstance.destroy();
+            ordersChartInstance = new Chart(ordersCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Orders',
+                            data: chartData.orders,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Collection',
+                            data: chartData.collection,
+                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            type: 'line',
+                            yAxisID: 'y1',
+                        },
+                        {
+                            label: 'Due',
+                            data: chartData.due,
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            type: 'line',
+                            yAxisID: 'y1',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Orders' } },
+                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Amount' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            if (statusChartInstance) statusChartInstance.destroy();
+            statusChartInstance = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Pending', 'Cancelled'],
+                    datasets: [{
+                        data: [{{ $completedOrders }}, {{ $pendingOrders }}, {{ $cancelledOrders }}],
+                        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        initCharts();
+
+        $('.period-tab').on('click', function() {
+            const period = $(this).data('period');
+            $('.period-tab').removeClass('active');
+            $(this).addClass('active');
+            window.location.href = '{{ route('delivery-man.dashboard') }}?period=' + period;
+        });
+    });
+    </script>
 </body>
 </html>
