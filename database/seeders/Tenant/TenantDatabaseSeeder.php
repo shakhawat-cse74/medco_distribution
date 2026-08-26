@@ -2126,6 +2126,26 @@ class TenantDatabaseSeeder extends Seeder
                 'name' => 'delivery_notifications-create',
                 'guard_name' => 'web',
             ],
+            [
+                'name' => 'delivery-reports-index',
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => 'warehouse-products-index',
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => 'warehouse-products-add',
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => 'warehouse-products-edit',
+                'guard_name' => 'web',
+            ],
+            [
+                'name' => 'warehouse-products-delete',
+                'guard_name' => 'web',
+            ],
         ];
 
         $insertData = [];
