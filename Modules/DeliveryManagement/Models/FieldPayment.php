@@ -2,6 +2,7 @@
 
 namespace Modules\DeliveryManagement\Models;
 
+use App\Models\GiftCard;
 use Illuminate\Database\Eloquent\Model;
 
 class FieldPayment extends Model
