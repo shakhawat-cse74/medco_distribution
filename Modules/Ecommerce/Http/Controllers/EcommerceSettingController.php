@@ -63,6 +63,7 @@ class EcommerceSettingController extends Controller
             'gift_card'           => $request->gift_card,
             'active_place_order'     => $request->has('active_place_order') ? 1 : 0,
             'active_whatsapp_order'  => $request->has('active_whatsapp_order') ? 1 : 0,
+            'cash_on_delivery'       => $request->has('cash_on_delivery') ? 1 : 0,
         ];
 
         if(!isset($request->gift_card)){

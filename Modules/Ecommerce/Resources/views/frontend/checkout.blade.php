@@ -161,6 +161,103 @@ if(auth()->user() && auth()->user()->role_id != 5){
         .rtl .bootstrap-select .dropdown-toggle .filter-option-inner-inner {text-align: right}
         .rtl .sub_total,.rtl #total,.rtl #shipping_cost,.rtl .cart-item .item-total,.rtl .cart-item .price{direction: rtl; unicode-bidi: bidi-override;}
         @endif
+
+        /* Payment Methods Modern Cards */
+        .payment-methods-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .payment-method-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background: #ffffff;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.2s ease-in-out;
+            user-select: none;
+            text-align: left;
+        }
+        .payment-method-card:hover {
+            border-color: #94a3b8;
+            background: #f8fafc;
+        }
+        .payment-method-card.selected {
+            border-color: var(--theme-color, #1e7e34) !important;
+            background: #f0fdf4 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .payment-method-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .custom-radio-indicator {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .custom-radio-indicator input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            margin: 0;
+            z-index: 2;
+        }
+        .radio-check-dot {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cbd5e1;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            transition: all 0.2s ease;
+            background: #fff;
+        }
+        .payment-method-card.selected .radio-check-dot,
+        .payment-method-card input[type="radio"]:checked + .radio-check-dot {
+            border-color: var(--theme-color, #1e7e34);
+            background: var(--theme-color, #1e7e34);
+            box-shadow: inset 0 0 0 3px #fff;
+        }
+        .payment-method-info {
+            text-align: left;
+        }
+        .payment-method-name {
+            font-size: 14px;
+            color: #1e293b;
+            line-height: 1.3;
+            display: block;
+        }
+        .payment-method-desc {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .payment-method-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.85;
+            flex-shrink: 0;
+        }
+        .rtl .payment-method-card {
+            text-align: right;
+        }
+        .rtl .payment-method-info {
+            text-align: right;
+        }
     </style>
 
     @if(isset($ecommerce_setting->custom_css))
@@ -1007,48 +1104,95 @@ if(auth()->user() && auth()->user()->role_id != 5){
                             </div>
                             @endif
 
-                            @foreach($gateways as $gateway)
-                                @if($gateway->module_status->ecommerce == 1)
-                                    <label for="{{$gateway->name}}" class="button sm style3 pay-button online">
-                                        <input type="radio" id="{{$gateway->name}}" name="payment_mode" value="{{$gateway->name}}" required>
-                                        {{$gateway->name}}
+                            <div class="payment-methods-wrapper mt-3 mb-3 text-left">
+                                <h6 class="payment-section-title mb-3 font-weight-bold" style="font-size: 15px; color: #333; display: flex; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-outlined" style="font-size: 20px; color: var(--theme-color, #1e7e34);">payments</span>
+                                    <span>{{__('db.Payment Method') ?? 'Payment Method'}}</span>
+                                </h6>
+
+                                <div class="payment-methods-grid">
+                                    {{-- Cash on Delivery Option --}}
+                                    @if(!isset($ecommerce_setting->cash_on_delivery) || $ecommerce_setting->cash_on_delivery == 1)
+                                    <label for="Cash" class="payment-method-card selected" id="card-Cash">
+                                        <div class="payment-method-left">
+                                            <div class="custom-radio-indicator">
+                                                <input type="radio" checked id="Cash" name="payment_mode" value="Cash on Delivery" required>
+                                                <span class="radio-check-dot"></span>
+                                            </div>
+                                            <div class="payment-method-info">
+                                                <span class="payment-method-name font-weight-bold">{{__('db.Cash on Delivery')}}</span>
+                                                <span class="payment-method-desc text-muted small d-block">{{__('db.Pay with cash upon delivery') ?? 'Pay with cash upon delivery'}}</span>
+                                            </div>
+                                        </div>
+                                        <div class="payment-method-icon">
+                                            <span class="material-symbols-outlined" style="font-size: 26px; color: #16a34a;">local_shipping</span>
+                                        </div>
                                     </label>
-                                @endif
-                            @endforeach
+                                    @endif
 
-                            <label for="Cash" class="button sm style3 pay-button cash">
-                                <input type="radio" checked id="Cash" name="payment_mode" value="Cash on Delivery" required>
-                                {{__('db.Cash on Delivery')}}
-                            </label>
+                                    {{-- Online Payment Gateways --}}
+                                    @foreach($gateways as $gateway)
+                                        @if($gateway->module_status->ecommerce == 1)
+                                        <label for="{{$gateway->name}}" class="payment-method-card" id="card-{{$gateway->name}}">
+                                            <div class="payment-method-left">
+                                                <div class="custom-radio-indicator">
+                                                    <input type="radio" id="{{$gateway->name}}" name="payment_mode" value="{{$gateway->name}}" required>
+                                                    <span class="radio-check-dot"></span>
+                                                </div>
+                                                <div class="payment-method-info">
+                                                    <span class="payment-method-name font-weight-bold">{{$gateway->name}}</span>
+                                                    <span class="payment-method-desc text-muted small d-block">{{__('db.Pay securely with') ?? 'Pay securely with'}} {{$gateway->name}}</span>
+                                                </div>
+                                            </div>
+                                            <div class="payment-method-icon">
+                                                <span class="material-symbols-outlined" style="font-size: 26px; color: #2563eb;">credit_card</span>
+                                            </div>
+                                        </label>
+                                        @endif
+                                    @endforeach
 
-                            @if(isset($ecommerce_setting->qr_code))
-                            <label for="qr_code" class="button sm style3 pay-button qr_code">
-                                <input type="radio" id="qr_code" name="payment_mode" value="qr_code" required>
-                                {{__('QR Code')}}
-                            </label>
+                                    {{-- QR Code Option --}}
+                                    @if(isset($ecommerce_setting->qr_code))
+                                    <label for="qr_code" class="payment-method-card" id="card-qr_code">
+                                        <div class="payment-method-left">
+                                            <div class="custom-radio-indicator">
+                                                <input type="radio" id="qr_code" name="payment_mode" value="qr_code" required>
+                                                <span class="radio-check-dot"></span>
+                                            </div>
+                                            <div class="payment-method-info">
+                                                <span class="payment-method-name font-weight-bold">{{__('QR Code')}}</span>
+                                                <span class="payment-method-desc text-muted small d-block">{{__('db.Scan QR code to pay') ?? 'Scan QR code to pay'}}</span>
+                                            </div>
+                                        </div>
+                                        <div class="payment-method-icon">
+                                            <span class="material-symbols-outlined" style="font-size: 26px; color: #9333ea;">qr_code_2</span>
+                                        </div>
+                                    </label>
 
-                            <div id="qr_code_section" class="text-center mb-2 mt-3">
-                                @php
-                                    $qrCodes = json_decode($ecommerce_setting->qr_code ?? '[]', true);
-                                    $currencyQr = collect($qrCodes)->firstWhere('id', $currency->id);
-                                @endphp
+                                    <div id="qr_code_section" class="text-center mb-3 mt-2 p-3" style="background:#f8fafc; border-radius:8px; border:1px dashed #cbd5e1; display:none;">
+                                        @php
+                                            $qrCodes = json_decode($ecommerce_setting->qr_code ?? '[]', true);
+                                            $currencyQr = collect($qrCodes)->firstWhere('id', $currency->id);
+                                        @endphp
 
-                                @if(isset($currencyQr['qr_code']))
-                                    <img src="{{ url('frontend/images/' . $currencyQr['qr_code']) }}" alt="QR Code" class="img-fluid mb-2">
-                                @else
-                                    <p>No QR code found for this currency.</p>
-                                @endif
+                                        @if(isset($currencyQr['qr_code']))
+                                            <img src="{{ url('frontend/images/' . $currencyQr['qr_code']) }}" alt="QR Code" class="img-fluid mb-2" style="max-height:160px; border-radius:8px;">
+                                        @else
+                                            <p class="text-muted small">No QR code found for this currency.</p>
+                                        @endif
 
-                                <p class="mb-1">{{__('db.Scan the QR code to pay')}}</p>
+                                        <p class="mb-1 font-weight-bold small">{{__('db.Scan the QR code to pay')}}</p>
 
-                                <p class="mb-2" data-toggle="collapse" data-target="#collapsePaymentProof" aria-expanded="false" aria-controls="collapsePaymentProof" style="cursor:pointer;text-decoration:underline">{{__('db.Upload payment proof')}}</p>
-                                <div class="collapse mb-3" id="collapsePaymentProof">
-                                    <div class="input-group">
-                                        <input type="file" class="form-control" name="payment_proof" accept="image">
+                                        <p class="mb-2" data-toggle="collapse" data-target="#collapsePaymentProof" aria-expanded="false" aria-controls="collapsePaymentProof" style="cursor:pointer;text-decoration:underline; font-size:13px; color:#2563eb;">{{__('db.Upload payment proof')}}</p>
+                                        <div class="collapse mb-2" id="collapsePaymentProof">
+                                            <div class="input-group">
+                                                <input type="file" class="form-control" name="payment_proof" accept="image/*">
+                                            </div>
+                                        </div>
                                     </div>
+                                    @endif
                                 </div>
                             </div>
-                            @endif
 
                             <div class="col-md-12 payment-details">
                                 <input type="hidden" id="gift_card_id" name="gift_card_id" value="">
@@ -1195,20 +1339,29 @@ if(auth()->user() && auth()->user()->role_id != 5){
             $(y).val($(x).val());
         }
 
-        if ($('#qr_code').is(':checked')) {
-            $('#qr_code_section').show();
-        } else {
-            $('#qr_code_section').hide();
+        function updatePaymentCards() {
+            $('.payment-method-card').removeClass('selected');
+            var $checked = $('input[name="payment_mode"]:checked');
+            $checked.closest('.payment-method-card').addClass('selected');
+
+            if ($('#qr_code').is(':checked')) {
+                $('#qr_code_section').slideDown(200);
+            } else {
+                $('#qr_code_section').slideUp(200);
+            }
         }
 
-        $('input[name="payment_mode"]').on('change', function() {
-            // Show or hide QR code section
-            if ($('#qr_code').is(':checked')) {
-                $('#qr_code_section').show();
-            } else {
-                $('#qr_code_section').hide();
+        $(document).on('change', 'input[name="payment_mode"]', function() {
+            updatePaymentCards();
+        });
+
+        $(document).on('click', '.payment-method-card', function(e) {
+            if (!$(e.target).is('input[type="radio"]')) {
+                $(this).find('input[type="radio"]').prop('checked', true).trigger('change');
             }
         });
+
+        updatePaymentCards();
 
         $("#register_guest").on('click', function(){
             if($("#register_guest").prop('checked') == true){
@@ -1544,12 +1697,6 @@ if(auth()->user() && auth()->user()->role_id != 5){
                 $('#billingAddress').addClass('show');
             }
         });
-
-        $(document).on('click', '.pay-button', function(e) {
-            $('.pay-button').removeClass('selected');
-            $(this).toggleClass('selected');
-        });
-
 
        /* whatsapp order */
     function formatPhoneNumber(number) {

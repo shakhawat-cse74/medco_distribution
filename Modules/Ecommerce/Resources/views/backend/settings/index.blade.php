@@ -230,6 +230,19 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <div class="custom-control custom-checkbox mt-4">
+                                        <input type="checkbox" class="custom-control-input" id="cash_on_delivery"
+                                            name="cash_on_delivery" value="1"
+                                            @if(!isset($settings->cash_on_delivery) || $settings->cash_on_delivery == 1) checked @endif>
+                                        <label class="custom-control-label fw-500" for="cash_on_delivery">
+                                            {{__('db.Active Cash on Delivery')}}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox mt-4">
                                         <input type="checkbox" class="custom-control-input" id="active_place_order"
                                             name="active_place_order" value="1"
                                             @if(!isset($settings->active_place_order) || $settings->active_place_order == 1) checked @endif>
