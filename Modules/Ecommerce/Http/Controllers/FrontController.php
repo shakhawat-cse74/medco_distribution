@@ -161,7 +161,7 @@ class FrontController extends Controller
         $brand = DB::table('brands')->where('id',$product->brand_id)->first();
 
         $categories = Cache::get('category_list');
-        $category = $categories->where('id',$product->category_id)->first();
+        $category = $categories ? $categories->where('id',$product->category_id)->first() : DB::table('categories')->where('id',$product->category_id)->first();
 
         $product_arr = explode(',',$product->related_products);
         $related_products = DB::table('products')->whereIn('id',$product_arr)->get();
@@ -344,7 +344,7 @@ class FrontController extends Controller
 
     public function shop()
     {
-        $categories = cache('category_list')->where('parent_id', Null);
+        $categories = cache('category_list') ? cache('category_list')->where('parent_id', Null) : DB::table('categories')->where('is_active', true)->whereNull('parent_id')->get();
 
         return view('ecommerce::frontend.shop', compact('categories'));
     }

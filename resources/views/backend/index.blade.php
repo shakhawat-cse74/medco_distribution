@@ -67,6 +67,7 @@
         $color_rgba = 'rgba(52, 73, 94, 0.8)';
     }
 @endphp
+
     <div class="row">
 
         <div class="container-fluid">

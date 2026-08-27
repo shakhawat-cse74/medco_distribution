@@ -188,7 +188,7 @@ class CategoryController extends Controller
         if(isset($request->is_sync_disable))
             $lims_category_data['is_sync_disable'] = $request->is_sync_disable;
 
-        if(in_array('ecommerce', explode(',',config('addons')))) {
+        if(in_array('ecommerce', explode(',', gen_setting()->modules ?? config('addons') ?? ''))) {
             $lims_category_data['slug'] = Str::slug($request->name, '-');
             if($request->featured == 1){
                 $lims_category_data['featured'] = 1;
@@ -281,7 +281,7 @@ class CategoryController extends Controller
         if(!isset($input['is_sync_disable']) && \Schema::hasColumn('categories', 'is_sync_disable'))
             $input['is_sync_disable'] = null;
 
-        if(in_array('ecommerce', explode(',',config('addons')))) {
+        if(in_array('ecommerce', explode(',', gen_setting()->modules ?? config('addons') ?? ''))) {
             $input['slug'] = Str::slug($request->name, '-');
             if($request->featured == 1){
                 $input['featured'] = 1;
@@ -299,10 +299,7 @@ class CategoryController extends Controller
 
     public function import(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:csv',
-        ]);
-
+        //get file
         $upload=$request->file('file');
         $ext = pathinfo($upload->getClientOriginalName(), PATHINFO_EXTENSION);
         if($ext != 'csv')
@@ -319,7 +316,7 @@ class CategoryController extends Controller
             $escapedItem=preg_replace('/[^a-z]/', '', $lheader);
             array_push($escapedHeader, $escapedItem);
         }
-        //looping through othe columns
+        //looping through other rows
         while($columns=fgetcsv($file))
         {
             if($columns[0]=="")
@@ -336,8 +333,8 @@ class CategoryController extends Controller
             else
                 $parent_id = null;
 
-            if(in_array('ecommerce', explode(',',config('addons')))) {
-                $input['slug'] = Str::slug($data['name'], '-');
+            if(in_array('ecommerce', explode(',', gen_setting()->modules ?? config('addons') ?? ''))) {
+                $category->slug = Str::slug($data['name'], '-');
             }
 
             $category->parent_id = $parent_id;

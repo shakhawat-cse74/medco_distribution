@@ -1,5 +1,7 @@
     @php
-        $products = DB::table('products')->where('is_active', true)->where('category_id',$widget->product_category_id)->get();
+        $sub_cat_ids = DB::table('categories')->where('parent_id', $widget->product_category_id)->where('is_active', true)->pluck('id')->toArray();
+        $cat_ids = array_merge([$widget->product_category_id], $sub_cat_ids);
+        $products = DB::table('products')->where('is_active', true)->where('is_online', true)->whereIn('category_id', $cat_ids)->get();
     @endphp
     <!--Product area starts-->
     <section class="product-tab-section">

@@ -185,47 +185,34 @@ class ProductController extends Controller
         }
 
         $totalData = $baseQuery->count();
-        $totalFiltered = $totalData;
-
-        // Clone query for actual data retrieval
-        $query = clone $baseQuery;
 
         $search = $request->input('search.value');
 
         if (!empty($search)) {
+            $brandIds = Brand::where('title', 'LIKE', "%{$search}%")->pluck('id')->toArray();
+            $categoryIds = Category::where('name', 'LIKE', "%{$search}%")->pluck('id')->toArray();
+            $variantProductIds = ProductVariant::where('item_code', 'LIKE', "%{$search}%")->pluck('product_id')->toArray();
+            $imeiProductIds = ProductPurchase::where('imei_number', 'LIKE', "%{$search}%")->pluck('product_id')->toArray();
 
-            $productIds = Product::query()
-                ->where('name', 'LIKE', "%{$search}%")
-                ->orWhere('code', 'LIKE', "%{$search}%")
-                ->pluck('id');
+            $baseQuery->where(function ($q) use ($search, $brandIds, $categoryIds, $variantProductIds, $imeiProductIds, $field_names) {
+                $q->where('products.name', 'LIKE', "%{$search}%")
+                  ->orWhere('products.code', 'LIKE', "%{$search}%");
 
-            $variantIds = ProductVariant::where('item_code', 'LIKE', "%{$search}%")
-                ->pluck('product_id');
+                if (!empty($variantProductIds)) {
+                    $q->orWhereIn('products.id', $variantProductIds);
+                }
 
-            $imeiIds = ProductPurchase::where('imei_number', 'LIKE', "%{$search}%")
-                ->pluck('product_id');
+                if (!empty($imeiProductIds)) {
+                    $q->orWhereIn('products.id', $imeiProductIds);
+                }
 
-            $brandIds = Brand::where('title', 'LIKE', "%{$search}%")
-                ->pluck('id');
-
-            $categoryIds = Category::where('name', 'LIKE', "%{$search}%")
-                ->pluck('id');
-
-            $query->where(function ($q) use ($productIds, $variantIds, $imeiIds, $brandIds, $categoryIds, $field_names, $search) {
-                if ($productIds->isNotEmpty())
-                    $q->whereIn('products.id', $productIds);
-
-                if ($variantIds->isNotEmpty())
-                    $q->orWhereIn('products.id', $variantIds);
-
-                if ($imeiIds->isNotEmpty())
-                    $q->orWhereIn('products.id', $imeiIds);
-
-                if ($brandIds->isNotEmpty())
+                if (!empty($brandIds)) {
                     $q->orWhereIn('products.brand_id', $brandIds);
+                }
 
-                if ($categoryIds->isNotEmpty())
+                if (!empty($categoryIds)) {
                     $q->orWhereIn('products.category_id', $categoryIds);
+                }
 
                 // custom fields
                 foreach ($field_names as $field_name) {
@@ -234,11 +221,13 @@ class ProductController extends Controller
                 }
             });
 
-
-
-            // FIX: distinct() without column
-            $totalFiltered = $search ? (clone $query)->distinct()->count('products.id') : $totalData;
+            $totalFiltered = (clone $baseQuery)->distinct()->count('products.id');
+        } else {
+            $totalFiltered = $totalData;
         }
+
+        // Clone query for actual data retrieval
+        $query = clone $baseQuery;
 
         // Pagination + ordering
         if ($limit) {
@@ -507,7 +496,7 @@ class ProductController extends Controller
 
             $data['name'] = preg_replace('/[\n\r]/', "<br>", htmlspecialchars(trim($data['name']), ENT_QUOTES));
 
-            if(in_array('ecommerce', explode(',',config('addons')))) {
+            if(in_array('ecommerce', explode(',', gen_setting()->modules ?? config('addons') ?? ''))) {
                 $baseSlug = Str::slug($data['name'], '-');
                 $baseSlug = preg_replace('/[^A-Za-z0-9\-]/', '', $baseSlug);
                 $baseSlug = str_replace( '\/', '/', $baseSlug );
@@ -2955,7 +2944,7 @@ class ProductController extends Controller
 
     public function allProductInStock()
     {
-        if (!in_array('ecommerce', explode(',', config('addons'))))
+        if (!in_array('ecommerce', explode(',', gen_setting()->modules ?? config('addons') ?? '')))
             return redirect()->back()->with('not_permitted', __('db.Please install the ecommerce addon!'));
         Product::where('is_active', true)->update(['in_stock' => true]);
         return redirect()->back()->with('create_message', __('db.All Products set to in stock successfully!'));
@@ -2963,7 +2952,7 @@ class ProductController extends Controller
 
     public function showAllProductOnline()
     {
-        if (!in_array('ecommerce', explode(',', config('addons'))))
+        if (!in_array('ecommerce', explode(',', gen_setting()->modules ?? config('addons') ?? '')))
             return redirect()->back()->with('not_permitted', __('db.Please install the ecommerce addon!'));
         Product::where('is_active', true)->update(['is_online' => true]);
         return redirect()->back()->with('create_message', __('db.All Products will be showed to online!'));

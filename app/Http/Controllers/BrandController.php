@@ -37,7 +37,7 @@ class BrandController extends Controller
 
         $input = $request->except('image');
         $input['is_active'] = true;
-        if(in_array('ecommerce', explode(',',config('addons'))))
+        if(in_array('ecommerce', explode(',', gen_setting()->modules ?? config('addons') ?? '')))
             $input['slug'] = Str::slug($request->title, '-');
         $image = $request->image;
         if ($image) {
@@ -82,7 +82,8 @@ class BrandController extends Controller
         ]);
         $lims_brand_data = Brand::findOrFail($request->brand_id);
         $lims_brand_data->title = $request->title;
-        if(in_array('ecommerce', explode(',',config('addons')))) {
+        if(in_array('ecommerce', explode(',', gen_setting()->modules ?? config('addons') ?? ''))) {
+            $lims_brand_data->slug = Str::slug($request->title, '-');
             $lims_brand_data->page_title = $request->page_title;
             $lims_brand_data->short_description = $request->short_description;
         }

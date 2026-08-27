@@ -48,6 +48,13 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
         $this->app->bind(\App\ViewModels\ISmsModel::class, \App\ViewModels\SmsModel::class);
 
+        try {
+            if (Schema::hasTable('general_settings')) {
+                config(['addons' => gen_setting()->modules ?? '']);
+            }
+        } catch (\Exception $e) {
+        }
+
         if (app()->runningInConsole()) {
             return;
         }
