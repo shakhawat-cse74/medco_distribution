@@ -61,6 +61,7 @@ use App\Http\Controllers\ReportController as ActivityLogController;
 use Modules\Manufacturing\Http\Controllers\ProductionController;
 use Modules\Manufacturing\Http\Controllers\RecipeController;
 use App\Http\Controllers\API\UserAuthController;
+use App\Http\Controllers\API;
 
 use Illuminate\Support\Facades\Route;
 
@@ -86,6 +87,34 @@ Route::group(['middleware' => ['api']], function () {
 });
 
 Route::middleware($middleware)->name('api.')->group(function () {
+    /*
+    |--------------------------------------------------------------------------
+    | Categories, Brands & Products Catalog API Routes (Public App / Web)
+    |--------------------------------------------------------------------------
+    */
+    // Category APIs (Public)
+    Route::prefix('categories')->group(function () {
+        Route::get('/', [API\CategoryController::class, 'index'])->name('catalog.categories.index');
+        Route::get('{idOrSlug}', [API\CategoryController::class, 'show'])->name('catalog.categories.show');
+        Route::get('{idOrSlug}/products', [API\CategoryController::class, 'products'])->name('catalog.categories.products');
+    });
+
+    // Brand APIs (Public)
+    Route::prefix('brands')->group(function () {
+        Route::get('/', [API\BrandController::class, 'index'])->name('catalog.brands.index');
+        Route::get('{idOrSlug}', [API\BrandController::class, 'show'])->name('catalog.brands.show');
+        Route::get('{idOrSlug}/products', [API\BrandController::class, 'products'])->name('catalog.brands.products');
+    });
+
+    // Product APIs (Public)
+    Route::prefix('products')->group(function () {
+        Route::get('/', [API\ProductController::class, 'index'])->name('catalog.products.index');
+        Route::get('featured', [API\ProductController::class, 'featured'])->name('catalog.products.featured');
+        Route::get('promotions', [API\ProductController::class, 'promotions'])->name('catalog.products.promotions');
+        Route::get('{idOrSlug}', [API\ProductController::class, 'show'])->name('catalog.products.show');
+        Route::get('{idOrSlug}/related', [API\ProductController::class, 'related'])->name('catalog.products.related');
+    });
+
     // Route::post('/check', [SetupController::class, 'checkLicense']);
     // Route::get('/offline-api-map', [RouteMapController::class, 'index']);
 
@@ -111,18 +140,18 @@ Route::middleware($middleware)->name('api.')->group(function () {
 
     Route::group(['middleware' => ['auth:sanctum', 'common', 'validate_mobile_token']], function () {
         Route::get('test', [BrandController::class, 'test']);
-        Route::resource('brands', BrandController::class);
+        Route::resource('brands', BrandController::class)->except(['index', 'show']);
         // Category import routes must come BEFORE resource route
         Route::get('categories/import', [CategoryController::class, 'import']);
         Route::post('categories/import', [CategoryController::class, 'import']);
-        Route::resource('categories', CategoryController::class);
+        Route::resource('categories', CategoryController::class)->except(['index', 'show']);
         Route::resource('units', UnitController::class);
         // Product routes - search and import must come BEFORE resource route
         Route::get('products/search', [ProductController::class, 'searchProducts']);
         Route::get('products/search/{query}', [ProductController::class, 'searchProducts']);
         Route::get('products/print-barcode/form', [ProductController::class, 'printBarcodeForm']);
         Route::get('products/import', [ProductController::class, 'import']);
-        Route::resource('products', ProductController::class);
+        Route::resource('products', ProductController::class)->except(['index', 'show']);
         Route::post('products/{id}', [ProductController::class, 'update']);
         // Supplier import routes must come BEFORE resource route
         Route::get('suppliers/import', [SupplierController::class, 'import']);

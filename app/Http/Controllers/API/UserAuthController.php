@@ -50,8 +50,8 @@ class UserAuthController extends Controller
             return $this->unauthorized('Your account has been deactivated. Please contact support.', 403);
         }
 
-        // Generate token and assign to user
-        $token = Str::random(80);
+        // Generate full-length JWT token and assign to user
+        $token = $this->generateJwtToken($user);
         $user->api_token = $token;
         $user->save();
 
@@ -101,18 +101,19 @@ class UserAuthController extends Controller
 
         DB::beginTransaction();
         try {
-            $token = Str::random(80);
-
             $user = User::create([
                 'name'      => $request->name,
                 'email'     => $request->email,
                 'password'  => Hash::make($request->password),
-                'api_token' => $token,
                 'phone'     => $request->phone,
                 'role_id'   => 5, // Customer / Normal User role
                 'is_active' => 1,
                 'is_guest'  => 0,
             ]);
+
+            $token = $this->generateJwtToken($user);
+            $user->api_token = $token;
+            $user->save();
 
             $this->sendOtp($user);
 
@@ -206,8 +207,6 @@ class UserAuthController extends Controller
                 ->where('is_guest', true)
                 ->first();
 
-            $token = Str::random(80);
-
             if (!$user) {
                 $registeredUser = User::where('device_id', $deviceId)
                     ->where('is_guest', false)
@@ -230,15 +229,15 @@ class UserAuthController extends Controller
                     'email'     => 'guest_' . Str::random(8) . '@guest.local',
                     'password'  => Hash::make(Str::random(16)),
                     'device_id' => $deviceId,
-                    'api_token' => $token,
                     'is_guest'  => true,
                     'role_id'   => 5,
                     'is_active' => 1,
                 ]);
-            } else {
-                $user->api_token = $token;
-                $user->save();
             }
+
+            $token = $this->generateJwtToken($user);
+            $user->api_token = $token;
+            $user->save();
 
             return $this->success([
                 'user'  => $this->formatUser($user),
@@ -737,14 +736,12 @@ class UserAuthController extends Controller
                 'name'              => $name ?? 'User_' . Str::random(5),
                 'email'             => $email,
                 'password'          => Hash::make(Str::random(16)),
-                'api_token'         => $token,
                 'email_verified_at' => now(),
                 'apple_id'          => ($provider === 'apple') ? $providerId : null,
                 'role_id'           => 5,
                 'is_active'         => 1,
             ]);
         } else {
-            $user->api_token = $token;
             if ($provider === 'apple' && $providerId && !$user->apple_id) {
                 $user->apple_id = $providerId;
             }
@@ -753,6 +750,10 @@ class UserAuthController extends Controller
             }
             $user->save();
         }
+
+        $token = $this->generateJwtToken($user);
+        $user->api_token = $token;
+        $user->save();
 
         return $this->success([
             'token' => $token,
@@ -869,5 +870,35 @@ class UserAuthController extends Controller
             'created_at'        => $user->created_at ? $user->created_at->toDateTimeString() : null,
             'updated_at'        => $user->updated_at ? $user->updated_at->toDateTimeString() : null,
         ];
+    }
+
+    /**
+     * Generate a standard, full-length JWT Token (Header.Payload.Signature)
+     */
+    protected function generateJwtToken(User $user, int $ttlDays = 30): string
+    {
+        $header = rtrim(strtr(base64_encode(json_encode([
+            'typ' => 'JWT',
+            'alg' => 'HS256',
+        ])), '+/', '-_'), '=');
+
+        $payload = rtrim(strtr(base64_encode(json_encode([
+            'iss'  => config('app.url', 'http://localhost'),
+            'sub'  => $user->id,
+            'iat'  => time(),
+            'exp'  => time() + ($ttlDays * 24 * 60 * 60),
+            'user' => [
+                'id'       => $user->id,
+                'name'     => $user->name,
+                'email'    => $user->email,
+                'role_id'  => $user->role_id,
+                'is_guest' => (bool) $user->is_guest,
+            ],
+        ])), '+/', '-_'), '=');
+
+        $secretKey = config('app.key', 'base64:SecretKeyForMedcoDistribution');
+        $signature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$header.$payload", $secretKey, true)), '+/', '-_'), '=');
+
+        return "$header.$payload.$signature";
     }
 }
