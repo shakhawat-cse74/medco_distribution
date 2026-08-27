@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Project\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EmployeeController;
 use Modules\Project\Http\Controllers\ProjectController;
 use Modules\Project\Http\Controllers\ProjectDiscussionController;
 use Modules\Project\Http\Controllers\ProjectBugController;
@@ -94,6 +94,6 @@ Route::middleware($middlewares)->group(function () {
         Route::post('tasks/{task}/notes', [TaskController::class, 'notesStore'])->name('task_notes.store');
     });
 
-    Route::resource('project-employees', EmployeeController::class);
+    Route::resource('project-employees', '\App\Http\Controllers\EmployeeController');
 
 });

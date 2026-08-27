@@ -948,14 +948,16 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
     });
 
     //ticket routes
-    Route::controller(\App\Http\Controllers\landlord\TicketController::class)->group(function () {
-        Route::get('tickets', 'index')->name('tickets.index');
-        Route::get('tickets/create', 'create')->name('tickets.create');
-        Route::post('tickets', 'store')->name('tickets.store');
-        Route::get('tickets/{id}', 'show')->name('tickets.show');
-        Route::post('tickets/{id}/reply', 'reply')->name('tickets.reply');
-        Route::delete('tickets/{id}', 'destroy')->name('tickets.destroy');
-    });
+    if (class_exists('App\Http\Controllers\landlord\TicketController')) {
+        Route::controller(\App\Http\Controllers\landlord\TicketController::class)->group(function () {
+            Route::get('tickets', 'index')->name('tickets.index');
+            Route::get('tickets/create', 'create')->name('tickets.create');
+            Route::post('tickets', 'store')->name('tickets.store');
+            Route::get('tickets/{id}', 'show')->name('tickets.show');
+            Route::post('tickets/{id}/reply', 'reply')->name('tickets.reply');
+            Route::delete('tickets/{id}', 'destroy')->name('tickets.destroy');
+        });
+    }
 
     Route::controller(DamageStockController::class)->group(function () {
         Route::get('damage-stock/getproduct/{id}',       'getProduct')         ->name('damage-stock.getproduct');

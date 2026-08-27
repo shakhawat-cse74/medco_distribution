@@ -3,66 +3,64 @@
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
-// use App\Http\Controllers\DemoAutoUpdateController;
-use App\Http\Controllers\Api\RegisterController;
-use App\Http\Controllers\Api\LoginController;
-use App\Http\Controllers\Api\HomeController;
-use App\Http\Controllers\Api\BrandController;
-use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\UnitController;
-use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\Api\WarehouseController;
-use App\Http\Controllers\Api\SupplierController;
-use App\Http\Controllers\Api\CurrencyController;
-use App\Http\Controllers\Api\TaxController;
-use App\Http\Controllers\Api\PurchaseController;
-use App\Http\Controllers\Api\CustomerController;
-use App\Http\Controllers\Api\CustomerGroupController;
-use App\Http\Controllers\Api\SaleController;
-use App\Http\Controllers\Api\BillerController;
-use App\Http\Controllers\Api\SettingController;
-use App\Http\Controllers\Api\DiscountPlanController;
-use App\Http\Controllers\Api\DiscountController;
-use App\Http\Controllers\Api\ExpenseCategoryController;
-use App\Http\Controllers\Api\ExpenseController;
-use App\Http\Controllers\Api\IncomeCategoryController;
-use App\Http\Controllers\Api\IncomeController;
-use App\Http\Controllers\Api\AccountController;
-use App\Http\Controllers\Api\InvoiceSettingController;
-use App\Http\Controllers\Api\BarcodeController;
-use App\Http\Controllers\Api\LanguageController;
-use App\Http\Controllers\Api\TableController;
-use App\Http\Controllers\Api\MoneyTransferController;
-use App\Http\Controllers\Api\ReturnSaleController;
-use App\Http\Controllers\Api\ReturnPurchaseController;
-use App\Http\Controllers\Api\TransferController;
-use App\Http\Controllers\Api\PosController;
-use App\Http\Controllers\Api\QuotationController;
-use App\Http\Controllers\Api\ReportController;
-use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\Api\SMSController;
-use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\AdjustmentController;
-use App\Http\Controllers\Api\EmployeeController;
-use App\Http\Controllers\Api\DepartmentController;
-use App\Http\Controllers\Api\PayrollController;
-use App\Http\Controllers\Api\GiftCardController;
-use App\Http\Controllers\Api\CouponController;
-use App\Http\Controllers\Api\DeliveryController;
-use App\Http\Controllers\Api\PackingSlipController;
-use App\Http\Controllers\Api\ChallanController;
-use App\Http\Controllers\Api\HolidayController;
-use App\Http\Controllers\Api\CourierController;
-use App\Http\Controllers\Api\AttendanceController;
-use App\Http\Controllers\Api\RoleController;
-// use App\Http\Controllers\Api\RouteMapController;
-use App\Http\Controllers\Api\StockCountController;
-// use App\Http\Controllers\Api\SetupController;
-use App\Http\Controllers\Api\ProductionController;
-use App\Http\Controllers\Api\RecipeController;
-use App\Http\Controllers\Api\SaleAgentController;
-use App\Http\Controllers\Api\WhatsappController;
-use App\Http\Controllers\Api\ActivityLogController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\BrandController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\UnitController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\TaxController;
+use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CustomerGroupController;
+use App\Http\Controllers\SaleController;
+use App\Http\Controllers\BillerController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\DiscountPlanController;
+use App\Http\Controllers\DiscountController;
+use App\Http\Controllers\ExpenseCategoryController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\IncomeCategoryController;
+use App\Http\Controllers\IncomeController;
+use App\Http\Controllers\AccountsController as AccountController;
+use App\Http\Controllers\InvoiceSettingController;
+use App\Http\Controllers\BarcodeController;
+use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\TableController;
+use App\Http\Controllers\MoneyTransferController;
+use App\Http\Controllers\ReturnController as ReturnSaleController;
+use App\Http\Controllers\ReturnPurchaseController;
+use App\Http\Controllers\TransferController;
+use App\Http\Controllers\SaleController as PosController;
+use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SmsTemplateController as SMSController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdjustmentController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\GiftCardController;
+use App\Http\Controllers\CouponController;
+use App\Http\Controllers\DeliveryController;
+use App\Http\Controllers\PackingSlipController;
+use App\Http\Controllers\ChallanController;
+use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\CourierController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\StockCountController;
+use App\Http\Controllers\SaleAgentController;
+use App\Http\Controllers\WhatsappController;
+use App\Http\Controllers\ReportController as ActivityLogController;
+use Modules\Manufacturing\Http\Controllers\ProductionController;
+use Modules\Manufacturing\Http\Controllers\RecipeController;
+use App\Http\Controllers\API\UserAuthController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -599,4 +597,36 @@ Route::middleware($middleware)->name('api.')->group(function () {
 
         Route::resource('users', UserController::class);
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Auth & Profile API Routes (Mobile / App / Postman)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('user')->group(function () {
+        // Public Auth Routes
+        Route::post('register', [UserAuthController::class, 'UserRegister'])->name('user.register');
+        Route::post('login', [UserAuthController::class, 'login'])->name('user.login');
+        Route::post('guest-login', [UserAuthController::class, 'guestLogin'])->name('user.guestLogin');
+        Route::post('forgot-password', [UserAuthController::class, 'forgetPassword'])->name('user.forgotPassword');
+        Route::post('verify-otp', [UserAuthController::class, 'verifyOtp'])->name('user.verifyOtp');
+        Route::post('resend-otp', [UserAuthController::class, 'resendOtp'])->name('user.resendOtp');
+        Route::post('reset-password', [UserAuthController::class, 'resetPassword'])->name('user.resetPassword');
+        Route::post('google-login', [UserAuthController::class, 'googleLogin'])->name('user.googleLogin');
+        Route::post('apple-login', [UserAuthController::class, 'appleLogin'])->name('user.appleLogin');
+        Route::post('app-account-delete', [UserAuthController::class, 'appAccountDelete'])->name('user.appAccountDelete');
+
+        // Authenticated User Routes (auth:api)
+        Route::middleware('auth:api')->group(function () {
+            Route::post('verify-email', [UserAuthController::class, 'verifyEmail'])->name('user.verifyEmail');
+            Route::get('profile', [UserAuthController::class, 'showUser'])->name('user.profile');
+            Route::post('update-profile', [UserAuthController::class, 'updateProfile'])->name('user.updateProfile');
+            Route::post('change-password', [UserAuthController::class, 'changePassword'])->name('user.changePassword');
+            Route::post('fcm-token', [UserAuthController::class, 'fmstoreFcmToken'])->name('user.storeFcmToken');
+            Route::delete('fcm-token', [UserAuthController::class, 'fmdeleteFcmToken'])->name('user.deleteFcmToken');
+            Route::post('logout', [UserAuthController::class, 'logout'])->name('user.logout');
+            Route::delete('account-delete', [UserAuthController::class, 'accountDelete'])->name('user.accountDelete');
+        });
+    });
 });
+

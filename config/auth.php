@@ -42,9 +42,10 @@ return [
         ],
 
         'api' => [
-            'driver' => 'sanctum',
+            'driver' => 'token',
             'provider' => 'users',
             'hash' => false,
+            'storage_key' => 'api_token',
         ],
 
         // ─── Affiliate portal guard ────────────────────────────────────────

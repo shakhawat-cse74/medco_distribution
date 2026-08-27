@@ -1,7 +1,9 @@
 <?php
-use Modules\Ecommerce\Http\Controllers\Api;
+
 use Illuminate\Http\Request;
-use Modules\Ecommerce\Http\Controllers\Api\HomePageController;
+use Illuminate\Support\Facades\Route;
+use Modules\Ecommerce\Http\Controllers\FrontController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -13,13 +15,15 @@ use Modules\Ecommerce\Http\Controllers\Api\HomePageController;
 |
 */
 
-Route::middleware('auth:api')->get('/ecommerce', function (Request $request) {
+Route::middleware('auth:sanctum')->get('/ecommerce', function (Request $request) {
     return $request->user();
 });
 
-	Route::middleware(['ecommerce','web'])->group(function () {
-        Route::get('/home', [HomePageController::class, 'homePage']);
-        Route::get('shop/{category}', [HomePageController::class, 'category']);
-        Route::get('product/{product_name}/{product_id}', [HomePageController::class, 'productDetails']);
-        Route::get('brand/{brand}', [HomePageController::class, 'brandProducts']);
-	});
+if (class_exists(FrontController::class)) {
+    Route::middleware(['ecommerce', 'api'])->group(function () {
+        Route::get('/home', [FrontController::class, 'index']);
+        Route::get('shop/{category}', [FrontController::class, 'shop']);
+        Route::get('product/{product_name}/{product_id}', [FrontController::class, 'productDetails']);
+        Route::get('brand/{brand}', [FrontController::class, 'brandProducts']);
+    });
+}
