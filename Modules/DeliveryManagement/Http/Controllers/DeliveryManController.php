@@ -389,7 +389,6 @@ class DeliveryManController extends Controller
                 $nestedData['phone_number'] = $deliveryMan->phone_number;
                 $nestedData['warehouse_id'] = $deliveryMan->warehouse ? $deliveryMan->warehouse->name : 'N/A';
                 $nestedData['is_active'] = '<span class="badge badge-'.($deliveryMan->is_active ? 'success' : 'danger').'">'.($deliveryMan->is_active ? __('db.Active') : __('db.Inactive')).'</span>';
-                $nestedData['performance'] = '<a href="'.route('delivery-men.performance', $deliveryMan->id).'" class="btn btn-sm btn-info" target="_blank"><i class="ti ti-chart-bar"></i> '.__('db.Performance').'</a>';
                 $nestedData['options'] = '<div class="btn-group">
                             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.__("db.action").'
                               <span class="caret"></span>
