@@ -41,7 +41,6 @@
                                     <th>{{__('db.Phone')}}</th>
                                     <th>{{__('db.Warehouse')}}</th>
                                     <th>{{__('db.status')}}</th>
-                                    <th>{{__('db.Performance')}}</th>
                                     <th class="not-exported">{{__('db.action')}}</th>
                                 </tr>
                             </thead>
@@ -233,7 +232,6 @@
             {"data": "phone_number"},
             {"data": "warehouse_id"},
             {"data": "is_active"},
-            {"data": "performance"},
             {"data": "options"},
         ],
         'language': {
@@ -249,7 +247,7 @@
         'columnDefs': [
             {
                 "orderable": false,
-                'targets': [0, 6]
+                'targets': [0, 5]
             },
             {
                 'render': function(data, type, row, meta){
