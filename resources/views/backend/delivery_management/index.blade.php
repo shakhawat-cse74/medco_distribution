@@ -25,6 +25,7 @@
     </section>
 
     <div class="page-block">
+        @if(!isset($isDeliveryMan) || !$isDeliveryMan)
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -75,14 +76,17 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <div class="row">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="m-b-0">{{ __('db.Delivery List') }}</h5>
+                        @if(!isset($isDeliveryMan) || !$isDeliveryMan)
                         <a href="{{ route('delivery-man-delivery.mapView') }}" class="btn btn-info btn-sm"><i
                                 class="ti ti-map-2"></i> {{ __('db.Map View') }}</a>
+                        @endif
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -169,7 +173,9 @@
                 {"data": "address"},
                 {"data": "status"},
                 {"data": "priority"},
+                @if(!isset($isDeliveryMan) || !$isDeliveryMan)
                 {"data": "options"},
+                @endif
             ],
             'language': {
                 'lengthMenu': '_MENU_ {{ __('db.records per page') }}',
@@ -182,10 +188,17 @@
             },
             order: [['1', 'desc']],
             'columnDefs': [
+                @if(!isset($isDeliveryMan) || !$isDeliveryMan)
                 {
                     "orderable": false,
                     'targets': [0, 7]
                 },
+                @else
+                {
+                    "orderable": false,
+                    'targets': [0]
+                },
+                @endif
                 {
                     'render': function(data, type, row, meta) {
                         if (type === 'display') {

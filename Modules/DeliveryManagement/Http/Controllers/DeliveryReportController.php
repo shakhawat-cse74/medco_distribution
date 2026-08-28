@@ -16,9 +16,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\DeliveryManagement\Traits\ChecksDeliveryManRole;
 
 class DeliveryReportController extends Controller
 {
+    use ChecksDeliveryManRole;
+
     public function index(Request $request)
     {
         $role = Role::find(Auth::user()->role_id);
@@ -36,6 +39,13 @@ class DeliveryReportController extends Controller
             $startDate = $request->input('start_date', date('Y-m-d'));
             $endDate = $request->input('end_date', date('Y-m-d'));
             $selectedDeliveryManId = $request->input('delivery_man_id');
+
+            // If delivery man user, force filter to their own data
+            $isDeliveryMan = $this->isDeliveryManUser();
+            if ($isDeliveryMan) {
+                $authDeliveryMan = $this->getAuthDeliveryMan();
+                $selectedDeliveryManId = $authDeliveryMan ? $authDeliveryMan->id : null;
+            }
 
             switch ($period) {
                 case 'week':
@@ -60,42 +70,63 @@ class DeliveryReportController extends Controller
             $startDateTime = $startDate . ' 00:00:00';
             $endDateTime = $endDate . ' 23:59:59';
 
-            $baseQuery = FieldOrder::query()->whereBetween('created_at', [$startDateTime, $endDateTime]);
+        $activeDeliveryManIds = DeliveryMan::where('is_active', true)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+            $query->where('id', $selectedDeliveryManId);
+        })->pluck('id')->toArray();
+
+        $baseQuery = FieldOrder::query()
+            ->whereIn('delivery_man_id', $activeDeliveryManIds)
+            ->whereBetween('created_at', [$startDateTime, $endDateTime]);
 
             if ($selectedDeliveryManId) {
                 $baseQuery->where('delivery_man_id', $selectedDeliveryManId);
             }
 
-            $stats = [
-                'total_delivery_men' => $lims_delivery_man_list->count(),
+        $stats = [
+                'total_delivery_men' => DeliveryMan::where('is_active', true)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+                    $query->where('id', $selectedDeliveryManId);
+                })->count(),
                 'total_orders' => (clone $baseQuery)->count(),
-                'total_collection' => (clone $baseQuery)->sum('paid_amount'),
-                'pending_deliveries' => DeliveryManDelivery::where('status', 'assigned')->count(),
+                'total_collection' => (float) ((clone $baseQuery)->sum('paid_amount') ?? 0),
+                'pending_deliveries' => DeliveryManDelivery::where('status', 'assigned')->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+                    $query->where('delivery_man_id', $selectedDeliveryManId);
+                })->count(),
                 'completed_orders' => (clone $baseQuery)->where('status', 'completed')->count(),
                 'pending_orders' => (clone $baseQuery)->where('status', 'pending')->count(),
-                'total_due' => (clone $baseQuery)->sum('due_amount'),
+                'total_due' => (float) ((clone $baseQuery)->sum('due_amount') ?? 0),
                 'cancelled_orders' => (clone $baseQuery)->where('status', 'cancelled')->count(),
             ];
 
             $deliveryManStats = [];
-            foreach ($lims_delivery_man_list as $deliveryMan) {
-                $orders = $deliveryMan->fieldOrders()->whereBetween('created_at', [$startDateTime, $endDateTime]);
+            $deliveryMenQuery = DeliveryMan::where('is_active', true);
+            if ($selectedDeliveryManId) {
+                $deliveryMenQuery->where('id', $selectedDeliveryManId);
+            }
+
+            $allOrders = FieldOrder::query()
+                ->whereIn('delivery_man_id', $activeDeliveryManIds)
+                ->whereBetween('created_at', [$startDateTime, $endDateTime])
+                ->get()
+                ->groupBy('delivery_man_id');
+
+            foreach ($deliveryMenQuery->get() as $deliveryMan) {
+                $orders = $allOrders->get($deliveryMan->id, collect());
                 $deliveryManStats[] = [
                     'delivery_man' => $deliveryMan,
                     'total_orders' => $orders->count(),
                     'completed_orders' => $orders->where('status', 'completed')->count(),
                     'pending_orders' => $orders->where('status', 'pending')->count(),
                     'cancelled_orders' => $orders->where('status', 'cancelled')->count(),
-                    'total_collection' => $orders->sum('paid_amount'),
-                    'total_due' => $orders->sum('due_amount'),
+                    'total_collection' => (float) ($orders->sum('paid_amount') ?? 0),
+                    'total_due' => (float) ($orders->sum('due_amount') ?? 0),
                 ];
             }
 
-            $chartData = $this->getChartData($period, $startDate, $endDate, $selectedDeliveryManId);
+            $chartData = $this->getChartData($period, $startDate, $endDate, $selectedDeliveryManId, $activeDeliveryManIds);
 
             return view('backend.delivery_management.delivery_report.index', compact(
                 'lims_delivery_man_list', 'lims_route_list', 'all_permission',
-                'period', 'startDate', 'endDate', 'stats', 'deliveryManStats', 'chartData', 'selectedDeliveryManId'
+                'period', 'startDate', 'endDate', 'stats', 'deliveryManStats', 'chartData', 'selectedDeliveryManId', 'isDeliveryMan'
             ));
         } else {
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -113,6 +144,13 @@ class DeliveryReportController extends Controller
         $startDate = $request->input('start_date', date('Y-m-d'));
         $endDate = $request->input('end_date', date('Y-m-d'));
         $selectedDeliveryManId = $request->input('delivery_man_id');
+
+        // If delivery man user, force filter to their own data
+        $isDeliveryMan = $this->isDeliveryManUser();
+        if ($isDeliveryMan) {
+            $authDeliveryMan = $this->getAuthDeliveryMan();
+            $selectedDeliveryManId = $authDeliveryMan ? $authDeliveryMan->id : null;
+        }
 
         switch ($period) {
             case 'week':
@@ -137,7 +175,13 @@ class DeliveryReportController extends Controller
         $startDateTime = $startDate . ' 00:00:00';
         $endDateTime = $endDate . ' 23:59:59';
 
-        $baseQuery = FieldOrder::query()->whereBetween('created_at', [$startDateTime, $endDateTime]);
+        $activeDeliveryManIds = DeliveryMan::where('is_active', true)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+            $query->where('id', $selectedDeliveryManId);
+        })->pluck('id')->toArray();
+
+        $baseQuery = FieldOrder::query()
+            ->whereIn('delivery_man_id', $activeDeliveryManIds)
+            ->whereBetween('created_at', [$startDateTime, $endDateTime]);
 
         if ($selectedDeliveryManId) {
             $baseQuery->where('delivery_man_id', $selectedDeliveryManId);
@@ -145,13 +189,17 @@ class DeliveryReportController extends Controller
 
         $stats = [
             'total_orders' => (clone $baseQuery)->count(),
-            'total_collection' => (clone $baseQuery)->sum('paid_amount'),
+            'total_collection' => (float) ((clone $baseQuery)->sum('paid_amount') ?? 0),
             'completed_orders' => (clone $baseQuery)->where('status', 'completed')->count(),
             'pending_orders' => (clone $baseQuery)->where('status', 'pending')->count(),
-            'total_due' => (clone $baseQuery)->sum('due_amount'),
+            'total_due' => (float) ((clone $baseQuery)->sum('due_amount') ?? 0),
             'cancelled_orders' => (clone $baseQuery)->where('status', 'cancelled')->count(),
-            'pending_deliveries' => DeliveryManDelivery::where('status', 'assigned')->count(),
-            'total_delivery_men' => DeliveryMan::where('is_active', true)->count(),
+            'pending_deliveries' => DeliveryManDelivery::where('status', 'assigned')->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+                $query->where('delivery_man_id', $selectedDeliveryManId);
+            })->count(),
+            'total_delivery_men' => DeliveryMan::where('is_active', true)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+                $query->where('id', $selectedDeliveryManId);
+            })->count(),
         ];
 
         $deliveryManStats = [];
@@ -159,20 +207,27 @@ class DeliveryReportController extends Controller
         if ($selectedDeliveryManId) {
             $deliveryMenQuery->where('id', $selectedDeliveryManId);
         }
+
+        $allOrders = FieldOrder::query()
+            ->whereIn('delivery_man_id', $activeDeliveryManIds)
+            ->whereBetween('created_at', [$startDateTime, $endDateTime])
+            ->get()
+            ->groupBy('delivery_man_id');
+
         foreach ($deliveryMenQuery->get() as $deliveryMan) {
-            $orders = $deliveryMan->fieldOrders()->whereBetween('created_at', [$startDateTime, $endDateTime]);
+            $orders = $allOrders->get($deliveryMan->id, collect());
             $deliveryManStats[] = [
                 'delivery_man' => $deliveryMan,
                 'total_orders' => $orders->count(),
                 'completed_orders' => $orders->where('status', 'completed')->count(),
                 'pending_orders' => $orders->where('status', 'pending')->count(),
                 'cancelled_orders' => $orders->where('status', 'cancelled')->count(),
-                'total_collection' => $orders->sum('paid_amount'),
-                'total_due' => $orders->sum('due_amount'),
+                'total_collection' => (float) ($orders->sum('paid_amount') ?? 0),
+                'total_due' => (float) ($orders->sum('due_amount') ?? 0),
             ];
         }
 
-        $chartData = $this->getChartData($period, $startDate, $endDate, $selectedDeliveryManId);
+        $chartData = $this->getChartData($period, $startDate, $endDate, $selectedDeliveryManId, $activeDeliveryManIds);
 
         return response()->json([
             'success' => true,
@@ -185,14 +240,16 @@ class DeliveryReportController extends Controller
         ]);
     }
 
-    private function getChartData($period, $startDate, $endDate, $deliveryManId = null)
+    private function getChartData($period, $startDate, $endDate, $deliveryManId = null, $activeDeliveryManIds = [])
     {
         $labels = [];
         $ordersData = [];
         $collectionData = [];
         $dueData = [];
 
-        $query = FieldOrder::query()->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        $query = FieldOrder::query()
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->whereIn('delivery_man_id', $activeDeliveryManIds);
         if ($deliveryManId) {
             $query->where('delivery_man_id', $deliveryManId);
         }

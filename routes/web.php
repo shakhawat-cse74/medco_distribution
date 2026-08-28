@@ -1005,6 +1005,10 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('performance/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'performance'])->name('performance');
         Route::post('upload-photo', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'uploadPhoto'])->name('uploadPhoto');
         Route::post('delivery-man-data', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'deliveryManData'])->name('deliveryManData');
+        Route::get('{id}/customers', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'assignedCustomers'])->name('assignedCustomers');
+        Route::get('{delivery_man_id}/customers/{customer_id}/orders', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'customerOrderHistory'])->name('customerOrderHistory');
+        Route::get('{delivery_man_id}/customers/{customer_id}/ledger', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'customerLedger'])->name('customerLedger');
+        Route::post('{delivery_man_id}/customers/{customer_id}/collect-payment', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'collectDuePayment'])->name('collectDuePayment');
     });
 
     Route::prefix('delivery-man-assignments')->name('delivery-man-assignments.')->group(function () {

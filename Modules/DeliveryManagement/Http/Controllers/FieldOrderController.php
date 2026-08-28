@@ -19,10 +19,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\CacheForget;
+use Modules\DeliveryManagement\Traits\LogsDeliveryActivity;
 
 class FieldOrderController extends Controller
 {
     use \App\Traits\CacheForget;
+    use LogsDeliveryActivity;
 
     public function index()
     {
@@ -105,12 +107,15 @@ class FieldOrderController extends Controller
                 'grand_total' => $grand_total,
                 'paid_amount' => $data['paid_amount'] ?? 0,
                 'due_amount' => $grand_total - ($data['paid_amount'] ?? 0),
+                'coupon_ids' => $data['coupon_code'] ?? null,
                 'special_instructions' => $data['special_instructions'] ?? null,
                 'delivery_address' => $data['delivery_address'] ?? null,
                 'delivery_city' => $data['delivery_city'] ?? null,
                 'delivery_country' => $data['delivery_country'] ?? null,
                 'created_by' => Auth::id(),
             ]);
+
+            $this->logActivity('field_order_created', $fieldOrder->reference_no, 'Field order created: ' . $fieldOrder->reference_no . ' for customer: ' . $fieldOrder->customer_id);
 
             foreach ($data['products'] as $product) {
                 FieldOrderProduct::create([
@@ -497,6 +502,38 @@ class FieldOrderController extends Controller
         }
 
         return redirect()->back()->with('message', __('db.SMS sent successfully'));
+    }
+
+    public function quickCreateCustomer(Request $request)
+    {
+        $role = Role::find(Auth::user()->role_id);
+        if (!$role->hasPermissionTo('field-orders-add')) {
+            return response()->json(['success' => false, 'message' => 'Not permitted'], 403);
+        }
+
+        $this->validate($request, [
+            'name' => 'required|max:255',
+            'phone_number' => 'required|max:255|unique:customers,phone_number',
+        ]);
+
+        $data = $request->all();
+        $data['is_active'] = true;
+
+        try {
+            DB::beginTransaction();
+            $customer = Customer::create($data);
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'customer' => $customer,
+                'message' => 'Customer created successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Quick customer creation failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to create customer: ' . $e->getMessage()], 500);
+        }
     }
 
     public function printBarcode($id)

@@ -39,6 +39,9 @@
                     <div class="mt-3">
                         <a href="{{ route('delivery-men.edit', $lims_delivery_man_data->id) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-edit"></i> {{__('db.edit')}}</a>
                         <a href="{{ route('delivery-men.performance', $lims_delivery_man_data->id) }}" class="btn btn-sm btn-outline-info" target="_blank"><i class="ti ti-chart-bar"></i> {{__('db.Performance')}}</a>
+                        <a href="{{ route('delivery-men.assignedCustomers', $lims_delivery_man_data->id) }}" class="btn btn-sm btn-outline-success">
+                            <i class="ti ti-users"></i> {{__('db.Customers')}}
+                        </a>
                     </div>
                 </div>
             </div>
