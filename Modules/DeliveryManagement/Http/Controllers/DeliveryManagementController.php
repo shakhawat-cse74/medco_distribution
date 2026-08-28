@@ -15,9 +15,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\DeliveryManagement\Traits\ChecksDeliveryManRole;
 
 class DeliveryManagementController extends Controller
 {
+    use ChecksDeliveryManRole;
+
     public function index()
     {
         $role = Role::find(Auth::user()->role_id);
@@ -28,10 +31,22 @@ class DeliveryManagementController extends Controller
             if (empty($all_permission))
                 $all_permission[] = 'dummy text';
 
+            $isDeliveryMan = $this->isDeliveryManUser();
+            
+            $query = DeliveryManDelivery::with(['deliveryMan', 'customer', 'fieldOrder']);
+            
+            // If delivery man user, filter to their own deliveries only
+            if ($isDeliveryMan) {
+                $authDeliveryMan = $this->getAuthDeliveryMan();
+                if ($authDeliveryMan) {
+                    $query->where('delivery_man_id', $authDeliveryMan->id);
+                }
+            }
+            
+            $lims_delivery_list = $query->get();
             $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
-            $lims_delivery_list = DeliveryManDelivery::with(['deliveryMan', 'customer', 'fieldOrder'])->get();
 
-            return view('backend.delivery_management.index', compact('lims_delivery_list', 'lims_delivery_man_list', 'all_permission'));
+            return view('backend.delivery_management.index', compact('lims_delivery_list', 'lims_delivery_man_list', 'all_permission', 'isDeliveryMan'));
         } else {
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
@@ -51,6 +66,14 @@ class DeliveryManagementController extends Controller
         $search = $request->input('search.value');
 
         $query = DeliveryManDelivery::with(['deliveryMan', 'customer', 'fieldOrder']);
+
+        // If delivery man user, filter to their own deliveries only
+        if ($this->isDeliveryManUser()) {
+            $authDeliveryMan = $this->getAuthDeliveryMan();
+            if ($authDeliveryMan) {
+                $query->where('delivery_man_id', $authDeliveryMan->id);
+            }
+        }
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -85,22 +108,27 @@ class DeliveryManagementController extends Controller
             $nestedData['id'] = $delivery->id;
             $nestedData['date'] = date(config('date_format'), strtotime($delivery->created_at));
 
-            $nestedData['options'] = '<div class="btn-group">
-                <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' . __("db.action") . '
-                    <span class="caret"></span>
-                    <span class="sr-only">Toggle Dropdown</span>
-                </button>
-                <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
-                    <li>
-                        <button type="button" data-id="' . $delivery->id . '" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> ' . __("db.edit") . '</button>
-                    </li>
-                    <li>
-                        <form action="' . route("delivery-man-delivery.delete", $delivery->id) . '" method="POST">' . csrf_field() . '' . method_field("DELETE") . '
-                            <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="ti ti-trash"></i> ' . __("db.delete") . '</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>';
+            $isDeliveryMan = $this->isDeliveryManUser();
+            if (!$isDeliveryMan) {
+                $nestedData['options'] = '<div class="btn-group">
+                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' . __("db.action") . '
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
+                        <li>
+                            <button type="button" data-id="' . $delivery->id . '" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> ' . __("db.edit") . '</button>
+                        </li>
+                        <li>
+                            <form action="' . route("delivery-man-delivery.delete", $delivery->id) . '" method="POST">' . csrf_field() . '' . method_field("DELETE") . '
+                                <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="ti ti-trash"></i> ' . __("db.delete") . '</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>';
+            } else {
+                $nestedData['options'] = '-';
+            }
 
             $data[] = $nestedData;
         }

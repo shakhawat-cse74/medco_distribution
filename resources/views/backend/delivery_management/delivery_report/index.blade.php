@@ -27,12 +27,14 @@
                             <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'month' ? 'active' : '' }}" data-period="month">Monthly</button>
                             <button type="button" class="btn btn-outline-primary period-tab {{ $period == 'custom' ? 'active' : '' }}" data-period="custom">Custom</button>
                         </div>
+                        @if(!isset($isDeliveryMan) || !$isDeliveryMan)
                         <select class="form-select" id="delivery_man_filter" style="width: auto; min-width: 180px;">
                             <option value="">{{__('db.All Delivery Men')}}</option>
                             @foreach($lims_delivery_man_list as $dm)
                                 <option value="{{ $dm->id }}" {{ ($selectedDeliveryManId ?? '') == $dm->id ? 'selected' : '' }}>{{ $dm->name }}</option>
                             @endforeach
                         </select>
+                        @endif
                     </div>
                     <div class="row g-2 d-none" id="custom-date-row">
                         <div class="col-md-4">
@@ -268,73 +270,83 @@ $(document).ready(function() {
     });
 
     function initCharts() {
-        const ordersCtx = document.getElementById('ordersChart').getContext('2d');
-        if (ordersChartInstance) ordersChartInstance.destroy();
-        ordersChartInstance = new Chart(ordersCtx, {
-            type: 'bar',
-            data: {
-                labels: chartData.labels,
-                datasets: [
-                    {
-                        label: 'Orders',
-                        data: chartData.orders,
-                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1,
-                        yAxisID: 'y',
-                    },
-                    {
-                        label: 'Collection',
-                        data: chartData.collection,
-                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1,
-                        type: 'line',
-                        yAxisID: 'y1',
-                    },
-                    {
-                        label: 'Due',
-                        data: chartData.due,
-                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 1,
-                        type: 'line',
-                        yAxisID: 'y1',
+        const ordersCanvas = document.getElementById('ordersChart');
+        if (ordersCanvas) {
+            const ordersCtx = ordersCanvas.getContext('2d');
+            if (ordersChartInstance) ordersChartInstance.destroy();
+            ordersChartInstance = new Chart(ordersCtx, {
+                type: 'bar',
+                data: {
+                    labels: (chartData && chartData.labels) ? chartData.labels : [],
+                    datasets: [
+                        {
+                            label: 'Orders',
+                            data: (chartData && chartData.orders) ? chartData.orders : [],
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Collection',
+                            data: (chartData && chartData.collection) ? chartData.collection : [],
+                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            type: 'line',
+                            yAxisID: 'y1',
+                        },
+                        {
+                            label: 'Due',
+                            data: (chartData && chartData.due) ? chartData.due : [],
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            type: 'line',
+                            yAxisID: 'y1',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Orders' } },
+                        y1: { type: 'linear', position: 'right', title: { display: true, text: 'Amount' }, grid: { drawOnChartArea: false } }
                     }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                scales: {
-                    y: { type: 'linear', position: 'left', title: { display: true, text: 'Orders' } },
-                    y1: { type: 'linear', position: 'right', title: { display: true, text: 'Amount' }, grid: { drawOnChartArea: false } }
                 }
-            }
-        });
+            });
+        }
 
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        if (statusChartInstance) statusChartInstance.destroy();
-        statusChartInstance = new Chart(statusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Completed', 'Pending', 'Cancelled'],
-                datasets: [{
-                    data: [stats.completed_orders, stats.pending_orders, stats.cancelled_orders],
-                    backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '65%',
-                plugins: {
-                    legend: { position: 'bottom' }
+        const statusCanvas = document.getElementById('statusChart');
+        if (statusCanvas) {
+            const statusCtx = statusCanvas.getContext('2d');
+            if (statusChartInstance) statusChartInstance.destroy();
+            statusChartInstance = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Pending', 'Cancelled'],
+                    datasets: [{
+                        data: [
+                            (stats && stats.completed_orders) ? stats.completed_orders : 0,
+                            (stats && stats.pending_orders) ? stats.pending_orders : 0,
+                            (stats && stats.cancelled_orders) ? stats.cancelled_orders : 0
+                        ],
+                        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     initCharts();
@@ -370,16 +382,18 @@ $(document).ready(function() {
                         let rows = '';
                         $.each(response.deliveryManStats, function(index, dm) {
                             rows += '<tr>' +
-                                '<td>' + dm.delivery_man.name + '</td>' +
-                                '<td>' + dm.total_orders + '</td>' +
-                                '<td>' + dm.completed_orders + '</td>' +
-                                '<td>' + dm.pending_orders + '</td>' +
-                                '<td>' + dm.cancelled_orders + '</td>' +
-                                '<td>' + parseFloat(dm.total_collection).toFixed(2) + '</td>' +
-                                '<td>' + parseFloat(dm.total_due).toFixed(2) + '</td>' +
+                                '<td>' + (dm.delivery_man?.name || '-') + '</td>' +
+                                '<td>' + (dm.total_orders || 0) + '</td>' +
+                                '<td>' + (dm.completed_orders || 0) + '</td>' +
+                                '<td>' + (dm.pending_orders || 0) + '</td>' +
+                                '<td>' + (dm.cancelled_orders || 0) + '</td>' +
+                                '<td>' + parseFloat(dm.total_collection || 0).toFixed(2) + '</td>' +
+                                '<td>' + parseFloat(dm.total_due || 0).toFixed(2) + '</td>' +
                                 '</tr>';
                         });
                         $('#deliveryManTable tbody').html(rows);
+                    } else {
+                        $('#deliveryManTable tbody').html('<tr><td colspan="7" class="text-center">No data available</td></tr>');
                     }
                 }
             },
