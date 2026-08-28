@@ -27,12 +27,28 @@ class DeliveryManAuthController extends Controller
         $credentials = $request->only('email', 'password');
         $remember = $request->filled('remember');
 
-        if (Auth::guard('delivery_man')->attempt($credentials, $remember)) {
+        if (Auth::guard('web')->attempt($credentials, $remember)) {
             $request->session()->regenerate();
-            $deliveryMan = Auth::guard('delivery_man')->user();
+            $user = Auth::guard('web')->user();
+
+            // Check if user has Delivery Man role
+            $deliveryManRole = \Spatie\Permission\Models\Role::where('name', 'Delivery Man')->first();
+            if (!$deliveryManRole || $user->role_id != $deliveryManRole->id) {
+                Auth::guard('web')->logout();
+                $request->session()->invalidate();
+                return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this panel'));
+            }
+
+            // Check if delivery man profile exists and is active
+            $deliveryMan = DeliveryMan::where('user_id', $user->id)->first();
+            if (!$deliveryMan) {
+                Auth::guard('web')->logout();
+                $request->session()->invalidate();
+                return redirect()->back()->with('not_permitted', __('db.Sorry! Delivery man profile not found'));
+            }
 
             if (!$deliveryMan->is_active) {
-                Auth::guard('delivery_man')->logout();
+                Auth::guard('web')->logout();
                 $request->session()->invalidate();
                 return redirect()->back()->with('not_permitted', __('db.Sorry! Your account is inactive'));
             }
@@ -184,7 +200,7 @@ class DeliveryManAuthController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::guard('delivery_man')->logout();
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

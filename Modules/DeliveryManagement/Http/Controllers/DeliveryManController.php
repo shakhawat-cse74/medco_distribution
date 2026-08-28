@@ -5,23 +5,28 @@ namespace Modules\DeliveryManagement\Http\Controllers;
 use App\Http\Controllers\Controller;
 
 use Modules\DeliveryManagement\Models\DeliveryMan;
+use Modules\DeliveryManagement\Models\FieldOrder;
+use Modules\DeliveryManagement\Models\FieldPayment;
+use App\Models\Customer;
 use App\Models\Warehouse;
 use App\Models\User;
 use Modules\DeliveryManagement\Models\DeliveryManAssignment;
 use Modules\DeliveryManagement\Models\DeliveryManVehicle;
-use Modules\DeliveryManagement\Models\FieldOrder;
 use Modules\DeliveryManagement\Models\DeliveryManCommission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\DeliveryManagement\Traits\LogsDeliveryActivity;
 
 class DeliveryManController extends Controller
 {
     use \App\Traits\CacheForget;
+    use LogsDeliveryActivity;
 
     public function index()
     {
@@ -75,6 +80,33 @@ class DeliveryManController extends Controller
 
             $data['is_active'] = true;
 
+            if (empty($data['delivery_man_id'])) {
+                $data['delivery_man_id'] = 'DM-' . date('Ymd') . '-' . str_pad(DeliveryMan::count() + 1, 4, '0', STR_PAD_LEFT);
+            }
+
+            // Create or find Delivery Man role
+            $deliveryManRole = Role::where('name', 'Delivery Man')->first();
+            if (!$deliveryManRole) {
+                $deliveryManRole = Role::create([
+                    'name' => 'Delivery Man',
+                    'description' => 'Delivery Man role for field operations',
+                    'guard_name' => 'web',
+                ]);
+            }
+
+            // Create user for delivery man
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => bcrypt($data['password'] ?? 'password123'),
+                'phone' => $data['phone_number'],
+                'role_id' => $deliveryManRole->id,
+                'is_active' => true,
+                'is_deleted' => false,
+            ]);
+
+            $data['user_id'] = $user->id;
+
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
@@ -94,6 +126,8 @@ class DeliveryManController extends Controller
             }
 
             $deliveryMan = DeliveryMan::create($data);
+
+            $this->logActivity('delivery_man_created', $deliveryMan->delivery_man_id, 'Delivery man created: ' . $deliveryMan->name);
 
             DB::commit();
             $this->cacheForget('delivery_man_list');
@@ -183,6 +217,8 @@ class DeliveryManController extends Controller
 
             $lims_delivery_man_data->update($data);
 
+            $this->logActivity('delivery_man_updated', $lims_delivery_man_data->delivery_man_id, 'Delivery man updated: ' . $lims_delivery_man_data->name);
+
             DB::commit();
             $this->cacheForget('delivery_man_list');
 
@@ -204,6 +240,8 @@ class DeliveryManController extends Controller
                 $lims_delivery_man_data = DeliveryMan::findOrFail($id);
                 $lims_delivery_man_data->is_active = false;
                 $lims_delivery_man_data->save();
+
+                $this->logActivity('delivery_man_deleted', $lims_delivery_man_data->delivery_man_id, 'Delivery man deleted: ' . $lims_delivery_man_data->name);
 
                 DB::commit();
                 $this->cacheForget('delivery_man_list');
@@ -264,6 +302,8 @@ class DeliveryManController extends Controller
             $lims_delivery_man_data = DeliveryMan::findOrFail($request->id);
             $lims_delivery_man_data->is_active = !$lims_delivery_man_data->is_active;
             $lims_delivery_man_data->save();
+
+            $this->logActivity('delivery_man_status_toggled', $lims_delivery_man_data->delivery_man_id, 'Delivery man status toggled: ' . $lims_delivery_man_data->name);
 
             return 'Delivery man status updated successfully';
         } else {
@@ -409,6 +449,107 @@ class DeliveryManController extends Controller
             return response()->json(['success' => false, 'message' => 'No image uploaded']);
         } else {
             return response()->json(['error' => 'Not permitted'], 403);
+        }
+    }
+
+    public function assignedCustomers($id)
+    {
+        $role = Role::find(Auth::user()->role_id);
+        if (!$role->hasPermissionTo('delivery-men-index')) {
+            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+        }
+
+        $lims_delivery_man_data = DeliveryMan::findOrFail($id);
+        $customers = Customer::whereHas('fieldOrders', function ($query) use ($id) {
+            $query->where('delivery_man_id', $id);
+        })->with(['fieldOrders' => function ($query) use ($id) {
+            $query->where('delivery_man_id', $id)->orderByDesc('created_at');
+        }])->get();
+
+        return view('backend.delivery_management.delivery_man.customers', compact('lims_delivery_man_data', 'customers'));
+    }
+
+    public function customerOrderHistory($delivery_man_id, $customer_id)
+    {
+        $role = Role::find(Auth::user()->role_id);
+        if (!$role->hasPermissionTo('delivery-men-index')) {
+            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+        }
+
+        $lims_delivery_man_data = DeliveryMan::findOrFail($delivery_man_id);
+        $customer = Customer::findOrFail($customer_id);
+        $orders = FieldOrder::where('delivery_man_id', $delivery_man_id)
+            ->where('customer_id', $customer_id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('backend.delivery_management.delivery_man.customer_orders', compact('lims_delivery_man_data', 'customer', 'orders'));
+    }
+
+    public function customerLedger($delivery_man_id, $customer_id)
+    {
+        $role = Role::find(Auth::user()->role_id);
+        if (!$role->hasPermissionTo('delivery-men-index')) {
+            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+        }
+
+        $lims_delivery_man_data = DeliveryMan::findOrFail($delivery_man_id);
+        $customer = Customer::findOrFail($customer_id);
+        $orders = FieldOrder::where('delivery_man_id', $delivery_man_id)
+            ->where('customer_id', $customer_id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $totalOrders = $orders->count();
+        $totalOrderAmount = $orders->sum('grand_total');
+        $totalPaid = $orders->sum('paid_amount');
+        $totalDue = $orders->sum('due_amount');
+
+        return view('backend.delivery_management.delivery_man.customer_ledger', compact(
+            'lims_delivery_man_data', 'customer', 'orders', 'totalOrders', 'totalOrderAmount', 'totalPaid', 'totalDue'
+        ));
+    }
+
+    public function collectDuePayment(Request $request, $delivery_man_id, $customer_id)
+    {
+        $role = Role::find(Auth::user()->role_id);
+        if (!$role->hasPermissionTo('delivery-men-edit')) {
+            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+        }
+
+        $this->validate($request, [
+            'field_order_id' => 'required|exists:field_orders,id',
+            'amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|string|max:255',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $fieldOrder = FieldOrder::where('delivery_man_id', $delivery_man_id)
+                ->where('customer_id', $customer_id)
+                ->findOrFail($request->field_order_id);
+
+            $payment = FieldPayment::create([
+                'field_order_id' => $fieldOrder->id,
+                'payment_method' => $request->payment_method,
+                'amount' => $request->amount,
+                'reference_no' => 'PAY-' . date('Ymd') . '-' . str_pad(mt_rand(1, 9999), 6, '0', STR_PAD_LEFT),
+                'note' => $request->note ?? null,
+                'created_by' => Auth::id(),
+            ]);
+
+            $fieldOrder->paid_amount += $request->amount;
+            $fieldOrder->due_amount = $fieldOrder->grand_total - $fieldOrder->paid_amount;
+            $fieldOrder->save();
+
+            DB::commit();
+
+            return redirect()->back()->with('message', __('db.Payment collected successfully'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Due payment collection failed: ' . $e->getMessage());
+            return redirect()->back()->with('not_permitted', 'Payment collection failed: ' . $e->getMessage());
         }
     }
 }

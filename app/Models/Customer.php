@@ -27,6 +27,11 @@ class Customer extends Model
         return $this->hasMany(Sale::class);
     }
 
+    public function fieldOrders()
+    {
+        return $this->hasMany(\Modules\DeliveryManagement\Models\FieldOrder::class);
+    }
+
     public function discountPlans()
     {
         return $this->belongsToMany('App\Models\DiscountPlan', 'discount_plan_customers');

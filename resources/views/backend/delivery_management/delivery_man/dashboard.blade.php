@@ -36,6 +36,30 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card">
+                        <div class="card-header">
+                            <h5 class="m-b-0">Quick Access</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <a href="{{ url('/delivery-reports') }}" target="_blank" class="btn btn-outline-primary btn-lg w-100 mb-2">
+                                        <i class="ti ti-report me-2"></i> Delivery Reports
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url('/delivery-man-delivery') }}" target="_blank" class="btn btn-outline-info btn-lg w-100 mb-2">
+                                        <i class="ti ti-map me-2"></i> Delivery Management
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
                         <div class="card-body">
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-outline-primary period-tab active" data-period="today">Today</button>

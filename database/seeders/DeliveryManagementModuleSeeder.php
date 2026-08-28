@@ -20,6 +20,20 @@ class DeliveryManagementModuleSeeder extends Seeder
         // Generate random data for deterministic test results
         $faker = \Faker\Factory::create();
 
+        // Create Delivery Man role if not exists
+        $deliveryManRole = DB::table('roles')->where('name', 'Delivery Man')->first();
+        if (!$deliveryManRole) {
+            $deliveryManRoleId = DB::table('roles')->insertGetId([
+                'name' => 'Delivery Man',
+                'description' => 'Delivery Man role for field operations',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            $deliveryManRoleId = $deliveryManRole->id;
+        }
+
         // First, ensure we have a warehouse to assign deliveries
         $warehouse = DB::table('warehouses')->first() ?: $this->createTestWarehouse();
 
@@ -39,7 +53,7 @@ class DeliveryManagementModuleSeeder extends Seeder
                     'email' => $email,
                     'password' => Hash::make('password123'),
                     'phone' => $phone,
-                    'role_id' => 3,
+                    'role_id' => $deliveryManRoleId,
                     'is_active' => 1,
                     'is_deleted' => 0,
                     'created_at' => now(),
@@ -297,6 +311,14 @@ class DeliveryManagementModuleSeeder extends Seeder
         }
 
         $this->command->info('Delivery Management module data seeded successfully!');
+
+        // Seed Delivery Settings
+        $this->seedDeliverySettings();
+
+        // Seed Delivery Man role permissions
+        $this->seedDeliveryManPermissions();
+
+        $this->command->info('Delivery Management settings seeded successfully!');
     }
 
     private function createTestWarehouse()
@@ -483,6 +505,77 @@ class DeliveryManagementModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+        }
+    }
+
+    private function seedDeliverySettings()
+    {
+        $settings = [
+            ['key' => 'auto_assign_orders', 'value' => '1', 'type' => 'general'],
+            ['key' => 'minimum_order_amount', 'value' => '0', 'type' => 'general'],
+            ['key' => 'offline_mode', 'value' => '0', 'type' => 'general'],
+            ['key' => 'cash_deposit_limit', 'value' => '10000', 'type' => 'general'],
+            ['key' => 'signature_mandatory', 'value' => '1', 'type' => 'general'],
+            ['key' => 'photo_mandatory', 'value' => '1', 'type' => 'general'],
+            ['key' => 'otp_verification', 'value' => '1', 'type' => 'general'],
+            ['key' => 'working_hours', 'value' => '09:00-18:00', 'type' => 'general'],
+            ['key' => 'commission_type', 'value' => 'percentage', 'type' => 'commission'],
+            ['key' => 'default_commission_rate', 'value' => '5', 'type' => 'commission'],
+            ['key' => 'minimum_orders_for_bonus', 'value' => '50', 'type' => 'commission'],
+            ['key' => 'bonus_rate', 'value' => '7', 'type' => 'commission'],
+            ['key' => 'default_route_optimization', 'value' => '1', 'type' => 'route'],
+            ['key' => 'max_stops_per_route', 'value' => '20', 'type' => 'route'],
+            ['key' => 'delivery_charge_type', 'value' => 'flat', 'type' => 'delivery_charge'],
+            ['key' => 'default_delivery_charge', 'value' => '0', 'type' => 'delivery_charge'],
+            ['key' => 'free_delivery_above', 'value' => '0', 'type' => 'delivery_charge'],
+            ['key' => 'enable_time_slots', 'value' => '1', 'type' => 'time_slot'],
+            ['key' => 'time_slot_interval', 'value' => '2', 'type' => 'time_slot'],
+            ['key' => 'first_delivery_time', 'value' => '09:00', 'type' => 'time_slot'],
+            ['key' => 'last_delivery_time', 'value' => '18:00', 'type' => 'time_slot'],
+        ];
+
+        foreach ($settings as $setting) {
+            DB::table('delivery_settings')->updateOrInsert(
+                ['key' => $setting['key']],
+                array_merge($setting, ['created_at' => now(), 'updated_at' => now()])
+            );
+        }
+    }
+
+    private function seedDeliveryManPermissions()
+    {
+        $deliveryManRole = DB::table('roles')->where('name', 'Delivery Man')->first();
+        if (!$deliveryManRole) {
+            return;
+        }
+
+        $permissionNames = [
+            'delivery-reports-index',
+            'delivery-man-delivery-index',
+        ];
+
+        $permissionIds = DB::table('permissions')
+            ->whereIn('name', $permissionNames)
+            ->pluck('id', 'name')
+            ->toArray();
+
+        $existingPermissions = DB::table('role_has_permissions')
+            ->where('role_id', $deliveryManRole->id)
+            ->pluck('permission_id')
+            ->toArray();
+
+        $insertData = [];
+        foreach ($permissionIds as $permissionName => $permissionId) {
+            if (!in_array($permissionId, $existingPermissions)) {
+                $insertData[] = [
+                    'permission_id' => $permissionId,
+                    'role_id' => $deliveryManRole->id,
+                ];
+            }
+        }
+
+        if (!empty($insertData)) {
+            DB::table('role_has_permissions')->insert($insertData);
         }
     }
 }
