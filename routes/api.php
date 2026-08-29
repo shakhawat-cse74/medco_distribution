@@ -115,6 +115,70 @@ Route::middleware($middleware)->name('api.')->group(function () {
         Route::get('{idOrSlug}/related', [API\ProductController::class, 'related'])->name('catalog.products.related');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | E-Commerce Public Catalog & Tracking APIs (Public)
+    |--------------------------------------------------------------------------
+    */
+    // Coupon APIs (Public)
+    Route::prefix('coupons')->group(function () {
+        Route::get('/', [API\CouponController::class, 'index'])->name('coupons.index');
+        Route::post('validate', [API\CouponController::class, 'validateCoupon'])->name('coupons.validate');
+        Route::post('check', [API\CouponController::class, 'validateCoupon'])->name('coupons.check');
+    });
+
+    // Delivery Areas / Shipping APIs (Public)
+    Route::get('delivery-areas', [API\DeliveryAreaController::class, 'index'])->name('delivery_areas.index');
+    Route::get('shipping-methods', [API\DeliveryAreaController::class, 'index'])->name('shipping.methods');
+
+    // Public Order Tracking
+    Route::get('orders/track/{referenceNo}', [API\OrderController::class, 'track'])->name('orders.track');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authenticated E-Commerce APIs (auth:api - Regular & Guest-Login Users)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('auth:api')->group(function () {
+        // Cart APIs
+        Route::prefix('cart')->group(function () {
+            Route::get('/', [API\CartController::class, 'index'])->name('cart.index');
+            Route::post('add', [API\CartController::class, 'addToCart'])->name('cart.add');
+            Route::post('update', [API\CartController::class, 'updateCart'])->name('cart.update');
+            Route::match(['post', 'delete'], 'remove/{id?}', [API\CartController::class, 'removeFromCart'])->name('cart.remove');
+            Route::match(['post', 'delete'], 'delete/{id?}', [API\CartController::class, 'removeFromCart'])->name('cart.delete');
+            Route::match(['post', 'delete'], 'clear', [API\CartController::class, 'clearCart'])->name('cart.clear');
+            Route::post('sync', [API\CartController::class, 'syncCart'])->name('cart.sync');
+            Route::post('apply-coupon', [API\CartController::class, 'applyCoupon'])->name('cart.apply_coupon');
+            Route::post('remove-coupon', [API\CartController::class, 'removeCoupon'])->name('cart.remove_coupon');
+        });
+
+        // Checkout APIs
+        Route::prefix('checkout')->group(function () {
+            Route::get('/', [API\CheckoutController::class, 'init'])->name('checkout.index');
+            Route::get('init', [API\CheckoutController::class, 'init'])->name('checkout.init');
+            Route::post('calculate', [API\CheckoutController::class, 'calculate'])->name('checkout.calculate');
+        });
+
+        // Customer Addresses
+        Route::prefix('addresses')->group(function () {
+            Route::get('/', [API\AddressController::class, 'index'])->name('addresses.index');
+            Route::post('/', [API\AddressController::class, 'store'])->name('addresses.store');
+            Route::get('{id}', [API\AddressController::class, 'show'])->name('addresses.show');
+            Route::match(['put', 'post'], '{id}', [API\AddressController::class, 'update'])->name('addresses.update');
+            Route::delete('{id}', [API\AddressController::class, 'destroy'])->name('addresses.destroy');
+            Route::post('{id}/set-default', [API\AddressController::class, 'setDefault'])->name('addresses.set_default');
+        });
+
+        // Orders Management
+        Route::prefix('orders')->group(function () {
+            Route::get('/', [API\OrderController::class, 'index'])->name('orders.index');
+            Route::post('/', [API\OrderController::class, 'placeOrder'])->name('orders.place');
+            Route::get('{referenceOrId}', [API\OrderController::class, 'show'])->name('orders.show');
+            Route::post('{referenceOrId}/cancel', [API\OrderController::class, 'cancel'])->name('orders.cancel');
+        });
+    });
+
     // Route::post('/check', [SetupController::class, 'checkLicense']);
     // Route::get('/offline-api-map', [RouteMapController::class, 'index']);
 

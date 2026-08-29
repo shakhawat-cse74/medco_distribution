@@ -35,4 +35,14 @@ class Customer extends Model
     public function points(){
         return $this->hasMany(Point::class,'customer_id');
     }
+
+    public function addresses()
+    {
+        return $this->hasMany(CustomerAddress::class, 'customer_id');
+    }
+
+    public function defaultAddress()
+    {
+        return $this->hasOne(CustomerAddress::class, 'customer_id')->where('default', 1);
+    }
 }
