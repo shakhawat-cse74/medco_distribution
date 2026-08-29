@@ -347,9 +347,10 @@ class DeliveryManController extends Controller
         $columns = array(
             0 => 'id',
             1 => 'name',
-            2 => 'phone_number',
-            3 => 'warehouse_id',
-            4 => 'is_active',
+            2 => 'email',
+            3 => 'phone_number',
+            4 => 'warehouse_id',
+            5 => 'is_active',
         );
 
         $totalData = DeliveryMan::count();
@@ -369,6 +370,7 @@ class DeliveryManController extends Controller
             $search = $request->input('search.value');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
                   ->orWhere('phone_number', 'LIKE', "%{$search}%");
             });
         }
@@ -386,32 +388,40 @@ class DeliveryManController extends Controller
                 $nestedData['id'] = $deliveryMan->id;
                 $nestedData['key'] = $key;
                 $nestedData['name'] = $deliveryMan->name;
+                $nestedData['email'] = $deliveryMan->email ?? 'N/A';
                 $nestedData['phone_number'] = $deliveryMan->phone_number;
                 $nestedData['warehouse_id'] = $deliveryMan->warehouse ? $deliveryMan->warehouse->name : 'N/A';
                 $nestedData['is_active'] = '<span class="badge badge-'.($deliveryMan->is_active ? 'success' : 'danger').'">'.($deliveryMan->is_active ? __('db.Active') : __('db.Inactive')).'</span>';
-                $nestedData['options'] = '<div class="btn-group">
-                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.__("db.action").'
-                              <span class="caret"></span>
-                              <span class="sr-only">Toggle Dropdown</span>
-                            </button>
-                            <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
-                                <li>
-                                    <a href="' . route("delivery-men.show", $deliveryMan->id) . '" class="btn btn-link"><i class="ti ti-eye"></i> '.__("db.View").'</a>
-                                </li>
-                                <li>
-                                    <button type="button" data-id="'.$deliveryMan->id.'" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> '.__("db.edit").'</button>
-                                </li>
-                                <li class="divider"></li>
-                                <li>
-                                    <button type="button" class="toggle-status btn btn-link" data-id="'.$deliveryMan->id.'"><i class="ti ti-toggle-left"></i> '.__("db.Toggle Status").'</button>
-                                </li>
-                                <li class="divider"></li>
-                                <form action="' . route("delivery-men.delete", $deliveryMan->id) . '" method="POST">'.csrf_field().'' . method_field("POST") . '
-                                <li>
-                                  <button type="submit" class="btn btn-link confirm-delete-btn" data-id="'.$deliveryMan->id.'" data-name="'.$deliveryMan->name.'"><i class="ti ti-trash"></i> '.__("db.delete").'</button>
-                                </li></form>
-                            </ul>
-                        </div>';
+                 $nestedData['options'] = '<div class="btn-group">
+                             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.__("db.action").'
+                               <span class="caret"></span>
+                               <span class="sr-only">Toggle Dropdown</span>
+                             </button>
+                             <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
+                                 <li>
+                                     <a href="' . route("delivery-men.show", $deliveryMan->id) . '" class="btn btn-link"><i class="ti ti-eye"></i> '.__("db.View").'</a>
+                                 </li>
+                                 <li>
+                                     <button type="button" data-id="'.$deliveryMan->id.'" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> '.__("db.edit").'</button>
+                                 </li>
+                                 <li class="divider"></li>
+                                 <li>
+                                      <a href="' . route("delivery-man-routes.index") . '?delivery_man_id=' . $deliveryMan->id . '" class="btn btn-link"><i class="ti ti-route"></i> '.__("db.view_routes").'</a>
+                                 </li>
+                                  <li>
+                                      <a href="' . route("delivery-man-routes.index") . '?delivery_man_id=' . $deliveryMan->id . '" class="btn btn-link"><i class="ti ti-plus"></i> '.__("db.Assign Route").'</a>
+                                  </li>
+                                 <li class="divider"></li>
+                                 <li>
+                                     <button type="button" class="toggle-status btn btn-link" data-id="'.$deliveryMan->id.'"><i class="ti ti-toggle-left"></i> '.__("db.Toggle Status").'</button>
+                                 </li>
+                                 <li class="divider"></li>
+                                 <form action="' . route("delivery-men.delete", $deliveryMan->id) . '" method="POST">'.csrf_field().'' . method_field("POST") . '
+                                 <li>
+                                   <button type="submit" class="btn btn-link confirm-delete-btn" data-id="'.$deliveryMan->id.'" data-name="'.$deliveryMan->name.'"><i class="ti ti-trash"></i> '.__("db.delete").'</button>
+                                 </li></form>
+                             </ul>
+                         </div>';
                 $data[] = $nestedData;
             }
         }

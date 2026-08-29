@@ -38,6 +38,7 @@
                                 <tr>
                                     <th class="not-exported"></th>
                                     <th>{{__('db.name')}}</th>
+                                    <th>{{__('db.Email')}}</th>
                                     <th>{{__('db.Phone')}}</th>
                                     <th>{{__('db.Warehouse')}}</th>
                                     <th>{{__('db.status')}}</th>
@@ -229,6 +230,7 @@
         "columns": [
             {"data": "key"},
             {"data": "name"},
+            {"data": "email"},
             {"data": "phone_number"},
             {"data": "warehouse_id"},
             {"data": "is_active"},
@@ -247,7 +249,7 @@
         'columnDefs': [
             {
                 "orderable": false,
-                'targets': [0, 5]
+                'targets': [0, 6]
             },
             {
                 'render': function(data, type, row, meta){

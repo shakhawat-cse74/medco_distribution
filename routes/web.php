@@ -1012,10 +1012,11 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
 
     Route::prefix('delivery-man-routes')->name('delivery-man-routes.')->group(function () {
         Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'index'])->name('index');
+        Route::post('data', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'routeData'])->name('data');
         Route::post('store', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'store'])->name('store');
+        Route::get('{id}/edit', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'edit'])->name('edit');
         Route::post('update/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'update'])->name('update');
         Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'delete'])->name('delete');
-        Route::post('assign-delivery-man', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'assignDeliveryMan'])->name('assignDeliveryMan');
     });
 
     Route::prefix('delivery-man-vehicles')->name('delivery-man-vehicles.')->group(function () {
@@ -1038,6 +1039,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::post('cancel/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'cancel'])->name('cancel');
         Route::get('products/search', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'searchProducts'])->name('searchProducts');
         Route::get('customers/search', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'searchCustomers'])->name('searchCustomers');
+        Route::post('customers/quick-create', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'quickCreateCustomer'])->name('quickCreateCustomer');
         Route::post('validate-stock', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'validateStock']);
         Route::get('invoice/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'genInvoice'])->name('invoice');
         Route::post('field-order-data', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'fieldOrderData'])->name('fieldOrderData');

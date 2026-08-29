@@ -268,5 +268,31 @@ return [
         "warehouse-products-add"    => "Add Warehouse Product",
         "warehouse-products-edit"   => "Edit Warehouse Product",
         "warehouse-products-delete" => "Delete Warehouse Product",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Warehouse
+    |--------------------------------------------------------------------------
+    |
+    | Manage warehouses master data.
+    |
+    */
+        "warehouse-index"  => "Warehouse List",
+        "warehouse-add"    => "Add Warehouse",
+        "warehouse-edit"   => "Edit Warehouse",
+        "warehouse-delete" => "Delete Warehouse",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Man Routes
+    |--------------------------------------------------------------------------
+    |
+    | Manage delivery routes assigned to delivery men.
+    |
+    */
+        "delivery-man-routes-index"  => "Delivery Routes",
+        "delivery-man-routes-add"    => "Add Route",
+        "delivery-man-routes-edit"   => "Edit Route",
+        "delivery-man-routes-delete" => "Delete Route",
     ],
 ];

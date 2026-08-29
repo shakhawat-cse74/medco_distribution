@@ -18,7 +18,7 @@
         <header class="header">
             <nav class="navbar navbar-expand-lg">
                 <div class="container-fluid">
-                    <a class="navbar-brand" href="{{ route('delivery-man.dashboard') }}">
+                    <a class="navbar-brand" href="{{ url('/delivery-reports') }}">
                         <i class="ti ti-motorbike"></i> Delivery Panel
                     </a>
                     <div class="ml-auto d-flex align-items-center">
@@ -32,7 +32,62 @@
             </nav>
         </header>
 
-        <div class="page-block">
+        <div class="container-fluid">
+            <div class="row">
+                <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                    <div class="sidebar-sticky">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('delivery-man/dashboard') || request()->is('delivery-man/reports') ? 'active' : '' }}" href="{{ url('/delivery-reports') }}">
+                                    <i class="ti ti-report"></i> Reports
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('delivery-man/deliveries*') ? 'active' : '' }}" href="{{ url('/delivery-man-delivery') }}">
+                                    <i class="ti ti-map"></i> Deliveries
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('delivery-man/orders*') ? 'active' : '' }}" href="{{ url('/delivery-man/orders') }}">
+                                    <i class="ti ti-shopping-cart"></i> Orders
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('delivery-man/routes*') ? 'active' : '' }}" href="{{ route('delivery-man-routes.index') }}">
+                                    <i class="ti ti-route"></i> Routes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('delivery-man/customers*') ? 'active' : '' }}" href="{{ route('delivery-man.customers.index') }}">
+                                    <i class="ti ti-users"></i> Customers
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('delivery-man/payments*') ? 'active' : '' }}" href="{{ route('delivery-man.payments.index') }}">
+                                    <i class="ti ti-credit-card"></i> Payments
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('delivery-man/cash-deposits*') ? 'active' : '' }}" href="{{ route('delivery-man.cash-deposits.index') }}">
+                                    <i class="ti ti-cash"></i> Cash Deposits
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('delivery-man/visits*') ? 'active' : '' }}" href="{{ route('delivery-man.visits.logs') }}">
+                                    <i class="ti ti-map-pin"></i> Visits
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('delivery-man/settings*') ? 'active' : '' }}" href="{{ route('delivery-man.settings.index') }}">
+                                    <i class="ti ti-settings"></i> Settings
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <main class="col-md-10 ml-sm-auto px-4" role="main">
+                    <div class="page-block">
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card">
@@ -251,7 +306,7 @@
                             @endif
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
         </div>
     </div>
