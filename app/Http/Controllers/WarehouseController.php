@@ -10,29 +10,45 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Product_Warehouse;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 
 class WarehouseController extends Controller
 {
     use CacheForget;
+
+    private function checkPermission($permission)
+    {
+        $role = Role::find(Auth::user()->role_id);
+        if (!$role->hasPermissionTo($permission)) {
+            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+        }
+    }
+
     public function index()
     {
-        $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-        $numberOfWarehouse = Warehouse::where('is_active', true)->count();
+        if ($response = $this->checkPermission('warehouse-index')) {
+            return $response;
+        }
+
+        $lims_warehouse_list = Warehouse::all();
+        $numberOfWarehouse = Warehouse::count();
         return view('backend.warehouse.create', compact('lims_warehouse_list', 'numberOfWarehouse'));
     }
 
     public function warehouseData(Request $request)
     {
+        if ($response = $this->checkPermission('warehouse-index')) {
+            return $response;
+        }
         $columns = [
             1 => 'warehouses.name',
             2 => 'warehouses.phone',
             3 => 'warehouses.email',
             4 => 'warehouses.address',
-            5 => 'number_of_product',
-            6 => 'stock_qty',
+            5 => 'warehouses.is_active',
         ];
     
-        $totalData = Warehouse::where('is_active', true)->count();
+        $totalData = Warehouse::count();
         $totalFiltered = $totalData;
     
         $limit = $request->input('length');
@@ -40,22 +56,7 @@ class WarehouseController extends Controller
         $order = $columns[$request->input('order.0.column')] ?? 'warehouses.id';
         $dir = $request->input('order.0.dir', 'asc');
     
-        $query = Warehouse::select('warehouses.*')
-                // Subquery 1: Count of active products in this warehouse
-                ->selectRaw('(
-                    SELECT COUNT(DISTINCT product_id) 
-                    FROM product_warehouse 
-                    JOIN products ON product_warehouse.product_id = products.id 
-                    WHERE product_warehouse.warehouse_id = warehouses.id 
-                    AND products.is_active = 1
-                ) as number_of_product')
-                // Subquery 2: Sum of stock quantity in this warehouse
-                ->selectRaw('(
-                    SELECT COALESCE(SUM(qty), 0) 
-                    FROM product_warehouse 
-                    WHERE product_warehouse.warehouse_id = warehouses.id
-                ) as stock_qty')
-                ->where('warehouses.is_active', true);
+        $query = Warehouse::select('warehouses.*');
     
         if ($search = $request->input('search.value')) {
             $query->where(function ($q) use ($search) {
@@ -86,8 +87,7 @@ class WarehouseController extends Controller
                 'phone' => $warehouse->phone,
                 'email' => $warehouse->email,
                 'address' => $warehouse->address,
-                'number_of_product' => $warehouse->number_of_product,
-                'stock_qty' => $warehouse->stock_qty,
+                'is_active' => (bool) $warehouse->is_active,
                 'action' => $action,
             ];
         }
@@ -102,6 +102,9 @@ class WarehouseController extends Controller
 
     public function store(Request $request)
     {
+        if ($response = $this->checkPermission('warehouse-add')) {
+            return $response;
+        }
         $this->validate($request, [
             'name' => [
                 'max:255',
@@ -139,12 +142,18 @@ class WarehouseController extends Controller
 
     public function edit($id)
     {
+        if ($response = $this->checkPermission('warehouse-edit')) {
+            return $response;
+        }
         $lims_warehouse_data = Warehouse::findOrFail($id);
         return $lims_warehouse_data;
     }
 
     public function update(Request $request, $id)
     {
+        if ($response = $this->checkPermission('warehouse-edit')) {
+            return $response;
+        }
         $this->validate($request, [
             'name' => [
                 'max:255',
@@ -162,6 +171,9 @@ class WarehouseController extends Controller
 
     public function importWarehouse(Request $request)
     {
+        if ($response = $this->checkPermission('warehouse-add')) {
+            return $response;
+        }
         //get file
         $upload=$request->file('file');
         $ext = pathinfo($upload->getClientOriginalName(), PATHINFO_EXTENSION);
@@ -204,6 +216,9 @@ class WarehouseController extends Controller
 
     public function deleteBySelection(Request $request)
     {
+        if ($response = $this->checkPermission('warehouse-delete')) {
+            return $response;
+        }
         $warehouse_id = $request['warehouseIdArray'];
         foreach ($warehouse_id as $id) {
             $lims_warehouse_data = Warehouse::find($id);
@@ -215,6 +230,9 @@ class WarehouseController extends Controller
 
     public function destroy($id)
     {
+        if ($response = $this->checkPermission('warehouse-delete')) {
+            return $response;
+        }
         $lims_warehouse_data = Warehouse::find($id);
         $lims_warehouse_data->deactivate();
         $this->cacheForget('warehouse_list');

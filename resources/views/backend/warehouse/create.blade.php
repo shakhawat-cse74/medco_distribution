@@ -11,8 +11,9 @@
 
 <section>
     <div class="container-fluid">
+        @can('warehouse-add')
         <a href="#" data-toggle="modal" data-target="#addWarehouse" class="btn btn-info add-warehouse-btn"><i class="ti ti-plus"></i> {{__('db.Add Warehouse')}}</a>
-        <a href="#" data-toggle="modal" data-target="#importWarehouse" class="btn btn-primary add-warehouse-btn"><i class="ti ti-copy"></i> {{__('db.Import Warehouse')}}</a>
+        @endcan
     </div>
     <div class="table-responsive">
         <table id="warehouse-table" class="table">
@@ -23,8 +24,7 @@
                     <th>{{__('db.Phone Number')}}</th>
                     <th>{{__('db.Email')}}</th>
                     <th>{{__('db.Address')}}</th>
-                    <th>{{__('db.Number of Product')}}</th>
-                    <th>{{__('db.Stock Quantity')}}</th>
+                    <th>{{__('db.Status')}}</th>
                     <th>{{__('db.action')}}</th>
                 </tr>
             </thead>
@@ -35,85 +35,49 @@
 @include('backend.warehouse.add-warehouse')
 
 <div id="editModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-  <div role="document" class="modal-dialog">
+  <div role="document" class="modal-dialog modal-sm">
     <div class="modal-content">
         <form action="{{ route('warehouse.update', 1) }}" method="POST">
             @csrf
             @method('PUT')
-      <div class="modal-header">
-        <h5 id="exampleModalLabel" class="modal-title"> {{__('db.Update Warehouse')}}</h5>
+      <div class="modal-header bg-light py-2">
+        <h5 id="exampleModalLabel" class="modal-title"><i class="ti ti-edit mr-1"></i> {{__('db.Update Warehouse')}}</h5>
         <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="ti ti-x"></i></span></button>
       </div>
-      <div class="modal-body">
-        <p class="italic"><small>{{__('db.The field labels marked with are required input fields')}}.</small></p>
-          <div class="form-group">
+      <div class="modal-body p-3">
+          <div class="form-group mb-2">
             <input type="hidden" name="warehouse_id">
-            <label>{{__('db.name')}} *</label>
-            <input type="text" placeholder="{{ __('db.Type WareHouse Name') }}" name="name" required="required" class="form-control">
+            <label class="small mb-1">{{__('db.name')}} <span class="text-danger">*</span></label>
+            <input type="text" placeholder="{{ __('db.Type WareHouse Name') }}" name="name" required="required" class="form-control form-control-sm">
           </div>
-          <div class="form-group">
-            <label>{{__('db.Phone Number')}} *</label>
-            <input type="text" name="phone" class="form-control" required>
+          <div class="form-group mb-2">
+            <label class="small mb-1">{{__('db.Phone Number')}} <span class="text-danger">*</span></label>
+            <input type="text" name="phone" class="form-control form-control-sm" required>
           </div>
-          <div class="form-group">
-            <label>{{__('db.Email')}}</label>
-            <input type="email" name="email" placeholder="example@example.com" class="form-control">
+          <div class="form-group mb-2">
+            <label class="small mb-1">{{__('db.Email')}}</label>
+            <input type="email" name="email" placeholder="example@example.com" class="form-control form-control-sm">
           </div>
-          <div class="form-group">
-            <label>{{__('db.Address')}} *</label>
-            <textarea class="form-control" rows="3" name="address" required></textarea>
+          <div class="form-group mb-2">
+            <label class="small mb-1">{{__('db.Address')}} <span class="text-danger">*</span></label>
+            <textarea class="form-control form-control-sm" rows="2" name="address" required></textarea>
           </div>
-          <div class="form-group">
-            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary">
+          <div class="form-group mb-2">
+            <label class="small mb-1">{{__('db.Status')}}</label>
+            <select class="form-control form-control-sm" name="is_active">
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+          <div class="text-right">
+            <button type="button" data-dismiss="modal" class="btn btn-sm btn-secondary">{{__('db.Cancel')}}</button>
+            <button type="submit" class="btn btn-sm btn-primary">{{__('db.Update')}}</button>
           </div>
       </div>
       </form>
     </div>
   </div>
 </div>
-
-<div id="importWarehouse" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-  <div role="document" class="modal-dialog">
-    <div class="modal-content">
-        <form action="{{ route('warehouse.import') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-      <div class="modal-header">
-        <h5 id="exampleModalLabel" class="modal-title">{{__('db.Import Warehouse')}}</h5>
-        <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="ti ti-x"></i></span></button>
-      </div>
-      <div class="modal-body">
-        <p class="italic"><small>{{__('db.The field labels marked with are required input fields')}}.</small></p>
-         <p>{{__('db.The correct column order is')}} (name*, phone, email, address*) {{__('db.and you must follow this')}}.</p>
-        <div class="row">
-              <div class="col-md-6">
-                  <div class="form-group">
-                      <label>{{__('db.Upload CSV File')}} *</label>
-                      <input type="file" name="file" class="form-control" required>
-                  </div>
-              </div>
-              <div class="col-md-6">
-                  <div class="form-group">
-                      <label> {{__('db.Sample File')}}</label>
-                      <a href="sample_file/sample_warehouse.csv" class="btn btn-info btn-block btn-md"><i class="ti ti-download"></i>  {{__('db.Download')}}</a>
-                  </div>
-              </div>
-        </div>
-        <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary">
-      </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- QR Modal -->
-<div class="modal fade" id="qrModal">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            @include('backend.qr-menu.includes')
-        </div>
-    </div>
-</div>
-
 
 @endsection
 
@@ -166,33 +130,13 @@
                 $("#editModal input[name='phone']").val(data['phone']);
                 $("#editModal input[name='email']").val(data['email']);
                 $("#editModal textarea[name='address']").val(data['address']);
+                var statusSelect = $("#editModal select[name='is_active']");
+                statusSelect.val(data['is_active'] ? 1 : 0);
+                statusSelect.trigger('change');
                 $("#editModal input[name='warehouse_id']").val(data['id']);
-
             });
         });
 
-        // QR Generate
-        $(document).on('click', '.btn-generate-qr', function() {
-            let id = $(this).data('id');
-            let type = 'warehouse';
-
-            // open modal
-            $('#qrModal').modal('show');
-
-        });
-
-        // QR View Modal
-        $(document).on('click', '.btn-view-qr', function() {
-            var id = $(this).data('id');
-            let type = 'warehouse';
-            $.get('{{url("qr/show") }}/' + id, function(data) {
-                if(data.success) {
-                    $('#qr-image').attr('src', data.image_url);
-                    $('#qr-url').val(data.redirect);
-                    $('#qrModal').modal('show');
-                }
-            });
-        });
     });
 
     $('#warehouse-table').DataTable({
@@ -215,8 +159,13 @@
             {data: 'phone', name: 'phone'},
             {data: 'email', name: 'email'},
             {data: 'address', name: 'address'},
-            {data: 'number_of_product', name: 'number_of_product'},
-            {data: 'stock_qty', name: 'stock_qty'},
+            {
+                data: 'is_active',
+                name: 'is_active',
+                render: function(data) {
+                    return '<span class="badge badge-' + (data ? 'success' : 'danger') + '">' + (data ? 'Active' : 'Inactive') + '</span>';
+                }
+            },
             {
                 data: 'action',
                 orderable: false,
@@ -243,7 +192,7 @@
         columnDefs: [
             {
                 orderable: false,
-                targets: [0, 7]
+                targets: [0, 5]
             }
         ],
     
