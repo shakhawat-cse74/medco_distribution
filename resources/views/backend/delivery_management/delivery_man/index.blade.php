@@ -40,6 +40,7 @@
                                     <th>{{__('db.name')}}</th>
                                     <th>{{__('db.Email')}}</th>
                                     <th>{{__('db.Phone')}}</th>
+                                    <th>{{__('db.City')}}</th>
                                     <th>{{__('db.status')}}</th>
                                     <th class="not-exported">{{__('db.action')}}</th>
                                 </tr>
@@ -243,6 +244,7 @@
             {"data": "email"},
             {"data": "phone_number"},
             {"data": "city"},
+            {"data": "status"},
             {"data": "options"},
         ],
         'language': {
@@ -258,7 +260,7 @@
         'columnDefs': [
             {
                 "orderable": false,
-                'targets': [0, 5]
+                'targets': [0, 6]
             },
             {
                 'render': function(data, type, row, meta){
