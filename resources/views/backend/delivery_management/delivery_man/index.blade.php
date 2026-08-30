@@ -13,7 +13,7 @@
             <div class="col-12">
                 <h3 class="page-title">{{__('db.delivery_men_list')}}</h3>
                 <ul class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="ti ti-home"></i> Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('delivery-reports.index') }}"><i class="ti ti-home"></i> Dashboard</a></li>
                     <li class="breadcrumb-item active">{{__('db.delivery_management')}}</li>
                 </ul>
             </div>
@@ -40,7 +40,6 @@
                                     <th>{{__('db.name')}}</th>
                                     <th>{{__('db.Email')}}</th>
                                     <th>{{__('db.Phone')}}</th>
-                                    <th>{{__('db.Warehouse')}}</th>
                                     <th>{{__('db.status')}}</th>
                                     <th class="not-exported">{{__('db.action')}}</th>
                                 </tr>
@@ -95,13 +94,20 @@
                             <label>{{__('db.Country')}}</label>
                             <input type="text" class="form-control" name="country" id="edit_country">
                         </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.NID Number')}}</label>
+                            <div class="col-md-6 form-group">
+                                <label>{{__('db.NID Number')}}</label>
                             <input type="text" class="form-control" name="nid_number" id="edit_nid_number">
                         </div>
                         <div class="col-md-6 form-group">
-                            <label>{{__('db.License Number')}}</label>
-                            <input type="text" class="form-control" name="license_number" id="edit_license_number">
+                            <label>{{__('db.Routes')}}</label>
+                            <select class="form-control" name="route_ids[]" id="edit_route_ids" multiple size="5">
+                                @forelse($lims_route_list ?? [] as $route)
+                                    <option value="{{ $route->id }}">{{ $route->name }} - {{ $route->city }}</option>
+                                @empty
+                                    <option value="" disabled>{{__('db.No routes available')}}</option>
+                                @endforelse
+                            </select>
+                            <small class="form-text text-muted">{{__('db.Hold Ctrl/Cmd to select multiple routes')}}</small>
                         </div>
                         <div class="col-md-6 form-group">
                             <label>{{__('db.Vehicle Type')}}</label>
@@ -118,23 +124,32 @@
                             <input type="text" class="form-control" name="vehicle_number" id="edit_vehicle_number">
                         </div>
                         <div class="col-md-6 form-group">
-                            <label>{{__('db.Warehouse')}}</label>
-                            <select class="form-control" name="warehouse_id" id="edit_warehouse_id">
-                                <option value="">{{__('db.Select Warehouse')}}</option>
-                                @foreach($lims_warehouse_list as $warehouse)
-                                    <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
-                                @endforeach
-                            </select>
+                            <label>{{__('db.Brand')}}</label>
+                            <input type="text" class="form-control" name="brand" id="edit_brand">
                         </div>
-                        <div class="col-md-12 form-group">
-                            <label>{{__('db.Note')}}</label>
-                            <textarea class="form-control" name="note" id="edit_note" rows="2"></textarea>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Model')}}</label>
+                            <input type="text" class="form-control" name="model" id="edit_model">
                         </div>
-                        <div class="col-md-12 form-group">
-                            <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input" id="edit_is_active" name="is_active" value="1">
-                                <label class="custom-control-label" for="edit_is_active">{{__('db.Active')}}</label>
-                            </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Color')}}</label>
+                            <input type="text" class="form-control" name="color" id="edit_color">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Registration Number')}}</label>
+                            <input type="text" class="form-control" name="registration_number" id="edit_registration_number">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.License Number')}}</label>
+                            <input type="text" class="form-control" name="license_number" id="edit_license_number">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Registration Expiry')}}</label>
+                            <input type="date" class="form-control" name="registration_expiry" id="edit_registration_expiry">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>{{__('db.Vehicle Image')}}</label>
+                            <input type="file" class="form-control" name="vehicle_image" id="edit_vehicle_image">
                         </div>
                     </div>
                 </div>
@@ -176,23 +191,18 @@
             $('#edit_city').val(data.city);
             $('#edit_country').val(data.country);
             $('#edit_nid_number').val(data.nid_number);
-            $('#edit_license_number').val(data.license_number);
             $('#edit_vehicle_type').val(data.vehicle_type);
             $('#edit_vehicle_number').val(data.vehicle_number);
-            $('#edit_warehouse_id').val(data.warehouse_id);
-            $('#edit_user_id').val(data.user_id);
-            $('#edit_note').val(data.note);
-            $('#edit_is_active').prop('checked', data.is_active == true);
+            $('#edit_brand').val(data.brand);
+            $('#edit_model').val(data.model);
+            $('#edit_color').val(data.color);
+            $('#edit_registration_number').val(data.registration_number);
+            $('#edit_license_number').val(data.license_number);
+            $('#edit_registration_expiry').val(data.registration_expiry);
+            if (data.route_ids) {
+                $('#edit_route_ids').val(data.route_ids).trigger('change');
+            }
         });
-    });
-
-    $(document).on("click", ".toggle-status", function() {
-        var id = $(this).data('id').toString();
-        if (confirm("{{__('db.Are you sure you want to toggle status?')}}")) {
-            $.post('delivery-men/toggle-status', { id: id }, function() {
-                location.reload();
-            });
-        }
     });
 
     $(document).on('click', '.confirm-delete-btn', function(e) {
@@ -232,8 +242,7 @@
             {"data": "name"},
             {"data": "email"},
             {"data": "phone_number"},
-            {"data": "warehouse_id"},
-            {"data": "is_active"},
+            {"data": "city"},
             {"data": "options"},
         ],
         'language': {
@@ -249,7 +258,7 @@
         'columnDefs': [
             {
                 "orderable": false,
-                'targets': [0, 6]
+                'targets': [0, 5]
             },
             {
                 'render': function(data, type, row, meta){

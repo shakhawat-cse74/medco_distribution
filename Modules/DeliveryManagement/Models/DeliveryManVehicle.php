@@ -8,8 +8,7 @@ class DeliveryManVehicle extends Model
 {
     protected $fillable = [
         'delivery_man_id', 'vehicle_type', 'vehicle_number', 'brand', 'model',
-        'color', 'registration_number', 'license_number', 'registration_expiry',
-        'insurance_expiry', 'image', 'note'
+        'color', 'registration_number', 'license_number', 'registration_expiry', 'image'
     ];
 
     public function deliveryMan()

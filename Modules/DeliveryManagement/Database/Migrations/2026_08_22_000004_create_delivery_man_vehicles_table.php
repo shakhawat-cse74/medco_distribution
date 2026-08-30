@@ -19,9 +19,7 @@ return new class extends Migration
             $table->string('registration_number')->nullable();
             $table->string('license_number')->nullable();
             $table->date('registration_expiry')->nullable();
-            $table->date('insurance_expiry')->nullable();
             $table->string('image')->nullable();
-            $table->text('note')->nullable();
             $table->timestamps();
         });
     }

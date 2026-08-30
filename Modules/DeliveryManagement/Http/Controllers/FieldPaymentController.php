@@ -31,7 +31,7 @@ class FieldPaymentController extends Controller
                 $all_permission[] = 'dummy text';
 
             $lims_payment_list = FieldPayment::with(['fieldOrder.deliveryMan', 'fieldOrder.customer'])->get();
-            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+            $lims_delivery_man_list = DeliveryMan::active()->get();
 
             return view('backend.delivery_management.field_payment.index', compact('lims_payment_list', 'lims_delivery_man_list', 'all_permission'));
         } else {
