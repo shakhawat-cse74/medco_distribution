@@ -449,6 +449,7 @@ class DeliveryManController extends Controller
             2 => 'email',
             3 => 'phone_number',
             4 => 'city',
+            5 => 'status',
         );
 
         $totalData = DeliveryMan::count();
@@ -491,36 +492,39 @@ class DeliveryManController extends Controller
                 $nestedData['email'] = $deliveryMan->user->email ?? 'N/A';
                 $nestedData['phone_number'] = $deliveryMan->user->phone ?? 'N/A';
                 $nestedData['city'] = $deliveryMan->city ?? 'N/A';
-                 $nestedData['options'] = '<div class="btn-group">
+                $nestedData['status'] = $deliveryMan->user && $deliveryMan->user->is_active == 1
+                    ? '<span class="badge badge-success">Active</span>'
+                    : '<span class="badge badge-danger">Inactive</span>';
+                $nestedData['options'] = '<div class="btn-group">
                              <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.__("db.action").'
                                <span class="caret"></span>
                                <span class="sr-only">Toggle Dropdown</span>
                              </button>
-                             <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
-                                 <li>
-                                     <a href="' . route("delivery-men.show", $deliveryMan->id) . '" class="btn btn-link"><i class="ti ti-eye"></i> '.__("db.View").'</a>
-                                 </li>
-                                 <li>
-                                     <button type="button" data-id="'.$deliveryMan->id.'" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> '.__("db.edit").'</button>
-                                 </li>
-                                 <li class="divider"></li>
-                                 <li>
-                                      <a href="' . route("delivery-man-routes.index") . '?delivery_man_id=' . $deliveryMan->id . '" class="btn btn-link"><i class="ti ti-route"></i> '.__("db.view_routes").'</a>
-                                 </li>
+                              <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
                                   <li>
-                                      <a href="' . route("delivery-man-routes.index") . '?delivery_man_id=' . $deliveryMan->id . '" class="btn btn-link"><i class="ti ti-plus"></i> '.__("db.Assign Route").'</a>
+                                      <a href="' . route("delivery-men.show", $deliveryMan->id) . '" class="btn btn-link"><i class="ti ti-eye"></i> '.__("db.View").'</a>
                                   </li>
-                                 <li class="divider"></li>
-                                 <li>
-                                     <button type="button" class="toggle-status btn btn-link" data-id="'.$deliveryMan->id.'"><i class="ti ti-toggle-left"></i> '.__("db.Toggle Status").'</button>
-                                 </li>
-                                 <li class="divider"></li>
-                                 <form action="' . route("delivery-men.delete", $deliveryMan->id) . '" method="POST">'.csrf_field().'' . method_field("POST") . '
-                                 <li>
-                                   <button type="submit" class="btn btn-link confirm-delete-btn" data-id="'.$deliveryMan->id.'" data-name="'.$deliveryMan->name.'"><i class="ti ti-trash"></i> '.__("db.delete").'</button>
-                                 </li></form>
-                             </ul>
-                         </div>';
+                                  <li>
+                                      <button type="button" data-id="'.$deliveryMan->id.'" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> '.__("db.edit").'</button>
+                                  </li>
+                                  <li class="divider"></li>
+                                  <li>
+                                       <a href="' . route("delivery-man-routes.index") . '?delivery_man_id=' . $deliveryMan->id . '" class="btn btn-link"><i class="ti ti-route"></i> '.__("db.view_routes").'</a>
+                                  </li>
+                                   <li>
+                                       <a href="' . route("delivery-man-routes.index") . '?delivery_man_id=' . $deliveryMan->id . '" class="btn btn-link"><i class="ti ti-plus"></i> '.__("db.Assign Route").'</a>
+                                   </li>
+                                  <li class="divider"></li>
+                                  <li>
+                                      <button type="button" class="toggle-status btn btn-link" data-id="'.$deliveryMan->id.'"><i class="ti ti-toggle-left"></i> '.__("db.Toggle Status").'</button>
+                                  </li>
+                                  <li class="divider"></li>
+                                  <form action="' . route("delivery-men.delete", $deliveryMan->id) . '" method="POST">'.csrf_field().'' . method_field("POST") . '
+                                  <li>
+                                    <button type="submit" class="btn btn-link confirm-delete-btn" data-id="'.$deliveryMan->id.'" data-name="'.$deliveryMan->name.'"><i class="ti ti-trash"></i> '.__("db.delete").'</button>
+                                  </li></form>
+                              </ul>
+                          </div>';
                 $data[] = $nestedData;
             }
         }
