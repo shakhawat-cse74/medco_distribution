@@ -25,6 +25,11 @@ Route::prefix('delivery-man')->name('delivery-man.')->group(function () {
     Route::middleware('delivery.man.auth')->group(function () {
         Route::get('dashboard', [DeliveryManAuthController::class, 'dashboard'])->name('dashboard');
 
+        Route::prefix('delivery-men')->name('delivery-men.')->group(function () {
+            Route::get('/', [DeliveryManController::class, 'index'])->name('index');
+            Route::get('{id}', [DeliveryManController::class, 'show'])->name('show');
+        });
+
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [DeliveryReportController::class, 'index'])->name('index');
             Route::post('dashboard-data', [DeliveryReportController::class, 'dashboardData'])->name('dashboardData');
@@ -42,6 +47,7 @@ Route::prefix('delivery-man')->name('delivery-man.')->group(function () {
             Route::get('/', [FieldOrderController::class, 'index'])->name('index');
             Route::get('create', [FieldOrderController::class, 'create'])->name('create');
             Route::post('store', [FieldOrderController::class, 'store'])->name('store');
+            Route::post('field-order-data', [FieldOrderController::class, 'fieldOrderData'])->name('fieldOrderData');
             Route::get('{id}', [FieldOrderController::class, 'show'])->name('show');
             Route::get('draft-list', [FieldOrderController::class, 'draftList'])->name('draftList');
             Route::get('draft/{id}', [FieldOrderController::class, 'loadDraft'])->name('loadDraft');
