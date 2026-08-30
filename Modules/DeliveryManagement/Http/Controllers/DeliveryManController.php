@@ -32,6 +32,17 @@ class DeliveryManController extends Controller
     public function index()
     {
         $role = Role::find(Auth::user()->role_id);
+
+        $isDeliveryMan = request()->is('delivery-man/*');
+
+        if ($isDeliveryMan) {
+            $deliveryMan = DeliveryMan::where('user_id', Auth::id())->first();
+            $lims_delivery_man_list = $deliveryMan ? DeliveryMan::with('user')->where('id', $deliveryMan->id)->get() : collect();
+            $lims_route_list = DeliveryArea::active()->get();
+
+            return view('backend.delivery_management.delivery_man.index', compact('lims_delivery_man_list', 'lims_route_list'));
+        }
+
         if ($role->hasPermissionTo('delivery-men-index')) {
             $permissions = Role::findByName($role->name)->permissions;
             foreach ($permissions as $permission)

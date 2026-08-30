@@ -21,8 +21,8 @@ class DeliveryManagementServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
         
-        if (class_exists(RouteServiceProvider::class)) {
-            $this->app->register(RouteServiceProvider::class);
+        if (class_exists(\Modules\DeliveryManagement\Providers\DeliveryManagementRouteServiceProvider::class)) {
+            $this->app->register(\Modules\DeliveryManagement\Providers\DeliveryManagementRouteServiceProvider::class);
         }
     }
 

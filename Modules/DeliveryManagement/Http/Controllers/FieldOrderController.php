@@ -29,6 +29,14 @@ class FieldOrderController extends Controller
     public function index()
     {
         $role = Role::find(Auth::user()->role_id);
+
+        $isDeliveryMan = request()->is('delivery-man/*');
+
+        if ($isDeliveryMan) {
+            $lims_warehouse_list = Warehouse::where('is_active', true)->get();
+            return view('backend.delivery_management.field_order.index', compact('lims_warehouse_list'));
+        }
+
         if ($role->hasPermissionTo('field-orders-index')) {
             $permissions = Role::findByName($role->name)->permissions;
             foreach ($permissions as $permission)
@@ -41,7 +49,7 @@ class FieldOrderController extends Controller
 
             return view('backend.delivery_management.field_order.index', compact('lims_warehouse_list', 'lims_delivery_man_list', 'all_permission'));
         } else {
-            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+            return redirect()->back()->with('not_permitted', __('db Sorry! You are not allowed to access this module'));
         }
     }
 
@@ -405,6 +413,16 @@ class FieldOrderController extends Controller
         $dir = $request->input('order.0.dir') ?? 'asc';
 
         $query = FieldOrder::query();
+
+        $isDeliveryMan = $request->is('delivery-man/*');
+
+        if ($isDeliveryMan) {
+            $user = Auth::guard('web')->user();
+            $deliveryMan = DeliveryMan::where('user_id', $user->id)->first();
+            if ($deliveryMan) {
+                $query->where('delivery_man_id', $deliveryMan->id);
+            }
+        }
 
         if (!empty($request->input('search.value'))) {
             $search = $request->input('search.value');

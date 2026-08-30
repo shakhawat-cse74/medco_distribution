@@ -985,11 +985,26 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
 
     // Delivery Management Module Routes
     Route::prefix('delivery-man')->name('delivery-man.')->group(function () {
-        Route::get('login', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'showLogin'])->name('login');
-        Route::post('login', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'login']);
         Route::middleware('delivery.man.auth')->group(function () {
             Route::get('dashboard', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'dashboard'])->name('dashboard');
             Route::post('logout', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'logout'])->name('logout');
+
+            Route::prefix('delivery-men')->name('delivery-men.')->group(function () {
+                Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'index'])->name('index');
+                Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'show'])->name('show');
+            });
+
+            Route::prefix('orders')->name('orders.')->group(function () {
+                Route::get('/', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'index'])->name('index');
+                Route::post('field-order-data', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'fieldOrderData'])->name('fieldOrderData');
+                Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'show'])->name('show');
+                Route::get('invoice/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'genInvoice'])->name('invoice');
+            });
+
+            Route::prefix('reports')->name('reports.')->group(function () {
+                Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'index'])->name('index');
+                Route::post('dashboard-data', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'dashboardData'])->name('dashboardData');
+            });
         });
     });
 

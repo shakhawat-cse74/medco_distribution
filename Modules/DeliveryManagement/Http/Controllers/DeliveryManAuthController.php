@@ -47,10 +47,10 @@ class DeliveryManAuthController extends Controller
                 return redirect()->back()->with('not_permitted', __('db.Sorry! Delivery man profile not found'));
             }
 
-            if (!$deliveryMan->is_active) {
+            if ($user->is_active == false) {
                 Auth::guard('web')->logout();
                 $request->session()->invalidate();
-                return redirect()->back()->with('not_permitted', __('db.Sorry! Your account is inactive'));
+                return redirect()->back()->with('not_permitted', __('db Sorry! Your account is inactive'));
             }
 
             return redirect()->route('delivery-man.dashboard');
@@ -61,7 +61,12 @@ class DeliveryManAuthController extends Controller
 
     public function dashboard(Request $request)
     {
-        $deliveryMan = Auth::guard('delivery_man')->user();
+        $user = Auth::guard('web')->user();
+        $deliveryMan = DeliveryMan::where('user_id', $user->id)->first();
+
+        if (!$deliveryMan) {
+            return redirect()->route('delivery-man.login')->with('not_permitted', 'Delivery man profile not found');
+        }
 
         $period = $request->input('period', 'today');
         $startDate = $request->input('start_date', date('Y-m-d'));
