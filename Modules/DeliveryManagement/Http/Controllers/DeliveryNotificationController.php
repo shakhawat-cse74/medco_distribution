@@ -28,7 +28,7 @@ class DeliveryNotificationController extends Controller
                 $all_permission[] = 'dummy text';
 
             $lims_notification_list = DeliveryNotification::with('deliveryMan')->get();
-            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+            $lims_delivery_man_list = DeliveryMan::active()->get();
 
             return view('backend.delivery_management.delivery_notification.index', compact('lims_notification_list', 'lims_delivery_man_list', 'all_permission'));
         } else {

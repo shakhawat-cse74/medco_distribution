@@ -33,7 +33,7 @@ class FieldReturnController extends Controller
                 $all_permission[] = 'dummy text';
 
             $lims_return_list = FieldReturn::with(['deliveryMan', 'customer', 'fieldOrder'])->get();
-            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+            $lims_delivery_man_list = DeliveryMan::active()->get();
 
             return view('backend.delivery_management.field_return.index', compact('lims_return_list', 'lims_delivery_man_list', 'all_permission'));
         } else {
@@ -46,7 +46,7 @@ class FieldReturnController extends Controller
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('field-returns-add')) {
             $lims_field_order_data = FieldOrder::with(['deliveryMan', 'customer', 'products.product'])->findOrFail($field_order_id);
-            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+            $lims_delivery_man_list = DeliveryMan::active()->get();
 
             return view('backend.delivery_management.field_return.create', compact('lims_field_order_data', 'lims_delivery_man_list'));
         } else {

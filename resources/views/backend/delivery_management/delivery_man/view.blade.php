@@ -33,9 +33,11 @@
                         </div>
                     @endif
                     <h4>{{ $lims_delivery_man_data->name }}</h4>
-                    <span class="badge badge-{{ $lims_delivery_man_data->is_active ? 'success' : 'danger' }}">
-                        {{ $lims_delivery_man_data->is_active ? __('db.Active') : __('db.Inactive') }}
-                    </span>
+                    @if($lims_delivery_man_data->user && $lims_delivery_man_data->user->is_active)
+                        <span class="badge badge-success">{{ __('db.Active') }}</span>
+                    @else
+                        <span class="badge badge-danger">{{ __('db.Inactive') }}</span>
+                    @endif
                     <div class="mt-3">
                         <a href="{{ route('delivery-men.edit', $lims_delivery_man_data->id) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-edit"></i> {{__('db.edit')}}</a>
                         <a href="{{ route('delivery-men.performance', $lims_delivery_man_data->id) }}" class="btn btn-sm btn-outline-info" target="_blank"><i class="ti ti-chart-bar"></i> {{__('db.Performance')}}</a>
@@ -54,16 +56,41 @@
                 </div>
                 <div class="card-body">
                     <table class="table table-striped">
-                        <tr><th style="width:35%">{{__('db.Phone')}}</th><td>{{ $lims_delivery_man_data->phone_number }}</td></tr>
-                        <tr><th>{{__('db.Email')}}</th><td>{{ $lims_delivery_man_data->email ?? 'N/A' }}</td></tr>
+                        <tr><th style="width:35%">{{__('db.Phone')}}</th><td>{{ $lims_delivery_man_data->user->phone ?? 'N/A' }}</td></tr>
+                        <tr><th>{{__('db.Email')}}</th><td>{{ $lims_delivery_man_data->user->email ?? 'N/A' }}</td></tr>
                         <tr><th>{{__('db.Address')}}</th><td>{{ $lims_delivery_man_data->address ?? 'N/A' }}</td></tr>
                         <tr><th>{{__('db.City')}}</th><td>{{ $lims_delivery_man_data->city ?? 'N/A' }}</td></tr>
                         <tr><th>{{__('db.Country')}}</th><td>{{ $lims_delivery_man_data->country ?? 'N/A' }}</td></tr>
                         <tr><th>{{__('db.NID Number')}}</th><td>{{ $lims_delivery_man_data->nid_number ?? 'N/A' }}</td></tr>
-                        <tr><th>{{__('db.License Number')}}</th><td>{{ $lims_delivery_man_data->license_number ?? 'N/A' }}</td></tr>
-                        <tr><th>{{__('db.Warehouse')}}</th><td>{{ $lims_delivery_man_data->warehouse ? $lims_delivery_man_data->warehouse->name : 'N/A' }}</td></tr>
-                        <tr><th>{{__('db.Note')}}</th><td>{{ $lims_delivery_man_data->note ?? 'N/A' }}</td></tr>
                     </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="m-b-0">{{__('db.Routes')}}</h5>
+                </div>
+                <div class="card-body">
+                    @if($lims_delivery_man_data->routes && $lims_delivery_man_data->routes->isNotEmpty())
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{{__('db.Route Name')}}</th>
+                                    <th>{{__('db.City')}}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($lims_delivery_man_data->routes as $route)
+                                    <tr>
+                                        <td>{{ $route->name ?? 'N/A' }}</td>
+                                        <td>{{ $route->city ?? 'N/A' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <p class="text-muted">{{__('db.No routes assigned')}}</p>
+                    @endif
                 </div>
             </div>
 
@@ -72,20 +99,27 @@
                     <h5 class="m-b-0">{{__('db.Vehicle Information')}}</h5>
                 </div>
                 <div class="card-body">
-                    <table class="table table-striped">
-                        <tr><th style="width:35%">{{__('db.Vehicle Type')}}</th><td>{{ $lims_delivery_man_data->vehicle_type ?? 'N/A' }}</td></tr>
-                        <tr><th>{{__('db.Vehicle Number')}}</th><td>{{ $lims_delivery_man_data->vehicle_number ?? 'N/A' }}</td></tr>
-                    </table>
                     @if($lims_delivery_man_data->vehicles && $lims_delivery_man_data->vehicles->isNotEmpty())
-                        <h6>{{__('db.Registered Vehicles')}}</h6>
-                        <ul class="list-group">
-                            @foreach($lims_delivery_man_data->vehicles as $vehicle)
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span>{{ $vehicle->vehicle_type ?? 'N/A' }}</span>
-                                    <span class="badge badge-secondary">{{ $vehicle->vehicle_number ?? 'N/A' }}</span>
-                                </li>
-                            @endforeach
-                        </ul>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{{__('db.Vehicle Type')}}</th>
+                                    <th>{{__('db.Vehicle Number')}}</th>
+                                    <th>{{__('db.License Number')}}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($lims_delivery_man_data->vehicles as $vehicle)
+                                    <tr>
+                                        <td>{{ $vehicle->vehicle_type ?? 'N/A' }}</td>
+                                        <td>{{ $vehicle->vehicle_number ?? 'N/A' }}</td>
+                                        <td>{{ $vehicle->license_number ?? 'N/A' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <p class="text-muted">{{__('db.No vehicles registered')}}</p>
                     @endif
                 </div>
             </div>

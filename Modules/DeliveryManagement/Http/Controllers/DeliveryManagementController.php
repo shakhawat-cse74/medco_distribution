@@ -44,7 +44,7 @@ class DeliveryManagementController extends Controller
             }
             
             $lims_delivery_list = $query->get();
-            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+            $lims_delivery_man_list = DeliveryMan::active()->get();
 
             return view('backend.delivery_management.index', compact('lims_delivery_list', 'lims_delivery_man_list', 'all_permission', 'isDeliveryMan'));
         } else {

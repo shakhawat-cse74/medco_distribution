@@ -26,9 +26,9 @@ class DeliveryManagementModuleSeeder extends Seeder
             $deliveryManRoleId = DB::table('roles')->insertGetId([
                 'name' => 'Delivery Man',
                 'description' => 'Delivery Man role for field operations',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'is_active'   => 1,
+                'created_at'  => now(),
+                'updated_at'  => now(),
             ]);
         } else {
             $deliveryManRoleId = $deliveryManRole->id;
@@ -41,7 +41,7 @@ class DeliveryManagementModuleSeeder extends Seeder
         $deliveryMen = [];
         foreach (range(1, 5) as $i) {
             $email = 'delivery' . ($i + 1) . '@example.com';
-            $phone = '1234567890' . $i;
+            $phone = '0179523259' . $i;
 
             // Check if user already exists
             $existingUser = DB::table('users')->where('email', $email)->first();
@@ -49,12 +49,12 @@ class DeliveryManagementModuleSeeder extends Seeder
                 $userId = $existingUser->id;
             } else {
                 $userId = DB::table('users')->insertGetId([
-                    'name' => 'Delivery Man ' . ($i + 1),
-                    'email' => $email,
-                    'password' => Hash::make('password123'),
-                    'phone' => $phone,
-                    'role_id' => $deliveryManRoleId,
-                    'is_active' => 1,
+                    'name'       => 'Delivery Man ' . ($i + 1),
+                    'email'      => $email,
+                    'password'   => Hash::make('password123'),
+                    'phone'      => $phone,
+                    'role_id'    => $deliveryManRoleId,
+                    'is_active'  => 1,
                     'is_deleted' => 0,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -62,34 +62,24 @@ class DeliveryManagementModuleSeeder extends Seeder
             }
 
             // Check if delivery man already exists
-            $existingDM = DB::table('delivery_men')->where('email', $email)->first();
+            $existingDM = DB::table('delivery_men')->where('user_id', $userId)->first();
             if ($existingDM) {
                 $deliveryMen[] = $existingDM->id;
                 continue;
             }
 
             $deliveryMen[] = DB::table('delivery_men')->insertGetId([
-                'delivery_man_id' => 'DLV-' . strtoupper(substr(md5($faker->name), 0, 8)),
-                'name' => 'Delivery Man ' . ($i + 1),
-                'email' => $email,
-                'phone_number' => $phone,
-                'password' => Hash::make('password123'),
-                'address' => $faker->address,
-                'city' => $faker->city,
-                'country' => 'Country ' . $i,
-                'nid_number' => 'NID' . str_pad($i, 9, '0', STR_PAD_LEFT),
-                'license_number' => 'LIC' . str_pad($i, 8, '0', STR_PAD_LEFT),
-                'vehicle_type' => ['motorcycle', 'car', 'van', 'bicycle'][($i - 1) % 4],
-                'vehicle_number' => 'VH' . strtoupper(substr(md5('vehicle' . $i), 0, 8)),
-                'image' => 'https://picsum.photos/seed/delivery{$i}/200/200.jpg',
-                'user_id' => $userId,
-                'warehouse_id' => $warehouse->id,
-                'note' => $faker->optional()->text(100),
-                'is_active' => 1,
-                'last_login_at' => $faker->optional()->dateTimeBetween('-30 days'),
-                'fcm_token' => $faker->optional()->slug(10),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'delivery_man_id'              => 'DLV-' . strtoupper(substr(md5($faker->name), 0, 8)),
+                'name'                         => 'Delivery Man ' . ($i + 1),
+                'address'                      => $faker->address,
+                'city'                         => $faker->city,
+                'country'                      => 'Country ' . $i,
+                'nid_number'                   => 'NID' . str_pad($i, 9, '0', STR_PAD_LEFT),
+                'image'                        => 'https://picsum.photos/seed/delivery{$i}/200/200.jpg',
+                'user_id'                      => $userId,
+                // 'is_active'                    => 1,
+                'created_at'                   => now(),
+                'updated_at'                   => now(),
             ]);
 
             // Create delivery man vehicle for each delivery man
@@ -339,20 +329,18 @@ class DeliveryManagementModuleSeeder extends Seeder
     private function createDeliveryManVehicle($deliveryManId, $faker)
     {
         DB::table('delivery_man_vehicles')->insert([
-            'delivery_man_id' => $deliveryManId,
-            'vehicle_type' => ['motorcycle', 'car', 'van'][array_rand(range(0, 2))],
-            'vehicle_number' => 'VH' . strtoupper(substr(md5('vehicle' . $faker->randomDigit), 0, 12)),
-            'brand' => $faker->optional()->word,
-            'model' => $faker->optional()->word,
-            'color' => $faker->optional()->safeColorName,
+            'delivery_man_id'     => $deliveryManId,
+            'vehicle_type'        => ['motorcycle', 'car', 'van'][array_rand(range(0, 2))],
+            'vehicle_number'      => 'VH' . strtoupper(substr(md5('vehicle' . $faker->randomDigit), 0, 12)),
+            'brand'               => $faker->optional()->word,
+            'model'               => $faker->optional()->word,
+            'color'               => $faker->optional()->safeColorName,
             'registration_number' => $faker->optional()->bothify('??-####-??'),
-            'license_number' => $faker->optional()->bothify('LIC-####'),
+            'license_number'      => $faker->optional()->bothify('LIC-####'),
             'registration_expiry' => $faker->optional()->dateTimeBetween('+1 year', '+3 years'),
-            'insurance_expiry' => $faker->optional()->dateTimeBetween('+1 year', '+3 years'),
-            'image' => $faker->optional()->imageUrl(400, 300, 'vehicle'),
-            'note' => $faker->optional()->sentence,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'image'               => $faker->optional()->imageUrl(400, 300, 'vehicle'),
+            'created_at'          => now(),
+            'updated_at'          => now(),
         ]);
     }
 
