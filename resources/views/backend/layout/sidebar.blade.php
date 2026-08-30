@@ -31,6 +31,32 @@
     </li>
     @endcanany
 
+    @canany(['delivery-men-index'])
+    <li>
+        <a href="#delivery-management" aria-expanded="false" data-toggle="collapse">
+            <i class="ti ti-truck"></i>
+            <span>{{ __('db.Delivery Management') }}</span>
+        </a>
+        <ul id="delivery-management" class="collapse list-unstyled">
+            @can('delivery-men-index')
+            <li id="delivery-men-menu"><a class="{{ request()->is('delivery-men') ? 'active' : '' }}" href="{{route('delivery-men.index')}}">{{ __('db.delivery_men_list') }}</a></li>
+            @endcan
+            {{-- @can('delivery-men-add')
+            <li id="delivery-men-create-menu"><a class="{{ request()->is('delivery-men/create') ? 'active' : '' }}" href="{{route('delivery-men.create')}}">{{ __('db.add_delivery_man') }}</a></li>
+            @endcan --}}
+            @can('field-orders-index')
+            <li id="field-orders-menu"><a class="{{ request()->is('field-orders') ? 'active' : '' }}" href="{{route('field-orders.index')}}">{{ __('db.field_orders') }}</a></li>
+            @endcan
+            @can('field-payments-index')
+            <li id="field-payments-menu"><a class="{{ request()->is('field-payments') ? 'active' : '' }}" href="{{route('field-payments.index')}}">{{ __('db.field_payments') }}</a></li>
+            @endcan
+            @can('delivery-man-delivery-index')
+            <li id="delivery-man-delivery-menu"><a class="{{ request()->is('delivery-man-delivery') ? 'active' : '' }}" href="{{route('delivery-man-delivery.index')}}">{{ __('db.delivery_management') }}</a></li>
+            @endcan
+        </ul>
+    </li>
+    @endcanany
+
     @canany([
     'categories-index',
     'brand',

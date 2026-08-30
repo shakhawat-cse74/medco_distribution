@@ -45,5 +45,192 @@ return [
         "repair-payment-add" => "Collect Payment",
         "repair-payment-delete" => "Delete Payment",
         "repair-device-type" => "Device Type",
-    ]
+    ],
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Management Module
+    |--------------------------------------------------------------------------
+    |
+    | Permissions related to delivery operations, delivery men,
+    | field orders, payments, routes, vehicles, deliveries,
+    | commissions, deposits, returns, visits, schedules,
+    | notifications, settings, and reports.
+    |
+    */
+    "delivery_management_module" => [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Man Management
+    |--------------------------------------------------------------------------
+    |
+    | Create, view, update, delete and manage delivery men.
+    |
+    */
+        "delivery-men-index"  => "Delivery Men List",
+        "delivery-men-add"    => "Add Delivery Man",
+        "delivery-men-view"   => "View Delivery Man",
+        "delivery-men-edit"   => "Edit Delivery Man",
+        "delivery-men-delete" => "Delete Delivery Man",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Man Assignments
+    |--------------------------------------------------------------------------
+    |
+    | Manage assignments of delivery men to their respective tasks/orders.
+    |
+    */
+        "delivery-men-assign-index" => "Delivery Man Assignments",
+        "delivery-men-assign-add"   => "Assign Delivery Man",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Routes and Vehicles
+    |--------------------------------------------------------------------------
+    |
+    | Manage delivery routes and vehicles used by delivery men.
+    |
+    */
+        "delivery-men-route-index"   => "Delivery Routes",
+        "delivery-men-vehicle-index" => "Vehicle Management",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Field Order Management
+    |--------------------------------------------------------------------------
+    |
+    | Manage field orders from creation through cancellation.
+    |
+    */
+        "field-orders-index"  => "Field Orders",
+        "field-orders-add"    => "Create Field Order",
+        "field-orders-view"   => "View Field Order",
+        "field-orders-edit"   => "Edit Field Order",
+        "field-orders-delete" => "Cancel Field Order",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Field Payment Management
+    |--------------------------------------------------------------------------
+    |
+    | Manage payments collected against field orders.
+    |
+    */
+        "field-payments-index"  => "Field Payments",
+        "field-payments-add"    => "Collect Payment",
+        "field-payments-view"   => "View Payment",
+        "field-payments-edit"   => "Edit Payment",
+        "field-payments-delete" => "Delete Payment",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Management
+    |--------------------------------------------------------------------------
+    |
+    | Manage delivery assignments and update delivery status/details.
+    |
+    */
+        "delivery-man-delivery-index"  => "Delivery Management",
+        "delivery-man-delivery-assign" => "Assign Deliveries",
+        "delivery-man-delivery-update" => "Update Delivery",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Proofs
+    |--------------------------------------------------------------------------
+    |
+    | Manage proof of delivery captured during the delivery process.
+    |
+    */
+        "delivery-proofs-index" => "Delivery Proofs",
+        "delivery-proofs-add"   => "Capture Proof",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Commission Management
+    |--------------------------------------------------------------------------
+    |
+    | View and calculate commissions for delivery men.
+    |
+    */
+        "delivery-man-commissions-index" => "Commission Management",
+        "delivery-man-commissions-add"   => "Calculate Commission",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cash Deposit Management
+    |--------------------------------------------------------------------------
+    |
+    | Manage cash deposits submitted by delivery men.
+    |
+    */
+        "cash-deposits-index" => "Cash Deposits",
+        "cash-deposits-add"   => "Record Deposit",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Field Return Management
+    |--------------------------------------------------------------------------
+    |
+    | Manage product/order returns initiated from the field.
+    |
+    */
+        "field-returns-index" => "Field Returns",
+        "field-returns-add"   => "Initiate Return",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Visit Management
+    |--------------------------------------------------------------------------
+    |
+    | Manage customer visits and customer check-in activities.
+    |
+    */
+        "customer-visits-index" => "Customer Visits",
+        "customer-visits-add"   => "Check Customer In",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Schedules
+    |--------------------------------------------------------------------------
+    |
+    | Manage delivery schedules and planned delivery activities.
+    |
+    */
+        "delivery-man-schedules-index" => "Delivery Schedules",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Settings
+    |--------------------------------------------------------------------------
+    |
+    | Manage configuration/settings related to the delivery module.
+    |
+    */
+        "delivery-settings-index"  => "Delivery Settings",
+        "delivery-settings-update" => "Update Delivery Settings",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Notifications
+    |--------------------------------------------------------------------------
+    |
+    | Manage delivery-related notifications.
+    |
+    */
+        "delivery-notifications-index" => "Delivery Notifications",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Reports
+    |--------------------------------------------------------------------------
+    |
+    | Access delivery-related reports and analytics.
+    |
+    */
+        "delivery-reports-index" => "Delivery Reports",
+    ],
 ];
