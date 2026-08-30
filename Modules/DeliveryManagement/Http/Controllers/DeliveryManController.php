@@ -70,6 +70,7 @@ class DeliveryManController extends Controller
             'name' => 'required|max:255',
             'phone_number' => 'required|max:255',
             'email' => 'nullable|email|max:255',
+            'image' => 'nullable|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();
@@ -188,32 +189,10 @@ class DeliveryManController extends Controller
         if ($role->hasPermissionTo('delivery-men-edit')) {
             $lims_delivery_man_data = DeliveryMan::with(['user', 'routes', 'vehicles'])->findOrFail($id);
             $lims_route_list = DeliveryArea::active()->get();
+            $selected_routes = $lims_delivery_man_data->routes->pluck('id')->toArray();
+            $lims_vehicle_data = $lims_delivery_man_data->vehicles->first();
 
-            $vehicle = $lims_delivery_man_data->vehicles->first();
-
-            $data = [
-                'id' => $lims_delivery_man_data->id,
-                'name' => $lims_delivery_man_data->name,
-                'email' => $lims_delivery_man_data->user->email ?? null,
-                'phone_number' => $lims_delivery_man_data->user->phone ?? null,
-                'address' => $lims_delivery_man_data->address,
-                'city' => $lims_delivery_man_data->city,
-                'country' => $lims_delivery_man_data->country,
-                'nid_number' => $lims_delivery_man_data->nid_number,
-                'image' => $lims_delivery_man_data->image,
-                'user_id' => $lims_delivery_man_data->user_id,
-                'route_ids' => $lims_delivery_man_data->routes->pluck('id')->toArray(),
-                'vehicle_type' => $vehicle?->vehicle_type,
-                'vehicle_number' => $vehicle?->vehicle_number,
-                'brand' => $vehicle?->brand,
-                'model' => $vehicle?->model,
-                'color' => $vehicle?->color,
-                'registration_number' => $vehicle?->registration_number,
-                'license_number' => $vehicle?->license_number,
-                'registration_expiry' => $vehicle?->registration_expiry,
-            ];
-
-            return $data;
+            return view('backend.delivery_management.delivery_man.edit', compact('lims_delivery_man_data', 'lims_route_list', 'selected_routes', 'lims_vehicle_data'));
         } else {
             return redirect()->back()->with('not_permitted', __('db Sorry! You are not allowed to access this module'));
         }
@@ -230,6 +209,7 @@ class DeliveryManController extends Controller
             'name' => 'required|max:255',
             'phone_number' => 'required|max:255',
             'email' => 'nullable|email|max:255',
+            'image' => 'nullable|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();
@@ -286,7 +266,7 @@ class DeliveryManController extends Controller
 
             // Update vehicle only if vehicle_type is provided
             if (!empty($data['vehicle_type'])) {
-                DB::table('delivery_men_vehicles')->where('delivery_man_id', $lims_delivery_man_data->id)->delete();
+                DB::table('delivery_man_vehicles')->where('delivery_man_id', $lims_delivery_man_data->id)->delete();
 
                 $vehicleData = [
                     'delivery_man_id' => $lims_delivery_man_data->id,
@@ -505,7 +485,7 @@ class DeliveryManController extends Controller
                                       <a href="' . route("delivery-men.show", $deliveryMan->id) . '" class="btn btn-link"><i class="ti ti-eye"></i> '.__("db.View").'</a>
                                   </li>
                                   <li>
-                                      <button type="button" data-id="'.$deliveryMan->id.'" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> '.__("db.edit").'</button>
+                                      <a href="' . route("delivery-men.edit", $deliveryMan->id) . '" class="btn btn-link"><i class="ti ti-edit"></i> '.__("db.edit").'</a>
                                   </li>
                                   <li class="divider"></li>
                                   <li>
@@ -513,7 +493,7 @@ class DeliveryManController extends Controller
                                   </li>
                                    <li>
                                        <a href="' . route("delivery-man-routes.index") . '?delivery_man_id=' . $deliveryMan->id . '" class="btn btn-link"><i class="ti ti-plus"></i> '.__("db.Assign Route").'</a>
-                                   </li>
+                                  </li>
                                   <li class="divider"></li>
                                   <li>
                                       <button type="button" class="toggle-status btn btn-link" data-id="'.$deliveryMan->id.'"><i class="ti ti-toggle-left"></i> '.__("db.Toggle Status").'</button>

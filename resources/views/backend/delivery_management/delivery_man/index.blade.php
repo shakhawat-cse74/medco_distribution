@@ -53,117 +53,7 @@
     </div>
 </div>
 
-<!-- Edit Delivery Man Modal -->
-<div id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form action="{{ route('delivery-men.update') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-header">
-                    <h5 id="editModalLabel" class="modal-title">{{__('db.edit')}} {{__('db.delivery_men_list')}}</h5>
-                    <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="ti ti-x"></i></span></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="id" id="edit_id">
-                    <div class="row">
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.name')}} <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="name" id="edit_name" required>
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Phone')}} <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="phone_number" id="edit_phone_number" required>
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Email')}}</label>
-                            <input type="email" class="form-control" name="email" id="edit_email">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Password')}}</label>
-                            <input type="password" class="form-control" name="password">
-                            <small class="text-muted">{{__('db.Leave blank to keep current')}}</small>
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Address')}}</label>
-                            <textarea class="form-control" name="address" id="edit_address" rows="2"></textarea>
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.City')}}</label>
-                            <input type="text" class="form-control" name="city" id="edit_city">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Country')}}</label>
-                            <input type="text" class="form-control" name="country" id="edit_country">
-                        </div>
-                            <div class="col-md-6 form-group">
-                                <label>{{__('db.NID Number')}}</label>
-                            <input type="text" class="form-control" name="nid_number" id="edit_nid_number">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Routes')}}</label>
-                            <select class="form-control" name="route_ids[]" id="edit_route_ids" multiple size="5">
-                                @forelse($lims_route_list ?? [] as $route)
-                                    <option value="{{ $route->id }}">{{ $route->name }} - {{ $route->city }}</option>
-                                @empty
-                                    <option value="" disabled>{{__('db.No routes available')}}</option>
-                                @endforelse
-                            </select>
-                            <small class="form-text text-muted">{{__('db.Hold Ctrl/Cmd to select multiple routes')}}</small>
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Vehicle Type')}}</label>
-                            <select class="form-control" name="vehicle_type" id="edit_vehicle_type">
-                                <option value="">{{__('db.Select Vehicle Type')}}</option>
-                                <option value="Motorcycle">Motorcycle</option>
-                                <option value="Car">Car</option>
-                                <option value="Van">Van</option>
-                                <option value="Truck">Truck</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Vehicle Number')}}</label>
-                            <input type="text" class="form-control" name="vehicle_number" id="edit_vehicle_number">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Brand')}}</label>
-                            <input type="text" class="form-control" name="brand" id="edit_brand">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Model')}}</label>
-                            <input type="text" class="form-control" name="model" id="edit_model">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Color')}}</label>
-                            <input type="text" class="form-control" name="color" id="edit_color">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Registration Number')}}</label>
-                            <input type="text" class="form-control" name="registration_number" id="edit_registration_number">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.License Number')}}</label>
-                            <input type="text" class="form-control" name="license_number" id="edit_license_number">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Registration Expiry')}}</label>
-                            <input type="date" class="form-control" name="registration_expiry" id="edit_registration_expiry">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <label>{{__('db.Vehicle Image')}}</label>
-                            <input type="file" class="form-control" name="vehicle_image" id="edit_vehicle_image">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{__('db.close')}}</button>
-                    <button type="submit" class="btn btn-primary">{{__('db.update')}}</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
-@endsection
 
 @push('scripts')
     @include('backend.layout.partials.datatable_js')
@@ -179,31 +69,6 @@
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
-    });
-
-    $(document).on("click", ".open-EditCategoryDialog", function() {
-        var id = $(this).data('id').toString();
-        $.get('delivery-men/' + id + '/edit', function(data) {
-            $('#edit_id').val(data.id);
-            $('#edit_name').val(data.name);
-            $('#edit_email').val(data.email);
-            $('#edit_phone_number').val(data.phone_number);
-            $('#edit_address').val(data.address);
-            $('#edit_city').val(data.city);
-            $('#edit_country').val(data.country);
-            $('#edit_nid_number').val(data.nid_number);
-            $('#edit_vehicle_type').val(data.vehicle_type);
-            $('#edit_vehicle_number').val(data.vehicle_number);
-            $('#edit_brand').val(data.brand);
-            $('#edit_model').val(data.model);
-            $('#edit_color').val(data.color);
-            $('#edit_registration_number').val(data.registration_number);
-            $('#edit_license_number').val(data.license_number);
-            $('#edit_registration_expiry').val(data.registration_expiry);
-            if (data.route_ids) {
-                $('#edit_route_ids').val(data.route_ids).trigger('change');
-            }
-        });
     });
 
     $(document).on('click', '.confirm-delete-btn', function(e) {
@@ -359,3 +224,4 @@
 
 </script>
 @endpush
+@endsection
