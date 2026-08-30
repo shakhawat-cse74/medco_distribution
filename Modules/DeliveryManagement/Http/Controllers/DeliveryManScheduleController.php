@@ -28,7 +28,7 @@ class DeliveryManScheduleController extends Controller
                 $all_permission[] = 'dummy text';
 
             $lims_schedule_list = DeliveryManSchedule::with('deliveryMan')->get();
-            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+            $lims_delivery_man_list = DeliveryMan::active()->get();
 
             return view('backend.delivery_management.delivery_man_schedule.index', compact('lims_schedule_list', 'lims_delivery_man_list', 'all_permission'));
         } else {

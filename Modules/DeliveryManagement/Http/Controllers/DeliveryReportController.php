@@ -3,6 +3,7 @@
 namespace Modules\DeliveryManagement\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Modules\DeliveryManagement\Models\DeliveryMan;
 use Modules\DeliveryManagement\Models\FieldOrder;
 use Modules\DeliveryManagement\Models\FieldPayment;
@@ -32,8 +33,8 @@ class DeliveryReportController extends Controller
             if (empty($all_permission))
                 $all_permission[] = 'dummy text';
 
-            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
-            $lims_route_list = DeliveryManRoute::where('is_active', true)->get();
+            $lims_delivery_man_list = User::where('is_active', true)->where('role_id', Role::where('name', 'Delivery Man')->value('id'))->get();
+            $lims_route_list        = DeliveryManRoute::where('is_active', true)->get();
 
             $period = $request->input('period', 'today');
             $startDate = $request->input('start_date', date('Y-m-d'));
@@ -70,25 +71,31 @@ class DeliveryReportController extends Controller
             $startDateTime = $startDate . ' 00:00:00';
             $endDateTime = $endDate . ' 23:59:59';
 
-        $activeDeliveryManIds = DeliveryMan::where('is_active', true)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
-            $query->where('id', $selectedDeliveryManId);
-        })->pluck('id')->toArray();
+            $deliveryManRoleId = Role::where('name', 'Delivery Man')->value('id');
+            $activeUserIds = User::where('is_active', true)
+                ->where('role_id', $deliveryManRoleId)
+                ->pluck('id')
+                ->toArray();
 
-        $baseQuery = FieldOrder::query()
-            ->whereIn('delivery_man_id', $activeDeliveryManIds)
-            ->whereBetween('created_at', [$startDateTime, $endDateTime]);
+            $activeDeliveryManIds = DeliveryMan::whereIn('user_id', $activeUserIds)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+                $query->where('id', $selectedDeliveryManId);
+            })->pluck('id')->toArray();
+
+            $baseQuery = FieldOrder::query()
+                ->whereIn('delivery_man_id', $activeDeliveryManIds)
+                ->whereBetween('created_at', [$startDateTime, $endDateTime]);
 
             if ($selectedDeliveryManId) {
                 $baseQuery->where('delivery_man_id', $selectedDeliveryManId);
             }
 
-        $stats = [
-                'total_delivery_men' => DeliveryMan::where('is_active', true)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+            $stats = [
+                'total_delivery_men' => DeliveryMan::whereIn('user_id', $activeUserIds)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
                     $query->where('id', $selectedDeliveryManId);
                 })->count(),
                 'total_orders' => (clone $baseQuery)->count(),
                 'total_collection' => (float) ((clone $baseQuery)->sum('paid_amount') ?? 0),
-                'pending_deliveries' => DeliveryManDelivery::where('status', 'assigned')->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+                'pending_deliveries' => DeliveryManDelivery::whereIn('delivery_man_id', $activeDeliveryManIds)->where('status', 'assigned')->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
                     $query->where('delivery_man_id', $selectedDeliveryManId);
                 })->count(),
                 'completed_orders' => (clone $baseQuery)->where('status', 'completed')->count(),
@@ -98,7 +105,7 @@ class DeliveryReportController extends Controller
             ];
 
             $deliveryManStats = [];
-            $deliveryMenQuery = DeliveryMan::where('is_active', true);
+            $deliveryMenQuery = DeliveryMan::whereIn('user_id', $activeUserIds);
             if ($selectedDeliveryManId) {
                 $deliveryMenQuery->where('id', $selectedDeliveryManId);
             }
@@ -175,7 +182,13 @@ class DeliveryReportController extends Controller
         $startDateTime = $startDate . ' 00:00:00';
         $endDateTime = $endDate . ' 23:59:59';
 
-        $activeDeliveryManIds = DeliveryMan::where('is_active', true)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+        $deliveryManRoleId = Role::where('name', 'Delivery Man')->value('id');
+        $activeUserIds = User::where('is_active', true)
+            ->where('role_id', $deliveryManRoleId)
+            ->pluck('id')
+            ->toArray();
+
+        $activeDeliveryManIds = DeliveryMan::whereIn('user_id', $activeUserIds)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
             $query->where('id', $selectedDeliveryManId);
         })->pluck('id')->toArray();
 
@@ -194,16 +207,16 @@ class DeliveryReportController extends Controller
             'pending_orders' => (clone $baseQuery)->where('status', 'pending')->count(),
             'total_due' => (float) ((clone $baseQuery)->sum('due_amount') ?? 0),
             'cancelled_orders' => (clone $baseQuery)->where('status', 'cancelled')->count(),
-            'pending_deliveries' => DeliveryManDelivery::where('status', 'assigned')->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+            'pending_deliveries' => DeliveryManDelivery::whereIn('delivery_man_id', $activeDeliveryManIds)->where('status', 'assigned')->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
                 $query->where('delivery_man_id', $selectedDeliveryManId);
             })->count(),
-            'total_delivery_men' => DeliveryMan::where('is_active', true)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
+            'total_delivery_men' => DeliveryMan::whereIn('user_id', $activeUserIds)->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
                 $query->where('id', $selectedDeliveryManId);
             })->count(),
         ];
 
         $deliveryManStats = [];
-        $deliveryMenQuery = DeliveryMan::where('is_active', true);
+        $deliveryMenQuery = DeliveryMan::whereIn('user_id', $activeUserIds);
         if ($selectedDeliveryManId) {
             $deliveryMenQuery->where('id', $selectedDeliveryManId);
         }
@@ -321,7 +334,7 @@ class DeliveryReportController extends Controller
 
     public function deliveryManWiseOrder()
     {
-        $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+        $lims_delivery_man_list = DeliveryMan::active()->get();
         $report = [];
 
         foreach ($lims_delivery_man_list as $deliveryMan) {
@@ -339,7 +352,7 @@ class DeliveryReportController extends Controller
 
     public function deliveryManWiseCollection()
     {
-        $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+        $lims_delivery_man_list = DeliveryMan::active()->get();
         $report = [];
 
         foreach ($lims_delivery_man_list as $deliveryMan) {
@@ -357,7 +370,7 @@ class DeliveryReportController extends Controller
 
     public function deliveryManWiseDue()
     {
-        $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+        $lims_delivery_man_list = DeliveryMan::active()->get();
         $report = [];
 
         foreach ($lims_delivery_man_list as $deliveryMan) {
@@ -382,7 +395,7 @@ class DeliveryReportController extends Controller
 
     public function deliveryPerformance()
     {
-        $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+        $lims_delivery_man_list = DeliveryMan::active()->get();
         $report = [];
 
         foreach ($lims_delivery_man_list as $deliveryMan) {

@@ -29,7 +29,7 @@ class DeliveryManAssignmentController extends Controller
                 $all_permission[] = 'dummy text';
 
             $lims_assignment_list = DeliveryManAssignment::with(['deliveryMan', 'warehouse', 'route'])->get();
-            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+            $lims_delivery_man_list = DeliveryMan::active()->get();
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             $lims_route_list = DeliveryManRoute::where('is_active', true)->get();
 
@@ -115,7 +115,7 @@ class DeliveryManAssignmentController extends Controller
 
     public function getDeliveryMenByWarehouse($warehouse_id)
     {
-        $delivery_men = DeliveryMan::where('warehouse_id', $warehouse_id)->where('is_active', true)->get(['id', 'name']);
+        $delivery_men = DeliveryMan::active()->where('warehouse_id', $warehouse_id)->get(['id', 'name']);
         return response()->json($delivery_men);
     }
 

@@ -37,7 +37,7 @@ class FieldOrderController extends Controller
                 $all_permission[] = 'dummy text';
 
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-            $lims_delivery_man_list = DeliveryMan::where('is_active', true)->get();
+            $lims_delivery_man_list = DeliveryMan::active()->get();
 
             return view('backend.delivery_management.field_order.index', compact('lims_warehouse_list', 'lims_delivery_man_list', 'all_permission'));
         } else {
@@ -50,7 +50,7 @@ class FieldOrderController extends Controller
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('field-orders-add')) {
             $lims_warehouses = Warehouse::where('is_active', true)->get();
-            $lims_delivery_men = DeliveryMan::where('is_active', true)->get();
+            $lims_delivery_men = DeliveryMan::active()->get();
             $lims_customers = Customer::where('is_active', true)->get();
 
             return view('backend.delivery_management.field_order.create', compact('lims_warehouses', 'lims_delivery_men', 'lims_customers'));
