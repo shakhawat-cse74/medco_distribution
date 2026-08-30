@@ -89,6 +89,17 @@ class CheckoutController extends Controller
         $user = Auth::guard('api')->user() ?? $request->user();
 
         if (!$user) {
+            $bearer = $request->bearerToken();
+            if ($bearer && substr_count($bearer, '.') === 2) {
+                [$header, $payload, $signature] = explode('.', $bearer);
+                $decoded = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
+                if (isset($decoded['sub'])) {
+                    $user = \App\Models\User::find($decoded['sub']);
+                }
+            }
+        }
+
+        if (!$user) {
             return ['user' => null, 'customer' => null];
         }
 

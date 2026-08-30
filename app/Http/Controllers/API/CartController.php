@@ -23,7 +23,21 @@ class CartController extends Controller
      */
     protected function resolveUser(Request $request)
     {
-        return Auth::guard('api')->user() ?? $request->user();
+        $user = Auth::guard('api')->user() ?? $request->user();
+        if ($user) {
+            return $user;
+        }
+
+        $bearer = $request->bearerToken();
+        if ($bearer && substr_count($bearer, '.') === 2) {
+            [$header, $payload, $signature] = explode('.', $bearer);
+            $decoded = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
+            if (isset($decoded['sub'])) {
+                return User::find($decoded['sub']);
+            }
+        }
+
+        return null;
     }
 
     /**

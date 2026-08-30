@@ -28,6 +28,27 @@ class OrderController extends Controller
     use ApiResponse;
 
     /**
+     * Resolve Authenticated User
+     */
+    protected function resolveUser(Request $request): ?User
+    {
+        $user = Auth::guard('api')->user() ?? $request->user();
+
+        if (!$user) {
+            $bearer = $request->bearerToken();
+            if ($bearer && substr_count($bearer, '.') === 2) {
+                [$header, $payload, $signature] = explode('.', $bearer);
+                $decoded = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
+                if (isset($decoded['sub'])) {
+                    $user = User::find($decoded['sub']);
+                }
+            }
+        }
+
+        return $user;
+    }
+
+    /**
      * Parse and normalize input from Request (JSON, Form-Data, Query, Raw Body)
      */
     protected function getRequestData(Request $request): array
@@ -136,7 +157,7 @@ class OrderController extends Controller
             return $this->validationError($validator->errors()->toArray(), 'Validation failed', 422);
         }
 
-        $user = Auth::guard('api')->user() ?? $request->user();
+        $user = $this->resolveUser($request);
         if (!$user) {
             return $this->unauthorized('Please log in or initialize guest session to place an order');
         }
@@ -395,7 +416,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         try {
-            $user = Auth::guard('api')->user() ?? $request->user();
+            $user = $this->resolveUser($request);
             if (!$user) {
                 return $this->unauthorized('Please log in to view your orders');
             }
@@ -449,7 +470,7 @@ class OrderController extends Controller
     public function show(Request $request, $referenceOrId)
     {
         try {
-            $user = Auth::guard('api')->user() ?? $request->user();
+            $user = $this->resolveUser($request);
 
             $sale = Sale::where(function ($q) use ($referenceOrId) {
                 if (is_numeric($referenceOrId)) {
@@ -487,7 +508,7 @@ class OrderController extends Controller
     public function cancel(Request $request, $referenceOrId)
     {
         try {
-            $user = Auth::guard('api')->user() ?? $request->user();
+            $user = $this->resolveUser($request);
             if (!$user) {
                 return $this->unauthorized('Please log in to cancel an order');
             }
