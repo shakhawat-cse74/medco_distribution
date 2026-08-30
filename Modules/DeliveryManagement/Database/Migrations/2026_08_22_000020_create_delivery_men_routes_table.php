@@ -10,13 +10,18 @@ return new class extends Migration
     {
         Schema::create('delivery_men_routes', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('delivery_man_id');
-            $table->unsignedBigInteger('route_id');
+            $table->foreignId('delivery_man_id')
+                ->nullable()
+                ->constrained('delivery_men')
+                ->cascadeOnDelete();
+
+            $table->foreignId('route_id')
+                ->nullable()
+                ->constrained('delivery_areas')
+                ->cascadeOnDelete();
             $table->boolean('is_primary')->default(false);
             $table->timestamps();
 
-            $table->foreign('delivery_man_id')->references('id')->on('delivery_men')->onDelete('cascade');
-            $table->foreign('route_id')->references('id')->on('delivery_areas')->onDelete('cascade');
             $table->unique(['delivery_man_id', 'route_id']);
         });
     }
