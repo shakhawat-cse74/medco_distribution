@@ -9,10 +9,10 @@
     ],
     "extra": {
         "laravel": {
-            "providers": [],
-            "aliases": {
-
-            }
+            "providers": [
+                "Modules\\DeliveryManagement\\Providers\\DeliveryManagementServiceProvider"
+            ],
+            "aliases": {}
         }
     },
     "autoload": {

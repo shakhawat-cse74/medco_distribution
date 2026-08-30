@@ -38,6 +38,10 @@
             <span>{{ __('db.delivery_management') }}</span>
         </a>
         <ul id="delivery-management" class="collapse list-unstyled">
+            @if(Auth::user()->role && Auth::user()->role->name == 'Delivery Man')
+            <li id="delivery-reports-menu"><a class="{{ request()->is('delivery-reports') || request()->is('delivery-man/*') ? 'active' : '' }}" href="{{route('delivery-man.reports.index')}}">{{ __('db.dashboard') }}</a></li>
+            <li id="field-orders-menu"><a class="{{ request()->is('delivery-man/orders') ? 'active' : '' }}" href="{{route('delivery-man.orders.index')}}">{{ __('db.orders') }}</a></li>
+            @else
             @can('delivery-reports-index')
             <li id="delivery-reports-menu"><a class="{{ request()->is('delivery-reports') ? 'active' : '' }}" href="{{route('delivery-reports.index')}}">{{ __('db.dashboard') }}</a></li>
             @endcan
@@ -65,6 +69,7 @@
             @can('warehouse-products-index')
             <li id="warehouse-products-menu"><a class="{{ request()->is('warehouse-products') ? 'active' : '' }}" href="{{route('warehouse-products.index')}}">{{ __('db.Warehouse_products') }}</a></li>
             @endcan
+            @endif
         </ul>
     </li>
     @endcanany

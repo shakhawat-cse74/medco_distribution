@@ -21,8 +21,12 @@ use Modules\DeliveryManagement\Http\Controllers\DeliverySettingController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryReportController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryReportController as LegacyReportController;
 
-class DeliveryManagementRouteServiceProvider extends \Illuminate\Routing\RouteServiceProvider
+class DeliveryManagementRouteServiceProvider extends \Illuminate\Foundation\Support\Providers\RouteServiceProvider
 {
+    protected string $moduleName = 'DeliveryManagement';
+
+    protected string $moduleNamespace = 'Modules\DeliveryManagement\Http\Controllers';
+
     public function boot()
     {
         Route::controller(DeliveryManController::class)->prefix('delivery-men')->name('delivery-men.')->group(function () {
@@ -193,6 +197,7 @@ class DeliveryManagementRouteServiceProvider extends \Illuminate\Routing\RouteSe
 
         Route::controller(DeliveryReportController::class)->prefix('delivery-reports')->name('delivery-reports.')->group(function () {
             Route::get('/', 'index')->name('index');
+            Route::post('dashboard-data', 'dashboardData')->name('dashboardData');
             Route::get('delivery-man-wise-order', 'deliveryManWiseOrder')->name('deliveryManWiseOrder');
             Route::get('delivery-man-wise-collection', 'deliveryManWiseCollection')->name('deliveryManWiseCollection');
             Route::get('delivery-man-wise-due', 'deliveryManWiseDue')->name('deliveryManWiseDue');
@@ -204,6 +209,28 @@ class DeliveryManagementRouteServiceProvider extends \Illuminate\Routing\RouteSe
             Route::get('customer-visit-report', 'customerVisitReport')->name('customerVisitReport');
             Route::get('product-wise-field-sale', 'productWiseFieldSale')->name('productWiseFieldSale');
             Route::get('delivery-man-dashboard/{id}', 'deliveryManDashboard')->name('deliveryManDashboard');
+        });
+
+        Route::prefix('delivery-man')->name('delivery-man.')->group(function () {
+            Route::get('login', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'showLogin'])->name('login');
+            Route::post('login', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'login'])->name('login.post');
+            Route::post('logout', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'logout'])->name('logout');
+
+            Route::middleware('delivery.man.auth')->group(function () {
+                Route::get('dashboard', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'dashboard'])->name('dashboard');
+
+                Route::prefix('delivery-men')->name('delivery-men.')->group(function () {
+                    Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'index'])->name('index');
+                    Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'show'])->name('show');
+                });
+
+                Route::prefix('orders')->name('orders.')->group(function () {
+                    Route::get('/', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'index'])->name('index');
+                    Route::post('field-order-data', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'fieldOrderData'])->name('fieldOrderData');
+                    Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'show'])->name('show');
+                    Route::get('invoice/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'genInvoice'])->name('invoice');
+                });
+            });
         });
 
         Route::controller(DeliveryManCommissionController::class)->prefix('delivery-man-commissions')->name('delivery-man-commissions.')->group(function () {
@@ -224,6 +251,22 @@ class DeliveryManagementRouteServiceProvider extends \Illuminate\Routing\RouteSe
 
     public function map()
     {
-        $this->app->make('router')->group(module_path($this->moduleName, 'Routes/web.php'));
+        $this->mapApiRoutes();
+        $this->mapWebRoutes();
+    }
+
+    protected function mapWebRoutes()
+    {
+        Route::middleware('web')
+            ->namespace($this->moduleNamespace)
+            ->group(module_path($this->moduleName, 'Routes/web.php'));
+    }
+
+    protected function mapApiRoutes()
+    {
+        Route::prefix('api')
+            ->middleware('api')
+            ->namespace($this->moduleNamespace)
+            ->group(module_path($this->moduleName, 'Routes/api.php'));
     }
 }
