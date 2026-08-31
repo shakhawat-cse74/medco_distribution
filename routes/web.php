@@ -215,6 +215,8 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
     Route::controller(HomeController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('/dashboard', 'dashboard');
+        // Route::get('/', 'index');
+        Route::get('/dashboard', 'dashboard')->name('dashboard');
 
         Route::get('new-release', 'newVersionReleasePage')->name('new-release');
         Route::post('version-upgrade', 'versionUpgrade')->name('version-upgrade');
@@ -983,9 +985,233 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::post('/save-settings', [QrCodeController::class, 'saveSettings'])->name('qr.saveSettings');
     });
 
+    // Delivery Management Module Routes
+    Route::prefix('delivery-man')->name('delivery-man.')->group(function () {
+        Route::get('login', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'showLogin'])->name('login');
+        Route::post('login', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'login']);
+        Route::middleware('delivery.man.auth')->group(function () {
+            Route::get('dashboard', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'dashboard'])->name('dashboard');
+            Route::post('logout', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController::class, 'logout'])->name('logout');
+        });
+    });
+
+    Route::prefix('delivery-men')->name('delivery-men.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'index'])->name('index');
+        Route::get('create', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'create'])->name('create');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'store'])->name('store');
+        Route::get('{id}/edit', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'edit'])->name('edit');
+        Route::post('update', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'update'])->name('update');
+        Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'delete'])->name('delete');
+        Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'show'])->name('show');
+        Route::post('toggle-status', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'toggleStatus'])->name('toggleStatus');
+        Route::get('performance/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'performance'])->name('performance');
+        Route::post('upload-photo', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'uploadPhoto'])->name('uploadPhoto');
+        Route::post('delivery-man-data', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'deliveryManData'])->name('deliveryManData');
+        Route::get('{id}/customers', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'assignedCustomers'])->name('assignedCustomers');
+        Route::get('{delivery_man_id}/customers/{customer_id}/orders', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'customerOrderHistory'])->name('customerOrderHistory');
+        Route::get('{delivery_man_id}/customers/{customer_id}/ledger', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'customerLedger'])->name('customerLedger');
+        Route::post('{delivery_man_id}/customers/{customer_id}/collect-payment', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'collectDuePayment'])->name('collectDuePayment');
+    });
+
+    Route::prefix('delivery-man-assignments')->name('delivery-man-assignments.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAssignmentController::class, 'index'])->name('index');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAssignmentController::class, 'store'])->name('store');
+        Route::post('update/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAssignmentController::class, 'update'])->name('update');
+        Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAssignmentController::class, 'delete'])->name('delete');
+        Route::get('delivery-men-by-warehouse/{warehouse_id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAssignmentController::class, 'getDeliveryMenByWarehouse']);
+        Route::get('delivery-men-by-route/{route_id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAssignmentController::class, 'getDeliveryMenByRoute']);
+        Route::get('delivery-men-by-area/{area_id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManAssignmentController::class, 'getDeliveryMenByArea']);
+    });
+
+    Route::prefix('delivery-man-routes')->name('delivery-man-routes.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'index'])->name('index');
+        Route::post('data', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'routeData'])->name('data');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'store'])->name('store');
+        Route::get('{id}/edit', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'edit'])->name('edit');
+        Route::post('update/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'update'])->name('update');
+        Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController::class, 'delete'])->name('delete');
+    });
+
+    Route::prefix('delivery-man-vehicles')->name('delivery-man-vehicles.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManVehicleController::class, 'index'])->name('index');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\DeliveryManVehicleController::class, 'store'])->name('store');
+        Route::post('update/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManVehicleController::class, 'update'])->name('update');
+        Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManVehicleController::class, 'delete'])->name('delete');
+    });
+
+    Route::prefix('field-orders')->name('field-orders.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'index'])->name('index');
+        Route::get('create', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'create'])->name('create');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'store'])->name('store');
+        Route::get('draft-list', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'draftList'])->name('draftList');
+        Route::get('draft/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'loadDraft'])->name('loadDraft');
+        Route::post('draft/{id}/update', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'updateDraft'])->name('updateDraft');
+        Route::post('draft/{id}/delete', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'deleteDraft'])->name('deleteDraft');
+        Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'show'])->name('show');
+        Route::post('update/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'update'])->name('update');
+        Route::post('cancel/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'cancel'])->name('cancel');
+        Route::get('products/search', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'searchProducts'])->name('searchProducts');
+        Route::get('customers/search', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'searchCustomers'])->name('searchCustomers');
+        Route::post('customers/quick-create', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'quickCreateCustomer'])->name('quickCreateCustomer');
+        Route::post('validate-stock', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'validateStock']);
+        Route::get('invoice/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'genInvoice'])->name('invoice');
+        Route::post('field-order-data', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'fieldOrderData'])->name('fieldOrderData');
+        Route::post('send-whatsapp/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'sendWhatsApp'])->name('sendWhatsApp');
+        Route::post('send-sms/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'sendSMS'])->name('sendSMS');
+        Route::get('barcode/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'printBarcode'])->name('printBarcode');
+    });
+
+    Route::prefix('field-payments')->name('field-payments.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'index'])->name('index');
+        Route::get('create/{field_order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'create'])->name('create');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'store'])->name('store');
+        Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'show'])->name('show');
+        Route::get('{id}/edit', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'edit'])->name('edit');
+        Route::put('update/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'update'])->name('update');
+        Route::delete('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'destroy'])->name('destroy');
+        Route::get('receipt/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'receipt'])->name('receipt');
+        Route::post('split-payment/{order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'splitPayment'])->name('splitPayment');
+        Route::get('order-payments/{order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'getOrderPayments']);
+        Route::get('send-receipt/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'sendReceipt'])->name('sendReceipt');
+        Route::get('daily-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'dailySummary'])->name('dailySummary');
+        Route::get('weekly-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'weeklySummary'])->name('weeklySummary');
+        Route::get('monthly-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'monthlySummary'])->name('monthlySummary');
+        Route::post('field-payment-data', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'fieldPaymentData'])->name('fieldPaymentData');
+    });
+
+    Route::prefix('delivery-man-delivery')->name('delivery-man-delivery.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'index'])->name('index');
+        Route::get('delivery-list-data', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'deliveryListData'])->name('deliveryListData');
+        Route::post('assign', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'assign'])->name('assign');
+        Route::post('auto-assign', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'autoAssign'])->name('autoAssign');
+        Route::post('update-status/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'updateStatus'])->name('updateStatus');
+        Route::get('map-view', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'mapView'])->name('mapView');
+        Route::get('live-tracking', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'liveTracking'])->name('liveTracking');
+        Route::get('route-optimization/{delivery_man_id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'routeOptimization'])->name('routeOptimization');
+        Route::post('set-priority/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'setPriority'])->name('setPriority');
+        Route::get('pending-deliveries', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'pendingDeliveries'])->name('pendingDeliveries');
+        Route::get('completed-deliveries', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'completedDeliveries'])->name('completedDeliveries');
+        Route::get('due-deliveries', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'dueDeliveries'])->name('dueDeliveries');
+        Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'delete'])->name('delete');
+    });
+
+    Route::prefix('warehouse-products')->name('warehouse-products.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'index'])->name('index');
+        Route::get('create', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'create'])->name('create');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'store'])->name('store');
+        Route::get('{id}/edit', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'edit'])->name('edit');
+        Route::put('update/{id}', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'update'])->name('update');
+        Route::post('warehouse-product-data', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'warehouseProductData'])->name('warehouseProductData');
+        Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'destroy'])->name('destroy');
+        Route::post('deletebyselection', [Modules\DeliveryManagement\Http\Controllers\WarehouseProductController::class, 'deleteBySelection'])->name('deletebyselection');
+    });
+
+    Route::prefix('delivery-proofs')->name('delivery-proofs.')->group(function () {
+        Route::get('{delivery_id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryProofController::class, 'index'])->name('index');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\DeliveryProofController::class, 'store'])->name('store');
+        Route::get('{id}/edit', [Modules\DeliveryManagement\Http\Controllers\DeliveryProofController::class, 'edit'])->name('edit');
+        Route::post('update/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryProofController::class, 'update'])->name('update');
+        Route::post('upload-photo', [Modules\DeliveryManagement\Http\Controllers\DeliveryProofController::class, 'uploadPhoto'])->name('uploadPhoto');
+        Route::post('capture-signature', [Modules\DeliveryManagement\Http\Controllers\DeliveryProofController::class, 'captureSignature'])->name('captureSignature');
+        Route::post('verify-otp', [Modules\DeliveryManagement\Http\Controllers\DeliveryProofController::class, 'verifyOtp'])->name('verifyOtp');
+        Route::post('geofence-check', [Modules\DeliveryManagement\Http\Controllers\DeliveryProofController::class, 'geofenceCheck'])->name('geofenceCheck');
+    });
+
+    Route::prefix('cash-deposits')->name('cash-deposits.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'index'])->name('index');
+        Route::get('create', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'create'])->name('create');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'store'])->name('store');
+        Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'show'])->name('show');
+        Route::post('verify/{id}', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'verify'])->name('verify');
+        Route::get('summary', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'summary'])->name('summary');
+        Route::get('delivery-man-summary/{delivery_man_id}', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'deliveryManSummary'])->name('deliveryManSummary');
+        Route::get('pending-deposits', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'pendingDeposits'])->name('pendingDeposits');
+    });
+
+    Route::prefix('field-returns')->name('field-returns.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'index'])->name('index');
+        Route::get('create/{field_order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'create'])->name('create');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'store'])->name('store');
+        Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'show'])->name('show');
+        Route::post('confirm/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'confirm'])->name('confirm');
+        Route::get('reasons', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'getReasons']);
+        Route::post('upload-photo', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'uploadPhoto'])->name('uploadPhoto');
+        Route::post('create-replacement/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'createReplacement'])->name('createReplacement');
+    });
+
+    Route::prefix('customer-visits')->name('customer-visits.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\CustomerVisitController::class, 'index'])->name('index');
+        Route::post('check-in', [Modules\DeliveryManagement\Http\Controllers\CustomerVisitController::class, 'checkIn'])->name('checkIn');
+        Route::post('check-out/{id}', [Modules\DeliveryManagement\Http\Controllers\CustomerVisitController::class, 'checkOut'])->name('checkOut');
+        Route::get('history/{customer_id}', [Modules\DeliveryManagement\Http\Controllers\CustomerVisitController::class, 'history'])->name('history');
+        Route::get('logs', [Modules\DeliveryManagement\Http\Controllers\CustomerVisitController::class, 'logs'])->name('logs');
+        Route::get('today-visits', [Modules\DeliveryManagement\Http\Controllers\CustomerVisitController::class, 'todayVisits'])->name('todayVisits');
+    });
+
+    Route::prefix('delivery-schedules')->name('delivery-schedules.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManScheduleController::class, 'index'])->name('index');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\DeliveryManScheduleController::class, 'store'])->name('store');
+        Route::post('update/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManScheduleController::class, 'update'])->name('update');
+        Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManScheduleController::class, 'delete'])->name('delete');
+        Route::get('by-delivery-man/{delivery_man_id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManScheduleController::class, 'getByDeliveryMan']);
+        Route::get('calendar', [Modules\DeliveryManagement\Http\Controllers\DeliveryManScheduleController::class, 'calendar'])->name('calendar');
+    });
+
+    Route::prefix('delivery-settings')->name('delivery-settings.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'index'])->name('index');
+        Route::post('update', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'update'])->name('update');
+        Route::get('commission-settings', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'commissionSettings'])->name('commissionSettings');
+        Route::post('commission-settings', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'updateCommissionSettings'])->name('updateCommissionSettings');
+        Route::get('route-settings', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'routeSettings'])->name('routeSettings');
+        Route::post('route-settings', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'updateRouteSettings'])->name('updateRouteSettings');
+        Route::get('delivery-charge-settings', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'deliveryChargeSettings'])->name('deliveryChargeSettings');
+        Route::post('delivery-charge-settings', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'updateDeliveryChargeSettings'])->name('updateDeliveryChargeSettings');
+        Route::get('time-slot-settings', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'timeSlotSettings'])->name('timeSlotSettings');
+        Route::post('time-slot-settings', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'updateTimeSlotSettings'])->name('updateTimeSlotSettings');
+        Route::get('general-settings', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'generalSettings'])->name('generalSettings');
+        Route::post('general-settings', [Modules\DeliveryManagement\Http\Controllers\DeliverySettingController::class, 'updateGeneralSettings'])->name('updateGeneralSettings');
+    });
+
+    Route::prefix('delivery-notifications')->name('delivery-notifications.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryNotificationController::class, 'index'])->name('index');
+        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\DeliveryNotificationController::class, 'store'])->name('store');
+        Route::get('unread-count', [Modules\DeliveryManagement\Http\Controllers\DeliveryNotificationController::class, 'unreadCount']);
+        Route::post('mark-as-read/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryNotificationController::class, 'markAsRead'])->name('markAsRead');
+        Route::post('mark-all-as-read', [Modules\DeliveryManagement\Http\Controllers\DeliveryNotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
+        Route::get('templates', [Modules\DeliveryManagement\Http\Controllers\DeliveryNotificationController::class, 'templates'])->name('templates');
+        Route::post('templates', [Modules\DeliveryManagement\Http\Controllers\DeliveryNotificationController::class, 'updateTemplates'])->name('updateTemplates');
+    });
+
+    Route::prefix('delivery-reports')->name('delivery-reports.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'index'])->name('index');
+        Route::post('dashboard-data', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'dashboardData'])->name('dashboardData');
+        Route::get('delivery-man-wise-order', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'deliveryManWiseOrder'])->name('deliveryManWiseOrder');
+        Route::get('delivery-man-wise-collection', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'deliveryManWiseCollection'])->name('deliveryManWiseCollection');
+        Route::get('delivery-man-wise-due', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'deliveryManWiseDue'])->name('deliveryManWiseDue');
+        Route::get('area-wise-sales', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'areaWiseSales'])->name('areaWiseSales');
+        Route::get('delivery-performance', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'deliveryPerformance'])->name('deliveryPerformance');
+        Route::get('commission-report', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'commissionReport'])->name('commissionReport');
+        Route::get('commission-payout', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'commissionPayout'])->name('commissionPayout');
+        Route::get('cash-reconciliation', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'cashReconciliation'])->name('cashReconciliation');
+        Route::get('customer-visit-report', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'customerVisitReport'])->name('customerVisitReport');
+        Route::get('product-wise-field-sale', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'productWiseFieldSale'])->name('productWiseFieldSale');
+        Route::get('delivery-man-dashboard/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryReportController::class, 'deliveryManDashboard'])->name('deliveryManDashboard');
+    });
+
+    Route::prefix('delivery-man-commissions')->name('delivery-man-commissions.')->group(function () {
+        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController::class, 'index'])->name('index');
+        Route::get('settings', [Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController::class, 'settings'])->name('settings');
+        Route::post('settings', [Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController::class, 'updateSettings'])->name('updateSettings');
+        Route::get('slabs', [Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController::class, 'slabs'])->name('slabs');
+        Route::post('slabs', [Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController::class, 'storeSlabs'])->name('storeSlabs');
+        Route::post('calculate/{field_order_id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController::class, 'calculate'])->name('calculate');
+        Route::get('payout-report', [Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController::class, 'payoutReport'])->name('payoutReport');
+        Route::post('payout', [Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController::class, 'processPayout'])->name('processPayout');
+        Route::get('incentives/new-customer', [Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController::class, 'newCustomerIncentives'])->name('newCustomerIncentives');
+        Route::get('incentives/due-collection', [Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController::class, 'dueCollectionIncentives'])->name('dueCollectionIncentives');
+    });
+
 });
-
-
 // Public QR Menu — no authentication required
 Route::get('/menu/{slug}', [\App\Http\Controllers\PublicMenuController::class, 'index'])->name('public.menu');
 Route::get('/menu/{slug}/products', [\App\Http\Controllers\PublicMenuController::class, 'getProducts'])->name('public.menu.products');
