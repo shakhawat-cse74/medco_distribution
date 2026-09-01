@@ -70,7 +70,6 @@ class Kernel extends HttpKernel
         'common' => \App\Http\Middleware\Common::class,
         'superadminauth'  => \App\Http\Middleware\SuperAdminAuth::class,
         'affiliateauth'   => \App\Http\Middleware\AffiliateAuth::class,
-        'delivery.man.auth' => \App\Http\Middleware\AuthenticateDeliveryMan::class,
         'customerauth' => \Modules\Ecommerce\Http\Middleware\CustomerAuth::class,
         'customerauth0' => \Modules\Restaurant\Http\Middleware\CustomerAuth::class,
         'cors' => \App\Http\Middleware\Cors::class,

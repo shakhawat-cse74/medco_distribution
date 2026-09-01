@@ -58,7 +58,7 @@ class Product extends Model
 
     public function warehouses()
     {
-        return $this->belongsToMany(Warehouse::class, 'product_warehouse')->withPivot('qty', 'price');
+        return $this->belongsToMany(Warehouse::class)->withPivot('qty');
     }
 
     public function purchases()

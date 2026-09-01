@@ -1136,32 +1136,8 @@
 														</td>
 													</tr>
 
-												{{-- DELIVERY MANAGEMENT MODULE PERMISSIONS --}}
-												@php $delivery_management_module = $permissions_data['delivery_management_module'] @endphp
-												<tr class="delivery-management-row">
-													<td>{{ __('db.delivery_management') }}</td>
-													<td class="report-permissions" colspan="5">
-														@foreach($delivery_management_module as $key => $label)
-															<span>
-																<div aria-checked="false" aria-disabled="false">
-																	<div class="checkbox">
-																		@if(in_array($key, $all_permission))
-																			<input type="checkbox" value="1" id={{$key}}
-																				name={{$key}} checked>
-																		@else
-																			<input type="checkbox" value="1" id={{$key}}
-																				name={{$key}}>
-																		@endif
-																		<label for={{$key}} class="padding05">{{__('db.' . $label)}} &nbsp;&nbsp;</label>
-																	</div>
-																</div>
-															</span>
-														@endforeach
-													</td>
-												</tr>
-
-											</tbody>
-											<!-- ENDMOD -->
+												</tbody>
+												<!-- ENDMOD -->
 											</table>
 										</div>
 									</div>

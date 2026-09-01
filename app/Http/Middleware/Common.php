@@ -76,7 +76,8 @@ class Common
         });
 
         $currency = Cache::remember('currency', 60*60*24*365, function () use ($general_setting, $currency_list) {
-            return $currency_list->find($general_setting->currency ?? null);
+            // $general_setting->currency already holds the currency ID
+            return $currency_list->find($general_setting->currency);
         });
 
         View::share('general_setting', $general_setting);
