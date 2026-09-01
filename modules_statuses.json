@@ -7,5 +7,6 @@
     "Project": true,
     "Gym": true,
     "Repair": true,
-    "AIAssistant": true
+    "AIAssistant": true,
+    "DeliveryManagement": true
 }

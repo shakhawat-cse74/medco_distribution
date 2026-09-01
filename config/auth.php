@@ -53,6 +53,11 @@ return [
             'driver'   => 'session',
             'provider' => 'affiliates',
         ],
+
+        'delivery_man' => [
+            'driver'   => 'session',
+            'provider' => 'delivery_men',
+        ],
     ],
 
     /*
@@ -88,6 +93,11 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+
+        'delivery_men' => [
+            'driver' => 'eloquent',
+            'model' => Modules\DeliveryManagement\Models\DeliveryMan::class,
+        ],
     ],
 
     /*
@@ -108,6 +118,13 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
+            'table' => 'password_resets',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        'delivery_men' => [
+            'provider' => 'delivery_men',
             'table' => 'password_resets',
             'expire' => 60,
             'throttle' => 60,

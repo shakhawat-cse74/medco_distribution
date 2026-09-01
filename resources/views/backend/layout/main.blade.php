@@ -508,6 +508,7 @@
     @include('backend.layout.theme_customizer')
     @include('backend.layout.toaster')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="text/javascript" src="{{ asset($asset_prefix . 'vendor/chart.js/Chart.min.js') }}"></script>
     <script>
         // Global SweetAlert Confirm Delete handler for all delete forms and action buttons
         $(document).on('click', 'form button[type="submit"]:has(.ti-trash), form button[type="submit"].btn-delete, form button[type="submit"].inv-btn, button[onclick*="confirmDelete"], a[onclick*="confirmDelete"], .btn-link[onclick*="confirmDelete"]', function(e) {

@@ -1,0 +1,8 @@
+{
+    "name": "DeliveryManagement",
+    "alias": "DeliveryManagement",
+    "description": "Delivery Management Module",
+    "version": "1.0.0",
+    "disabled": false,
+    "dependencies": []
+}

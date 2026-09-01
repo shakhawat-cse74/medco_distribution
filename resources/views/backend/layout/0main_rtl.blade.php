@@ -254,6 +254,63 @@
               @endif
 
               <?php
+                $delivery_men_index_permission = DB::table('permissions')->where('name', 'delivery-men-index')->first();
+                $delivery_men_index_permission_active = DB::table('role_has_permissions')->where([
+                        ['permission_id', $delivery_men_index_permission->id],
+                        ['role_id', $role->id]
+                    ])->first();
+              ?>
+              @if($delivery_men_index_permission_active)
+              <li><a href="#delivery-management" aria-expanded="false" data-toggle="collapse"> <i class="ti ti-truck"></i><span>{{__('db.Delivery Management')}}</span></a>
+                <ul id="delivery-management" class="collapse list-unstyled ">
+                  @if($delivery_men_index_permission_active)
+                  <li id="delivery-men-menu"><a href="{{route('delivery-men.index')}}">{{__('db.delivery_men_list')}}</a></li>
+                  <?php
+                    $delivery_men_add_permission = DB::table('permissions')->where('name', 'delivery-men-add')->first();
+                    $delivery_men_add_permission_active = DB::table('role_has_permissions')->where([
+                        ['permission_id', $delivery_men_add_permission->id],
+                        ['role_id', $role->id]
+                    ])->first();
+                  ?>
+                  @if($delivery_men_add_permission_active)
+                  <li id="delivery-men-create-menu"><a href="{{route('delivery-men.create')}}">{{__('db.add_delivery_man')}}</a></li>
+                  @endif
+                  <?php
+                    $field_orders_index_permission = DB::table('permissions')->where('name', 'field-orders-index')->first();
+                    $field_orders_index_permission_active = DB::table('role_has_permissions')->where([
+                        ['permission_id', $field_orders_index_permission->id],
+                        ['role_id', $role->id]
+                    ])->first();
+                  ?>
+                  @if($field_orders_index_permission_active)
+                  <li id="field-orders-menu"><a href="{{route('field-orders.index')}}">{{__('db.field_orders')}}</a></li>
+                  <?php
+                    $field_payments_index_permission = DB::table('permissions')->where('name', 'field-payments-index')->first();
+                    $field_payments_index_permission_active = DB::table('role_has_permissions')->where([
+                        ['permission_id', $field_payments_index_permission->id],
+                        ['role_id', $role->id]
+                    ])->first();
+                  ?>
+                  @if($field_payments_index_permission_active)
+                  <li id="field-payments-menu"><a href="{{route('field-payments.index')}}">{{__('db.field_payments')}}</a></li>
+                  <?php
+                    $delivery_man_delivery_index_permission = DB::table('permissions')->where('name', 'delivery-man-delivery-index')->first();
+                    $delivery_man_delivery_index_permission_active = DB::table('role_has_permissions')->where([
+                        ['permission_id', $delivery_man_delivery_index_permission->id],
+                        ['role_id', $role->id]
+                    ])->first();
+                  ?>
+                  @if($delivery_man_delivery_index_permission_active)
+                  <li id="delivery-man-delivery-menu"><a href="{{route('delivery-man-delivery.index')}}">{{__('db.delivery_management')}}</a></li>
+                  @endif
+                  @endif
+                  @endif
+                  @endif
+                </ul>
+              </li>
+              @endif
+
+              <?php
                 $index_permission = DB::table('permissions')->where('name', 'expenses-index')->first();
                 $index_permission_active = DB::table('role_has_permissions')->where([
                         ['permission_id', $index_permission->id],
