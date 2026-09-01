@@ -2606,8 +2606,8 @@
 																	</div>
 																</div>
 															</span>
-															<span class="delivery-section">
-																<div>
+														<span class="delivery-section">
+															<div>
 																	<div class="">
 																		@if(in_array("delivery", $all_permission))
 																			<input type="checkbox" value="1" id="delivery"
@@ -2622,7 +2622,39 @@
 																	</div>
 																</div>
 															</span>
-															<span class="stock-count-section">
+														<span class="delivery-sales-section">
+															<div>
+																	<div class="">
+																		@if(in_array("delivery-sales-index", $all_permission))
+																			<input type="checkbox" value="1" id="delivery-sales-index"
+																				name="delivery-sales-index" checked>
+																		@else
+																			<input type="checkbox" value="1" id="delivery-sales-index"
+																				name="delivery-sales-index">
+																		@endif
+																		<label for="delivery-sales-index"
+																			class="padding05">{{__('db.Delivery Sales')}}
+																			&nbsp;&nbsp;</label>
+																	</div>
+																</div>
+															</span>
+														<span class="delivery-installments-section">
+															<div>
+																	<div class="">
+																		@if(in_array("delivery-installments-index", $all_permission))
+																			<input type="checkbox" value="1" id="delivery-installments-index"
+																				name="delivery-installments-index" checked>
+																		@else
+																			<input type="checkbox" value="1" id="delivery-installments-index"
+																				name="delivery-installments-index">
+																		@endif
+																		<label for="delivery-installments-index"
+																			class="padding05">{{__('db.Installments')}}
+																			&nbsp;&nbsp;</label>
+																	</div>
+																</div>
+															</span>
+														<span class="stock-count-section">
 																<div>
 																	<div class="">
 																		@if(in_array("stock_count", $all_permission))

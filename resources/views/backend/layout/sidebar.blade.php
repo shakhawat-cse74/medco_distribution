@@ -40,7 +40,6 @@
         <ul id="delivery-management" class="collapse list-unstyled">
             @if(Auth::user()->role && Auth::user()->role->name == 'Delivery Man')
             <li id="delivery-reports-menu"><a class="{{ request()->is('delivery-reports') || request()->is('delivery-man/*') ? 'active' : '' }}" href="{{route('delivery-man.reports.index')}}">{{ __('db.dashboard') }}</a></li>
-            <li id="field-orders-menu"><a class="{{ request()->is('delivery-man/orders') ? 'active' : '' }}" href="{{route('delivery-man.orders.index')}}">{{ __('db.orders') }}</a></li>
             @else
             @can('delivery-reports-index')
             <li id="delivery-reports-menu"><a class="{{ request()->is('delivery-reports') ? 'active' : '' }}" href="{{route('delivery-reports.index')}}">{{ __('db.dashboard') }}</a></li>
@@ -57,17 +56,41 @@
             {{-- @can('delivery-men-add')
             <li id="delivery-men-create-menu"><a class="{{ request()->is('delivery-men/creatde') ? 'active' : '' }}" href="{{route('delivery-men.create')}}">{{ __('db.add_delivery_man') }}</a></li>
             @endcan --}}
-            @can('field-orders-index')
-            <li id="field-orders-menu"><a class="{{ request()->is('field-orders') ? 'active' : '' }}" href="{{route('field-orders.index')}}">{{ __('db.orders') }}</a></li>
-            @endcan
-            @can('field-payments-index')
-            <li id="field-payments-menu"><a class="{{ request()->is('field-payments') ? 'active' : '' }}" href="{{route('field-payments.index')}}">{{ __('db.payments') }}</a></li>
-            @endcan
             @can('delivery-man-delivery-index')
             <li id="delivery-man-delivery-menu"><a class="{{ request()->is('delivery-man-delivery') ? 'active' : '' }}" href="{{route('delivery-man-delivery.index')}}">{{ __('db.manage_delivery') }}</a></li>
             @endcan
             @can('warehouse-products-index')
             <li id="warehouse-products-menu"><a class="{{ request()->is('warehouse-products') ? 'active' : '' }}" href="{{route('warehouse-products.index')}}">{{ __('db.Warehouse_products') }}</a></li>
+            @endcan
+            @can('delivery-sales-index')
+            <li id="delivery-sales-menu"><a class="{{ request()->is('delivery-sale') ? 'active' : '' }}" href="{{route('delivery-sale.index')}}">{{ __('db.Delivery Sales') }}</a></li>
+            @endcan
+            @can('delivery-installments-index')
+            <li id="delivery-installments-menu"><a class="{{ request()->is('delivery-installment') ? 'active' : '' }}" href="{{route('delivery-installment.index')}}">{{ __('db.Installments') }}</a></li>
+            @endcan
+            @can('delivery-sales-challan-slip-list')
+            <li id="delivery-challan-slip-list-menu"><a class="{{ request()->is('delivery-sale/challan-slip-list') ? 'active' : '' }}" href="{{route('delivery-sale.challan-slip-list')}}">{{ __('db.Challan Slip List') }}</a></li>
+            @endcan
+            @can('delivery-sales-packing-slip-list')
+            <li id="delivery-packing-slip-list-menu"><a class="{{ request()->is('delivery-sale/packing-slip-list') ? 'active' : '' }}" href="{{route('delivery-sale.packing-slip-list')}}">{{ __('db.Packing Slip List') }}</a></li>
+            @endcan
+            @can('delivery-sales-delivery-list')
+            <li id="delivery-delivery-list-menu"><a class="{{ request()->is('delivery-sale/delivery-list') ? 'active' : '' }}" href="{{route('delivery-sale.deliveryList')}}">{{ __('db.Delivery List') }}</a></li>
+            @endcan
+            @can('delivery-sales-gift-card-list')
+            <li id="delivery-gift-card-list-menu"><a class="{{ request()->is('delivery-sale/gift-card-list') ? 'active' : '' }}" href="{{route('delivery-sale.giftCardList')}}">{{ __('db.Gift Card List') }}</a></li>
+            @endcan
+            @can('delivery-sales-coupon-list')
+            <li id="delivery-coupon-list-menu"><a class="{{ request()->is('delivery-sale/coupon-list') ? 'active' : '' }}" href="{{route('delivery-sale.couponList')}}">{{ __('db.Coupon List') }}</a></li>
+            @endcan
+            @can('delivery-sales-courier-list')
+            <li id="delivery-courier-list-menu"><a class="{{ request()->is('delivery-sale/courier-list') ? 'active' : '' }}" href="{{route('delivery-sale.courierList')}}">{{ __('db.Courier List') }}</a></li>
+            @endcan
+            @can('delivery-sales-sale-return')
+            <li id="delivery-sale-return-menu"><a class="{{ request()->is('delivery-sale/sale-return') ? 'active' : '' }}" href="{{route('delivery-sale.saleReturn')}}">{{ __('db.Sale Return') }}</a></li>
+            @endcan
+            @can('delivery-sales-sale-exchange')
+            <li id="delivery-sale-exchange-menu"><a class="{{ request()->is('delivery-sale/sale-exchange') ? 'active' : '' }}" href="{{route('delivery-sale.saleExchange')}}">{{ __('db.Sale Exchange') }}</a></li>
             @endcan
             @endif
         </ul>

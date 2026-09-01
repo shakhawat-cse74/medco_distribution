@@ -1,0 +1,11 @@
+{
+    "name": "Mahadi",
+    "alias": "mahadi",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Mahadi\\Providers\\MahadiServiceProvider"
+    ],
+    "files": []
+}

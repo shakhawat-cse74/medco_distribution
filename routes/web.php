@@ -939,14 +939,14 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
     });
 
     //ticket routes
-    Route::controller(\App\Http\Controllers\landlord\TicketController::class)->group(function () {
-        Route::get('tickets', 'index')->name('tickets.index');
-        Route::get('tickets/create', 'create')->name('tickets.create');
-        Route::post('tickets', 'store')->name('tickets.store');
-        Route::get('tickets/{id}', 'show')->name('tickets.show');
-        Route::post('tickets/{id}/reply', 'reply')->name('tickets.reply');
-        Route::delete('tickets/{id}', 'destroy')->name('tickets.destroy');
-    });
+    // Route::controller(\App\Http\Controllers\landlord\TicketController::class)->group(function () {
+    //     Route::get('tickets', 'index')->name('tickets.index');
+    //     Route::get('tickets/create', 'create')->name('tickets.create');
+    //     Route::post('tickets', 'store')->name('tickets.store');
+    //     Route::get('tickets/{id}', 'show')->name('tickets.show');
+    //     Route::post('tickets/{id}/reply', 'reply')->name('tickets.reply');
+    //     Route::delete('tickets/{id}', 'destroy')->name('tickets.destroy');
+    // });
 
     Route::controller(DamageStockController::class)->group(function () {
         Route::get('damage-stock/getproduct/{id}',       'getProduct')         ->name('damage-stock.getproduct');
@@ -981,13 +981,6 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
             Route::prefix('delivery-men')->name('delivery-men.')->group(function () {
                 Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'index'])->name('index');
                 Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManController::class, 'show'])->name('show');
-            });
-
-            Route::prefix('orders')->name('orders.')->group(function () {
-                Route::get('/', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'index'])->name('index');
-                Route::post('field-order-data', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'fieldOrderData'])->name('fieldOrderData');
-                Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'show'])->name('show');
-                Route::get('invoice/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'genInvoice'])->name('invoice');
             });
 
             Route::prefix('reports')->name('reports.')->group(function () {
@@ -1041,46 +1034,6 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::post('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\DeliveryManVehicleController::class, 'delete'])->name('delete');
     });
 
-    Route::prefix('field-orders')->name('field-orders.')->group(function () {
-        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'index'])->name('index');
-        Route::get('create', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'create'])->name('create');
-        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'store'])->name('store');
-        Route::get('draft-list', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'draftList'])->name('draftList');
-        Route::get('draft/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'loadDraft'])->name('loadDraft');
-        Route::post('draft/{id}/update', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'updateDraft'])->name('updateDraft');
-        Route::post('draft/{id}/delete', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'deleteDraft'])->name('deleteDraft');
-        Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'show'])->name('show');
-        Route::post('update/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'update'])->name('update');
-        Route::post('cancel/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'cancel'])->name('cancel');
-        Route::get('products/search', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'searchProducts'])->name('searchProducts');
-        Route::get('customers/search', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'searchCustomers'])->name('searchCustomers');
-        Route::post('customers/quick-create', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'quickCreateCustomer'])->name('quickCreateCustomer');
-        Route::post('validate-stock', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'validateStock']);
-        Route::get('invoice/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'genInvoice'])->name('invoice');
-        Route::post('field-order-data', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'fieldOrderData'])->name('fieldOrderData');
-        Route::post('send-whatsapp/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'sendWhatsApp'])->name('sendWhatsApp');
-        Route::post('send-sms/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'sendSMS'])->name('sendSMS');
-        Route::get('barcode/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldOrderController::class, 'printBarcode'])->name('printBarcode');
-    });
-
-    Route::prefix('field-payments')->name('field-payments.')->group(function () {
-        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'index'])->name('index');
-        Route::get('create/{field_order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'create'])->name('create');
-        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'store'])->name('store');
-        Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'show'])->name('show');
-        Route::get('{id}/edit', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'edit'])->name('edit');
-        Route::put('update/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'update'])->name('update');
-        Route::delete('delete/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'destroy'])->name('destroy');
-        Route::get('receipt/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'receipt'])->name('receipt');
-        Route::post('split-payment/{order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'splitPayment'])->name('splitPayment');
-        Route::get('order-payments/{order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'getOrderPayments']);
-        Route::get('send-receipt/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'sendReceipt'])->name('sendReceipt');
-        Route::get('daily-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'dailySummary'])->name('dailySummary');
-        Route::get('weekly-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'weeklySummary'])->name('weeklySummary');
-        Route::get('monthly-summary', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'monthlySummary'])->name('monthlySummary');
-        Route::post('field-payment-data', [Modules\DeliveryManagement\Http\Controllers\FieldPaymentController::class, 'fieldPaymentData'])->name('fieldPaymentData');
-    });
-
     Route::prefix('delivery-man-delivery')->name('delivery-man-delivery.')->group(function () {
         Route::get('/', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'index'])->name('index');
         Route::get('delivery-list-data', [Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController::class, 'deliveryListData'])->name('deliveryListData');
@@ -1128,17 +1081,6 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('summary', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'summary'])->name('summary');
         Route::get('delivery-man-summary/{delivery_man_id}', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'deliveryManSummary'])->name('deliveryManSummary');
         Route::get('pending-deposits', [Modules\DeliveryManagement\Http\Controllers\CashDepositController::class, 'pendingDeposits'])->name('pendingDeposits');
-    });
-
-    Route::prefix('field-returns')->name('field-returns.')->group(function () {
-        Route::get('/', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'index'])->name('index');
-        Route::get('create/{field_order_id}', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'create'])->name('create');
-        Route::post('store', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'store'])->name('store');
-        Route::get('{id}', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'show'])->name('show');
-        Route::post('confirm/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'confirm'])->name('confirm');
-        Route::get('reasons', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'getReasons']);
-        Route::post('upload-photo', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'uploadPhoto'])->name('uploadPhoto');
-        Route::post('create-replacement/{id}', [Modules\DeliveryManagement\Http\Controllers\FieldReturnController::class, 'createReplacement'])->name('createReplacement');
     });
 
     Route::prefix('customer-visits')->name('customer-visits.')->group(function () {

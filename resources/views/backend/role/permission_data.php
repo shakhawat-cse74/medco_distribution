@@ -294,5 +294,45 @@ return [
         "delivery-man-routes-add"    => "Add Route",
         "delivery-man-routes-edit"   => "Edit Route",
         "delivery-man-routes-delete" => "Delete Route",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Sales
+    |--------------------------------------------------------------------------
+    |
+    | Manage delivery sales, challan slips, packing slips, returns,
+    | installments, coupons, courier, delivery list, and exchange.
+    |
+    */
+        "delivery-sales-index"             => "Delivery Sales",
+        "delivery-sales-add"               => "Add Delivery Sale",
+        "delivery-sales-edit"              => "Edit Delivery Sale",
+        "delivery-sales-delete"            => "Delete Delivery Sale",
+        "delivery-sales-pos"               => "Delivery Sale POS",
+        "delivery-sales-gift-card-list"    => "Gift Card List",
+        "delivery-sales-challan-list"      => "Challan List",
+        "delivery-sales-challan-slip-list" => "Challan Slip List",
+        "delivery-sales-packing-slip-list" => "Packing Slip List",
+        "delivery-sales-sale-return"       => "Sale Return",
+        "delivery-sales-installment-list"  => "Installment List",
+        "delivery-sales-coupon-list"       => "Coupon List",
+        "delivery-sales-cupon-list"        => "Cupon List",
+        "delivery-sales-courier-list"      => "Courier List",
+        "delivery-sales-curirer-list"      => "Curirer List",
+        "delivery-sales-delivery-list"     => "Delivery List",
+        "delivery-sales-sale-exchange"     => "Sale Exchange",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery Installments
+    |--------------------------------------------------------------------------
+    |
+    | Manage delivery installments.
+    |
+    */
+        "delivery-installments-index" => "Delivery Installments",
+        "delivery-installments-add"   => "Add Delivery Installment",
+        "delivery-installments-edit"  => "Edit Delivery Installment",
+        "delivery-installments-delete" => "Delete Delivery Installment",
     ],
 ];

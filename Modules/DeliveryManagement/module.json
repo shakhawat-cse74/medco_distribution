@@ -1,8 +1,14 @@
 {
     "name": "DeliveryManagement",
-    "alias": "DeliveryManagement",
+    "alias": "deliverymanagement",
     "description": "Delivery Management Module",
-    "version": "1.0.0",
-    "disabled": false,
-    "dependencies": []
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\DeliveryManagement\\Providers\\DeliveryManagementServiceProvider",
+        "Modules\\DeliveryManagement\\Providers\\RouteServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
 }

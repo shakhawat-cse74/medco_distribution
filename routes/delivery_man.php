@@ -5,9 +5,6 @@ use Modules\DeliveryManagement\Http\Controllers\DeliveryManAuthController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryReportController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryManController;
-use Modules\DeliveryManagement\Http\Controllers\FieldOrderController;
-use Modules\DeliveryManagement\Http\Controllers\FieldPaymentController;
-use Modules\DeliveryManagement\Http\Controllers\FieldReturnController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryProofController;
 use Modules\DeliveryManagement\Http\Controllers\CashDepositController;
 use Modules\DeliveryManagement\Http\Controllers\CustomerVisitController;
@@ -43,49 +40,8 @@ Route::prefix('delivery-man')->name('delivery-man.')->group(function () {
             Route::get('due', [DeliveryManagementController::class, 'dueDeliveries'])->name('due');
         });
 
-        Route::prefix('orders')->name('orders.')->group(function () {
-            Route::get('/', [FieldOrderController::class, 'index'])->name('index');
-            Route::get('create', [FieldOrderController::class, 'create'])->name('create');
-            Route::post('store', [FieldOrderController::class, 'store'])->name('store');
-            Route::post('field-order-data', [FieldOrderController::class, 'fieldOrderData'])->name('fieldOrderData');
-            Route::get('{id}', [FieldOrderController::class, 'show'])->name('show');
-            Route::get('draft-list', [FieldOrderController::class, 'draftList'])->name('draftList');
-            Route::get('draft/{id}', [FieldOrderController::class, 'loadDraft'])->name('loadDraft');
-            Route::post('draft/{id}/update', [FieldOrderController::class, 'updateDraft'])->name('updateDraft');
-            Route::post('draft/{id}/delete', [FieldOrderController::class, 'deleteDraft'])->name('deleteDraft');
-            Route::post('cancel/{id}', [FieldOrderController::class, 'cancel'])->name('cancel');
-            Route::get('products/search', [FieldOrderController::class, 'searchProducts'])->name('searchProducts');
-            Route::get('customers/search', [FieldOrderController::class, 'searchCustomers'])->name('searchCustomers');
-            Route::post('validate-stock', [FieldOrderController::class, 'validateStock'])->name('validateStock');
-            Route::get('invoice/{id}', [FieldOrderController::class, 'genInvoice'])->name('invoice');
-            Route::post('send-whatsapp/{id}', [FieldOrderController::class, 'sendWhatsApp'])->name('sendWhatsApp');
-            Route::post('send-sms/{id}', [FieldOrderController::class, 'sendSMS'])->name('sendSMS');
-            Route::get('barcode/{id}', [FieldOrderController::class, 'printBarcode'])->name('printBarcode');
-        });
-
         Route::prefix('warehouse-products')->name('warehouse-products.')->group(function () {
             Route::get('/', [WarehouseProductController::class, 'index'])->name('index');
-        });
-
-        Route::prefix('payments')->name('payments.')->group(function () {
-            Route::get('/', [FieldPaymentController::class, 'index'])->name('index');
-            Route::get('create/{field_order_id}', [FieldPaymentController::class, 'create'])->name('create');
-            Route::post('store', [FieldPaymentController::class, 'store'])->name('store');
-            Route::get('{id}', [FieldPaymentController::class, 'show'])->name('show');
-            Route::get('{id}/edit', [FieldPaymentController::class, 'edit'])->name('edit');
-            Route::post('update/{id}', [FieldPaymentController::class, 'update'])->name('update');
-            Route::get('receipt/{id}', [FieldPaymentController::class, 'receipt'])->name('receipt');
-            Route::post('split-payment/{order_id}', [FieldPaymentController::class, 'splitPayment'])->name('splitPayment');
-            Route::get('order-payments/{order_id}', [FieldPaymentController::class, 'getOrderPayments'])->name('getOrderPayments');
-            Route::get('daily-summary', [FieldPaymentController::class, 'dailySummary'])->name('dailySummary');
-            Route::get('weekly-summary', [FieldPaymentController::class, 'weeklySummary'])->name('weeklySummary');
-            Route::get('monthly-summary', [FieldPaymentController::class, 'monthlySummary'])->name('monthlySummary');
-        });
-
-        Route::prefix('returns')->name('returns.')->group(function () {
-            Route::get('create/{field_order_id}', [FieldReturnController::class, 'create'])->name('create');
-            Route::post('store', [FieldReturnController::class, 'store'])->name('store');
-            Route::get('{id}', [FieldReturnController::class, 'show'])->name('show');
         });
 
         Route::prefix('proofs')->name('proofs.')->group(function () {

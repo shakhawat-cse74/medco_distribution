@@ -5,18 +5,17 @@ use Modules\DeliveryManagement\Http\Controllers\DeliveryManController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryManAssignmentController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryManRouteController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryManVehicleController;
-use Modules\DeliveryManagement\Http\Controllers\FieldOrderController;
-use Modules\DeliveryManagement\Http\Controllers\FieldPaymentController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryManagementController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryProofController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryManCommissionController;
 use Modules\DeliveryManagement\Http\Controllers\CashDepositController;
-use Modules\DeliveryManagement\Http\Controllers\FieldReturnController;
 use Modules\DeliveryManagement\Http\Controllers\CustomerVisitController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryNotificationController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryManScheduleController;
 use Modules\DeliveryManagement\Http\Controllers\DeliverySettingController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryReportController;
+use Modules\DeliveryManagement\Http\Controllers\DeliverySaleController;
+use Modules\DeliveryManagement\Http\Controllers\DeliveryInstallmentController;
 
 Route::group(['middleware' => ['common', 'auth', 'active']], function () {
 
@@ -63,43 +62,6 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::post('delete/{id}', 'delete')->name('delete');
     });
 
-    Route::controller(FieldOrderController::class)->prefix('field-orders')->name('field-orders.')->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('create', 'create')->name('create');
-        Route::post('store', 'store')->name('store');
-        Route::get('draft-list', 'draftList')->name('draftList');
-        Route::get('draft/{id}', 'loadDraft')->name('loadDraft');
-        Route::post('draft/{id}/update', 'updateDraft')->name('updateDraft');
-        Route::post('draft/{id}/delete', 'deleteDraft')->name('deleteDraft');
-        Route::get('{id}', 'show')->name('show');
-        Route::post('update/{id}', 'update')->name('update');
-        Route::post('cancel/{id}', 'cancel')->name('cancel');
-        Route::get('products/search', 'searchProducts');
-        Route::get('customers/search', 'searchCustomers');
-        Route::post('customers/quick-create', 'quickCreateCustomer')->name('quickCreateCustomer');
-        Route::post('validate-stock', 'validateStock');
-        Route::get('invoice/{id}', 'genInvoice')->name('invoice');
-        Route::post('send-whatsapp/{id}', 'sendWhatsApp')->name('sendWhatsApp');
-        Route::post('send-sms/{id}', 'sendSMS')->name('sendSMS');
-        Route::get('barcode/{id}', 'printBarcode')->name('printBarcode');
-    });
-
-    Route::controller(FieldPaymentController::class)->prefix('field-payments')->name('field-payments.')->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('create/{field_order_id}', 'create')->name('create');
-        Route::post('store', 'store')->name('store');
-        Route::get('{id}', 'show')->name('show');
-        Route::get('{id}/edit', 'edit')->name('edit');
-        Route::post('update/{id}', 'update')->name('update');
-        Route::get('receipt/{id}', 'receipt')->name('receipt');
-        Route::post('split-payment/{order_id}', 'splitPayment')->name('splitPayment');
-        Route::get('order-payments/{order_id}', 'getOrderPayments');
-        Route::post('send-receipt/{id}', 'sendReceipt')->name('sendReceipt');
-        Route::get('daily-summary', 'dailySummary')->name('dailySummary');
-        Route::get('weekly-summary', 'weeklySummary')->name('weeklySummary');
-        Route::get('monthly-summary', 'monthlySummary')->name('monthlySummary');
-    });
-
     Route::controller(DeliveryManagementController::class)->prefix('delivery-man-delivery')->name('delivery-man-delivery.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('delivery-list-data', 'deliveryListData');
@@ -135,17 +97,6 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('summary', 'summary')->name('summary');
         Route::get('delivery-man-summary/{delivery_man_id}', 'deliveryManSummary')->name('deliveryManSummary');
         Route::get('pending-deposits', 'pendingDeposits')->name('pendingDeposits');
-    });
-
-    Route::controller(FieldReturnController::class)->prefix('field-returns')->name('field-returns.')->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('create/{field_order_id}', 'create')->name('create');
-        Route::post('store', 'store')->name('store');
-        Route::get('{id}', 'show')->name('show');
-        Route::post('confirm/{id}', 'confirm')->name('confirm');
-        Route::get('reasons', 'getReasons');
-        Route::post('upload-photo', 'uploadPhoto')->name('uploadPhoto');
-        Route::post('create-replacement/{id}', 'createReplacement')->name('createReplacement');
     });
 
     Route::controller(CustomerVisitController::class)->prefix('customer-visits')->name('customer-visits.')->group(function () {
@@ -207,17 +158,40 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('delivery-man-dashboard/{id}', 'deliveryManDashboard')->name('deliveryManDashboard');
     });
 
-    Route::controller(DeliveryManCommissionController::class)->prefix('delivery-man-commissions')->name('delivery-man-commissions.')->group(function () {
+    Route::controller(DeliverySaleController::class)->prefix('delivery-sale')->name('delivery-sale.')->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::get('settings', 'settings')->name('settings');
-        Route::post('settings', 'updateSettings')->name('updateSettings');
-        Route::get('slabs', 'slabs')->name('slabs');
-        Route::post('slabs', 'storeSlabs')->name('storeSlabs');
-        Route::post('calculate/{field_order_id}', 'calculate')->name('calculate');
-        Route::get('payout-report', 'payoutReport')->name('payoutReport');
-        Route::post('payout', 'processPayout')->name('processPayout');
-        Route::get('incentives/new-customer', 'newCustomerIncentives')->name('newCustomerIncentives');
-        Route::get('incentives/due-collection', 'dueCollectionIncentives')->name('dueCollectionIncentives');
+        Route::get('create', 'create')->name('create');
+        Route::post('store', 'store')->name('store');
+        Route::get('data', 'saleData')->name('saleData');
+        Route::get('pos', 'pos')->name('pos');
+        Route::get('get-warehouse-products/{warehouse_id}', 'getWarehouseProducts')->name('getWarehouseProducts');
+        Route::get('gift-card-list', 'giftCardList')->name('giftCardList');
+        Route::get('challan-list', 'challanList')->name('challanList');
+        Route::get('challan-slip-list', 'challanSlipList')->name('challan-slip-list');
+        Route::get('packing-slip-list', 'packingSlipList')->name('packing-slip-list');
+        Route::get('sale-return', 'saleReturn')->name('saleReturn');
+        Route::get('installment-list', 'installmentList')->name('installmentList');
+        Route::get('coupon-list', 'couponList')->name('couponList');
+        Route::get('cupon-list', 'cuponList')->name('cupon-list');
+        Route::get('courier-list', 'courierList')->name('courierList');
+        Route::get('curirer-list', 'curirerList')->name('curirer-list');
+        Route::get('delivery-list', 'deliveryList')->name('deliveryList');
+        Route::get('sale-exchange', 'saleExchange')->name('saleExchange');
+        Route::get('{id}', 'show')->name('show');
+        Route::get('{id}/edit', 'edit')->name('edit');
+        Route::post('update/{id}', 'update')->name('update');
+        Route::post('delete/{id}', 'destroy')->name('delete');
+        Route::post('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });
 
+    Route::controller(DeliveryInstallmentController::class)->prefix('delivery-installment')->name('delivery-installment.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::post('store', 'store')->name('store');
+        Route::get('data', 'installmentData')->name('installmentData');
+        Route::get('{id}', 'show')->name('show');
+        Route::get('{id}/edit', 'edit')->name('edit');
+        Route::post('update/{id}', 'update')->name('update');
+        Route::post('delete/{id}', 'destroy')->name('delete');
+    });
 });

@@ -11,7 +11,7 @@ class Sale extends Model
     use SoftDeletes;
 
     protected $fillable =[
-        "reference_no", "user_id", "cash_register_id", "table_id", "queue", "customer_id", "warehouse_id", "biller_id", "item", "total_qty", "total_discount", "total_tax", "total_price", "order_tax_rate", "order_tax", "order_discount_type", "order_discount_value", "order_discount", "coupon_id", "coupon_discount", "shipping_cost", "grand_total", "currency_id", "exchange_rate", "sale_status", "payment_status", "payment_mode", "billing_name", "billing_phone", "billing_email", "billing_address", "billing_city", "billing_state", "billing_country", "billing_zip", "shipping_name", "shipping_phone", "shipping_email", "shipping_address", "shipping_city", "shipping_state","shipping_country","shipping_zip", "sale_type", "service_id", "waiter_id", "paid_amount", "document", "sale_note", "staff_note", "created_at", "woocommerce_order_id", "deleted_by",'pay_term_no','pay_term_period','due_date',"repair_id","service_charge",
+        "reference_no", "user_id", "cash_register_id", "table_id", "queue", "customer_id", "warehouse_id", "biller_id", "item", "total_qty", "total_discount", "total_tax", "total_price", "order_tax_rate", "order_tax", "order_discount_type", "order_discount_value", "order_discount", "coupon_id", "coupon_discount", "shipping_cost", "grand_total", "currency_id", "exchange_rate", "sale_status", "payment_status", "payment_mode", "billing_name", "billing_phone", "billing_email", "billing_address", "billing_city", "billing_state", "billing_country", "billing_zip", "shipping_name", "shipping_phone", "shipping_email", "shipping_address", "shipping_city", "shipping_state","shipping_country","shipping_zip", "sale_type", "service_id", "waiter_id", "paid_amount", "document", "sale_note", "staff_note", "created_at", "woocommerce_order_id", "deleted_by",'pay_term_no','pay_term_period','due_date',"repair_id","service_charge","delivery_man_id","route_id","installment_parent_id","installment_amount","installment_months",
     ];
 
     public function user()
@@ -67,6 +67,16 @@ class Sale extends Model
     public function delivery()
     {
         return $this->hasOne(Delivery::class);
+    }
+
+    public function deliveryMan()
+    {
+        return $this->belongsTo(\Modules\DeliveryManagement\Models\DeliveryMan::class, 'delivery_man_id');
+    }
+
+    public function route()
+    {
+        return $this->belongsTo(\Modules\DeliveryManagement\Models\DeliveryArea::class, 'route_id');
     }
 
     public function return()
