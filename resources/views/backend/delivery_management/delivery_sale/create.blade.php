@@ -2948,25 +2948,8 @@ $(document).on('submit', '.payment-form', function(e) {
                 }else if(response.payment_method === 'moneipoint'){
                 }else if ($('select[name="sale_status"]').val() == 1 && response !== 'pesapal') {
                     let saleId = response.sale_id || response;
-                    let link = "{{ url('sales/gen_invoice') }}/" + saleId + "?is_print=true";
-                    $.ajax({
-                        url: link,
-                        type: 'GET',
-                        success: function(data) {
-                            if (data.trim() === 'receipt_printer') {
-                                alert("{{ __('db.The receipt has been successfully printed') }}");
-                                location.href = "{{route('delivery-sale.index')}}";
-                            } else if (data.trim() === 'invoice_settings_error') {
-                                alert("{{ __('db.Please select either the 58mm or 80mm template as the default in Invoice Settings') }}");
-                                location.href = "{{route('delivery-sale.index')}}";
-                            } else {
-                                location.href = link;
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error("Error loading invoice:", error);
-                        }
-                    });
+                    let link = "{{ route('delivery-sale.show', '') }}/" + saleId;
+                    location.href = link;
                 }
                 else if($('select[name="sale_status"]').val() != 1){
                     localStorage.clear();
