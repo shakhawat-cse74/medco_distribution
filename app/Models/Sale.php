@@ -76,7 +76,7 @@ class Sale extends Model
 
     public function route()
     {
-        return $this->belongsTo(\Modules\DeliveryManagement\Models\DeliveryArea::class, 'route_id');
+        return $this->belongsTo(\App\Models\DeliveryArea::class, 'route_id');
     }
 
     public function return()

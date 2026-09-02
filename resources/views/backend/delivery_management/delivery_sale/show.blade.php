@@ -5,7 +5,7 @@
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <h3 class="mb-0">{{ __('db.Sale Details') }} - {{ $lims_sale_data->reference_no }}</h3>
+                <h3 class="mb-0">{{ __('db.Delivery Sale Details') }} - {{ $lims_sale_data->reference_no }}</h3>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -119,7 +119,7 @@
                 </div>
 
                 <div class="form-group mt-3">
-                    <a href="{{ route('delivery-sale.invoice', $lims_sale_data->id) }}" class="btn btn-primary">
+                    <a href="{{ url('sales/gen_invoice', $lims_sale_data->id) }}" class="btn btn-primary">
                         <i class="ti ti-printer"></i> {{ __('db.Generate Invoice') }}
                     </a>
                     <a href="{{ route('delivery-sale.index') }}" class="btn btn-secondary">

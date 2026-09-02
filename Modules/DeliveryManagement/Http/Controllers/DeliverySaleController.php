@@ -285,11 +285,11 @@ class DeliverySaleController extends Controller
                     'success' => true,
                     'message' => __('db.Delivery sale created successfully'),
                     'sale_id' => $lims_sale_data->id,
-                    'redirect_url' => url('delivery-sale.show', $lims_sale_data->id)
+                    'redirect_url' => route('delivery-sale.show', $lims_sale_data->id)
                 ]);
             }
 
-            return redirect('delivery-sale.show', $lims_sale_data->id)->with('message', __('db.Delivery sale created successfully'));
+            return redirect(route('delivery-sale.show', $lims_sale_data->id))->with('message', __('db.Delivery sale created successfully'));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Delivery sale creation failed', [
