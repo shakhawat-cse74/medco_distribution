@@ -169,7 +169,7 @@
         },
         "columns": [
             { "data": "key" },
-            { "data": "date" },
+            { "data": "sale_date" },
             { "data": "reference_no" },
             { "data": "customer" },
             { "data": "warehouse" },
@@ -178,7 +178,7 @@
             { "data": "payment_status" },
             { "data": "grand_total" },
             { "data": "paid_amount" },
-            { "data": "due" },
+            { "data": "due_amount" },
             { "data": "options" }
         ],
         'language': {
