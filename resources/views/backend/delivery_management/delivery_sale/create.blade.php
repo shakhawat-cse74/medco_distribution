@@ -2979,7 +2979,9 @@ $(document).on('submit', '.payment-form', function(e) {
             },
             error: function(xhr) {
                 let message = 'An error occurred';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    message = xhr.responseJSON.error;
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
                     message = xhr.responseJSON.message;
                 } else if (xhr.responseText) {
                     message = xhr.responseText;

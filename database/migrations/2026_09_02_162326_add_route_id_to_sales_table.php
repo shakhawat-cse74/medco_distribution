@@ -12,9 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sales', function (Blueprint $table) {
-            $table->unsignedBigInteger('installment_parent_id')->nullable()->after('shipping_zip');
-            $table->decimal('installment_amount', 15, 2)->nullable()->after('installment_parent_id');
-            $table->integer('installment_months')->nullable()->after('installment_amount');
+            $table->unsignedBigInteger('route_id')->nullable()->after('delivery_man_id');
+            $table->foreign('route_id')->references('id')->on('delivery_areas')->onDelete('set null');
         });
     }
 
@@ -24,7 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('sales', function (Blueprint $table) {
-            $table->dropColumn(['installment_parent_id', 'installment_amount', 'installment_months']);
+            $table->dropForeign(['route_id']);
+            $table->dropColumn('route_id');
         });
     }
 };
