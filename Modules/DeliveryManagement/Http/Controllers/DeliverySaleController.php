@@ -202,8 +202,19 @@ class DeliverySaleController extends Controller
                 'delivery_man_id', 'item', 'total_qty', 'total_discount', 'total_tax', 'total_price',
                 'order_tax_rate', 'order_tax', 'order_discount_type', 'order_discount_value', 'order_discount',
                 'shipping_cost', 'grand_total', 'currency_id', 'exchange_rate', 'sale_status', 'payment_status',
-                'payment_mode', 'paid_amount', 'document', 'sale_note', 'staff_note', 'created_at', 'created_by'
+                'payment_mode', 'paid_amount', 'document', 'sale_note', 'staff_note', 'created_at', 'created_by',
+                'sale_type', 'service_id', 'table_id', 'waiter_id', 'coupon_id', 'coupon_discount',
+                'pay_term_no', 'pay_term_period', 'due_date', 'woocommerce_order_id', 'repair_id',
+                'service_charge', 'installment_amount', 'installment_months'
             ])->toArray());
+            
+            if ($request->enable_installment && $request->installment_plan) {
+                $installmentPlanController = new \App\Http\Controllers\InstallmentPlanController();
+                $installment_plan_data = $request->installment_plan;
+                $installment_plan_data['reference_id'] = $lims_sale_data->id;
+                $installment_plan_data['reference_type'] = 'sale';
+                $installmentPlanController->store(new Request($installment_plan_data));
+            }
             
             DB::commit();
             

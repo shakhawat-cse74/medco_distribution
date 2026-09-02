@@ -1264,9 +1264,9 @@
 </script>
 <script type="text/javascript">
 
-    $("ul#sale").siblings('a').attr('aria-expanded','true');
-    $("ul#sale").addClass("show");
-    $("ul#sale #sale-create-menu").addClass("active");
+    $("ul#delivery-management").siblings('a').attr('aria-expanded','true');
+    $("ul#delivery-management").addClass("show");
+    $("ul#delivery-management #delivery-sales-menu").addClass("active");
 
     @if(config('database.connections.saleprosaas_landlord'))
         numberOfInvoice = <?php echo json_encode($numberOfInvoice)?>;

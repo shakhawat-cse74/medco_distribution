@@ -19,11 +19,11 @@
         @can('delivery-sales-add')
             <a href="{{route('delivery-sale.create')}}" class="btn btn-info add-sale-btn btn-icon"><i class="ti ti-plus"></i> {{__('db.Add Sale')}}</a>
         @endcan
-        <a href="{{route('delivery-sale.pos')}}" class="btn btn-primary add-sale-btn btn-icon"><i class="ti ti-shopping-cart"></i> {{__('db.POS')}}</a>
-        <a href="{{route('delivery-sale.giftCardList')}}" class="btn btn-secondary add-sale-btn btn-icon"><i class="ti ti-gift"></i> {{__('db.Gift Card List')}}</a>
-        <a href="{{route('delivery-sale.challanList')}}" class="btn btn-warning add-sale-btn btn-icon"><i class="ti ti-file"></i> {{__('db.Challan List')}}</a>
-        <a href="{{route('delivery-sale.saleReturn')}}" class="btn btn-info add-sale-btn btn-icon"><i class="ti ti-arrow-back"></i> {{__('db.Sale Return')}}</a>
-        <a href="{{route('delivery-sale.installmentList')}}" class="btn btn-dark add-sale-btn btn-icon"><i class="ti ti-calendar"></i> {{__('db.Installment List')}}</a>
+        @can('delivery-sales-delete')
+            <a href="{{ url('sales/deleted_data') }}" class="btn btn-secondary add-sale-btn btn-icon">
+                <i class="ti ti-trash"></i> {{ __('Deleted Sales') }}
+            </a>
+        @endcan
 
         <button type="button" class="btn btn-warning btn-icon" id="toggle-filter">
             <i class="ti ti-filter"></i> {{ __('db.Filter Sales') }}
