@@ -29,6 +29,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Pagination\LengthAwarePaginator;
+use NumberToWords\NumberToWords;
+use App\Models\Payment;
+use App\Models\Product_Sale;
+use App\Models\Unit;
 
 class DeliverySaleController extends Controller
 {
@@ -320,6 +324,157 @@ class DeliverySaleController extends Controller
         }
 
         return view('backend.delivery_management.delivery_sale.show', compact('lims_sale_data'));
+    }
+
+    public function invoice($id)
+    {
+        $is_print = filter_var(request()->query('is_print'), FILTER_VALIDATE_BOOLEAN);
+
+        try {
+            $lims_sale_data = Sale::with(['currency', 'user', 'customer', 'warehouse', 'biller', 'deliveryMan', 'route'])->find($id);
+
+            if (!$lims_sale_data) {
+                return redirect()->back()->with('not_permitted', 'Sale not found');
+            }
+
+            $lims_biller_data = Biller::find($lims_sale_data->biller_id);
+            $lims_warehouse_data = Warehouse::find($lims_sale_data->warehouse_id);
+            $lims_customer_data = Customer::find($lims_sale_data->customer_id);
+
+            $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
+
+            $lims_payment_data = Payment::where('sale_id', $id)->get();
+
+            $paid_by_info = $lims_payment_data->map(function ($payment) {
+                return $payment->paying_method ?? 'Cash';
+            })->unique()->implode(', ');
+
+            $numberTransformer = (new NumberToWords())->getNumberTransformer('en');
+            $numberInWords = $numberTransformer->toWords($lims_sale_data->grand_total);
+
+            $currency = \App\Models\Currency::find($lims_sale_data->currency_id);
+            $currency_code = $currency ? $currency->code : 'USD';
+
+            $productIds = $lims_product_sale_data->pluck('product_id')->unique();
+            $productMap = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
+            $variantIds = $lims_product_sale_data->pluck('variant_id')->filter()->unique();
+            $variantMap = $variantIds->isNotEmpty()
+                ? ProductVariant::select('id', 'name')->whereIn('id', $variantIds)->get()->keyBy('id')
+                : collect();
+
+            $batchIds = $lims_product_sale_data->pluck('product_batch_id')->filter()->unique();
+            $batchMap = $batchIds->isNotEmpty()
+                ? ProductBatch::select('id', 'batch_no')->whereIn('id', $batchIds)->get()->keyBy('id')
+                : collect();
+
+            $line_items = [];
+            foreach ($lims_product_sale_data as $key => $psd) {
+                $product = $productMap->get($psd->product_id);
+                $item = new \stdClass();
+                $item->product_name = $product ? $product->name : 'Unknown Product';
+                if ($psd->variant_id && $variantMap->has($psd->variant_id)) {
+                    $item->product_name .= ' [' . $variantMap->get($psd->variant_id)->name . ']';
+                }
+                $item->variant_name = ($psd->variant_id && $variantMap->has($psd->variant_id)) ? $variantMap->get($psd->variant_id)->name : '';
+                $item->imei_number = $psd->imei_number;
+                $item->net_unit_price = $psd->net_unit_price;
+                $item->discount = $psd->discount;
+                $item->qty = $psd->qty;
+                $item->total = $psd->total;
+                $item->tax = $psd->tax;
+                $item->unit_code = '';
+                $line_items[] = $item;
+            }
+
+            // QR text
+            $qrText = $lims_sale_data->reference_no;
+
+            // Customer financials
+            $returned_amount = DB::table('sales')
+                ->join('returns', 'sales.id', '=', 'returns.sale_id')
+                ->where('sales.customer_id', $lims_customer_data->id)
+                ->where('sales.payment_status', '!=', 4)
+                ->whereNull('sales.deleted_at')
+                ->sum('returns.grand_total');
+
+            $saleData = DB::table('sales')
+                ->where('customer_id', $lims_customer_data->id)
+                ->where('payment_status', '!=', 4)
+                ->whereNull('sales.deleted_at')
+                ->selectRaw('SUM(grand_total) as grand_total, SUM(paid_amount) as paid_amount')
+                ->first();
+
+            $totalDue = $saleData->grand_total - $returned_amount - $saleData->paid_amount;
+            $prevDue = $totalDue - ($lims_sale_data->grand_total - $lims_sale_data->paid_amount);
+            $change_amount = 0;
+
+            // Custom fields
+            $allCustomFields = CustomField::where('is_invoice', true)
+                ->whereIn('belongs_to', ['sale', 'customer', 'product'])
+                ->get()
+                ->groupBy('belongs_to');
+
+            $sale_custom_fields = $allCustomFields->get('sale', collect())->pluck('name');
+            $customer_custom_fields = $allCustomFields->get('customer', collect())->pluck('name');
+            $product_custom_fields = $allCustomFields->get('product', collect())->pluck('name');
+
+            // Biller info
+            $lims_bill_by = $lims_sale_data->user->only(['name', 'email']);
+
+            // Installment info
+            $lims_installment_plan_data = DB::table('installment_plans')->where([
+                ['reference_type', 'sale'],
+                ['reference_id', $lims_sale_data->id]
+            ])->first();
+
+            $installment_info = null;
+            if ($lims_installment_plan_data) {
+                $inst_all = DB::table('installments')->where('installment_plan_id', $lims_installment_plan_data->id)->get();
+                $installment_info = new \stdClass();
+                $installment_info->plan = $lims_installment_plan_data;
+                $installment_info->total = $inst_all->count();
+                $installment_info->paid = $inst_all->where('status', 'completed')->count();
+                $installment_info->next = $inst_all->where('status', 'pending')->sortBy('payment_date')->first();
+            }
+
+            $invoice_settings = \App\Models\InvoiceSetting::active_setting();
+
+            $viewData = compact(
+                'invoice_settings',
+                'lims_sale_data',
+                'currency_code',
+                'lims_product_sale_data',
+                'lims_biller_data',
+                'lims_warehouse_data',
+                'lims_customer_data',
+                'lims_payment_data',
+                'numberInWords',
+                'paid_by_info',
+                'line_items',
+                'qrText',
+                'prevDue',
+                'totalDue',
+                'change_amount',
+                'lims_bill_by',
+                'sale_custom_fields',
+                'customer_custom_fields',
+                'product_custom_fields',
+                'installment_info'
+            );
+
+            $viewData['back_url'] = route('delivery-sale.show', $id);
+
+            if ($invoice_settings && in_array($invoice_settings->size, ['58mm', '80mm'])) {
+                return view('backend.setting.invoice_setting.' . $invoice_settings->size, $viewData);
+            }
+
+            return view('backend.setting.invoice_setting.a4', $viewData);
+
+        } catch (\Exception $e) {
+            Log::error('Delivery Invoice error: ' . $e->getMessage() . ' on line ' . $e->getLine() . ' in ' . $e->getFile());
+            return redirect()->back()->with('not_permitted', 'Invoice Error: ' . $e->getMessage());
+        }
     }
 
     public function edit($id)

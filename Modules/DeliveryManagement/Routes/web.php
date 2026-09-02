@@ -177,6 +177,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('curirer-list', 'curirerList')->name('curirer-list');
         Route::get('delivery-list', 'deliveryList')->name('deliveryList');
         Route::get('sale-exchange', 'saleExchange')->name('saleExchange');
+        Route::get('invoice/{id}', 'invoice')->name('invoice');
         Route::get('{id}', 'show')->name('show');
         Route::get('{id}/edit', 'edit')->name('edit');
         Route::post('update/{id}', 'update')->name('update');

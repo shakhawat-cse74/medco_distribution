@@ -119,7 +119,7 @@
                 </div>
 
                 <div class="form-group mt-3">
-                    <a href="{{ url('sales/gen_invoice', $lims_sale_data->id) }}" class="btn btn-primary">
+                    <a href="{{ route('delivery-sale.invoice', $lims_sale_data->id) }}" class="btn btn-primary">
                         <i class="ti ti-printer"></i> {{ __('db.Generate Invoice') }}
                     </a>
                     <a href="{{ route('delivery-sale.index') }}" class="btn btn-secondary">

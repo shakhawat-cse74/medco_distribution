@@ -234,7 +234,7 @@
 <body>
 
     <div class="hidden-print">
-        <a href="{{ route('sales.index') }}" class="btn-action btn-back"><i class="ti ti-arrow-left"></i> {{ __('db.Back') }}</a>
+        <a href="{{ $back_url ?? route('sales.index') }}" class="btn-action btn-back"><i class="ti ti-arrow-left"></i> {{ __('db.Back') }}</a>
         <button onclick="window.print();" class="btn-action btn-print"><i class="ti ti-printer"></i> {{ __('db.Print') }}</button>
     </div>
 
@@ -310,6 +310,30 @@
                         </td>
                     </tr>
                 </table>
+
+                <!-- Delivery Information -->
+                @if(isset($lims_sale_data->warehouse) || isset($lims_sale_data->route) || isset($lims_sale_data->deliveryMan))
+                <table class="meta-table" style="margin-top: 10px;">
+                    <tr>
+                        <td style="width: 100%;">
+                            <div style="background-color: #f5f5f5; padding: 8px; border: 1px solid #ddd;">
+                                <strong style="color: #d84315;">Delivery Information</strong>
+                                <div style="margin-top: 5px;">
+                                    @if(isset($lims_sale_data->warehouse) && $lims_sale_data->warehouse)
+                                        <div><strong>Warehouse:</strong> {{ $lims_sale_data->warehouse->name ?? 'N/A' }}</div>
+                                    @endif
+                                    @if(isset($lims_sale_data->route) && $lims_sale_data->route)
+                                        <div><strong>Route:</strong> {{ $lims_sale_data->route->name ?? 'N/A' }}</div>
+                                    @endif
+                                    @if(isset($lims_sale_data->deliveryMan) && $lims_sale_data->deliveryMan)
+                                        <div><strong>Delivery Man:</strong> {{ $lims_sale_data->deliveryMan->name ?? 'N/A' }}</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                @endif
 
                 <!-- Main Products Table (Only items, no lines/dividers below) -->
                 <table class="main-invoice-table">

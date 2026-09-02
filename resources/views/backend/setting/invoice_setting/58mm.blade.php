@@ -112,7 +112,7 @@
 
 <body>
     <div style="width:100%;max-width:180px;margin:0 0">
-        @php $url = route('sales.index'); @endphp
+        @php $url = $back_url ?? route('sales.index'); @endphp
         <div class="hidden-print">
             <table>
                 <tr>
