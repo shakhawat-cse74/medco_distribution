@@ -1,6 +1,8 @@
     @php
-    $collections = DB::table('collections')->whereIn('id',explode(',',$widget->tab_product_collection_id))->get();
+    $tab_col_ids = !empty($widget->tab_product_collection_id) ? array_filter(explode(',', $widget->tab_product_collection_id)) : [];
+    $collections = !empty($tab_col_ids) ? DB::table('collections')->whereIn('id', $tab_col_ids)->get() : collect();
     @endphp
+    @if($collections->isNotEmpty())
     <!--Product area starts-->
     <section class="product-tab-section">
         <div class="container-fluid">
@@ -49,4 +51,5 @@
             </div>
         </div>
     </section>
+    @endif
     <!--product area ends-->

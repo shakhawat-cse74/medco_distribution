@@ -28,11 +28,11 @@ class FrontController extends Controller
     {
         $sliders = DB::table('sliders')->orderBy('order', 'asc')->get();
 
-        $ecommerce_setting = Cache::get('ecommerce_setting');
+        $ecommerce_setting = Cache::remember('ecommerce_setting', 60*60*24*365, function () {
+            return DB::table('ecommerce_settings')->latest()->first();
+        });
 
-        if(isset($ecommerce_setting->home_page)) {
-            $home = $ecommerce_setting->home_page;
-        }
+        $home = $ecommerce_setting->home_page ?? (DB::table('pages')->where('template', 'home')->value('id') ?? null);
         
         $widgets = null;
         $recently_viewed = null;
@@ -163,8 +163,17 @@ class FrontController extends Controller
         $categories = Cache::get('category_list');
         $category = $categories ? $categories->where('id',$product->category_id)->first() : DB::table('categories')->where('id',$product->category_id)->first();
 
-        $product_arr = explode(',',$product->related_products);
-        $related_products = DB::table('products')->whereIn('id',$product_arr)->get();
+        $product_arr = !empty($product->related_products) ? array_filter(explode(',', $product->related_products)) : [];
+        $related_products = !empty($product_arr) ? DB::table('products')->whereIn('id', $product_arr)->where('is_active', 1)->where('is_online', 1)->get() : collect();
+        if ($related_products->isEmpty()) {
+            $related_products = DB::table('products')
+                ->where('category_id', $product->category_id)
+                ->where('id', '!=', $product->id)
+                ->where('is_active', 1)
+                ->where('is_online', 1)
+                ->take(6)
+                ->get();
+        }
 
         $recently_viewed = [];
         if(session()->has('recently_viewed')){
@@ -188,19 +197,60 @@ class FrontController extends Controller
             $average_rating = false;
         }
 
+        $sub_category = !empty($product->sub_category_id) ? DB::table('categories')->where('id', $product->sub_category_id)->first() : null;
+        $unit = !empty($product->unit_id) ? DB::table('units')->where('id', $product->unit_id)->first() : null;
+
+        // Base & tiered bulk pricing
+        $base_price = ($product->promotion == 1 && (!isset($product->last_date) || $product->last_date > date('Y-m-d')) && !empty($product->promotion_price))
+            ? (float)$product->promotion_price
+            : (float)$product->price;
+
+        $tier_discounts = [
+            [
+                'min_qty' => '1 - 4',
+                'price' => $base_price,
+                'each_price' => round($base_price, 2),
+                'badge' => null,
+            ],
+            [
+                'min_qty' => '5 - 9',
+                'price' => round($base_price * 0.92, 2),
+                'each_price' => round($base_price * 0.92, 2),
+                'badge' => 'Top Pick',
+            ],
+            [
+                'min_qty' => '10+',
+                'price' => round($base_price * 0.85, 2),
+                'each_price' => round($base_price * 0.85, 2),
+                'badge' => 'Bulk Save',
+            ],
+        ];
+
+        // 3D Model Asset (supports custom product 3D or high quality realistic GLB model)
+        $model_3d_url = (!empty($product->file) && (str_ends_with(strtolower($product->file), '.glb') || str_ends_with(strtolower($product->file), '.gltf')))
+            ? asset('product/files/' . $product->file)
+            : asset('product/files/128355.glb');
+
+        // Video URL (supports youtube watch, youtu.be, embed, or custom video URL)
+        $video_url = 'https://www.youtube.com/embed/H4p6njjPV_o';
+        if (!empty($product->extras)) {
+            if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $product->extras, $matches)) {
+                $video_url = 'https://www.youtube.com/embed/' . $matches[1];
+            } elseif (filter_var($product->extras, FILTER_VALIDATE_URL)) {
+                $video_url = $product->extras;
+            }
+        }
+
+        $variant = collect();
         if($product->is_variant == 1){
             $variant = DB::table('product_variants')
                        ->join('variants','product_variants.variant_id','=','variants.id')
                        ->select('name','qty')
                        ->where('product_id',$product->id)
                        ->get();
-            //return $variant;
-
-
-            return view('ecommerce::frontend/product-details', compact('product','brand','category','related_products','recently_viewed','variant','reviews','review_permission','already_review_exists','average_rating'));
         }
 
-        return view('ecommerce::frontend/product-details', compact('product','brand','category','related_products','recently_viewed','reviews','review_permission','already_review_exists','average_rating'));
+        return view('ecommerce::frontend/product-details', compact('product','brand','category','sub_category','unit','tier_discounts','model_3d_url','video_url','related_products','recently_viewed','variant','reviews','review_permission','already_review_exists','average_rating'));
 
     }
 

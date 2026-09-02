@@ -11,7 +11,7 @@
                 $images = explode(',', $product->image);
                 $product->image = $images[0];
             @endphp
-            <img loading="lazy" class="product-img" data-src="{{ url('images/product/large/') }}/{{ $product->image }}" alt="{{ $product->name }}">
+            <img loading="lazy" class="product-img" src="{{ url('images/product/large/') }}/{{ $product->image }}" data-src="{{ url('images/product/large/') }}/{{ $product->image }}" alt="{{ $product->name }}">
             @else
             <img loading="lazy" src="https://dummyimage.com/300x300/e5e8ec/333333&text={{ urlencode($product->name) }}" alt="{{ $product->name }}">
             @endif

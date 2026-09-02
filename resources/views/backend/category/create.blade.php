@@ -12,10 +12,17 @@
         <!-- Trigger the modal with a button -->
          @can('categories-add')
             <button type="button" class="btn btn-info" data-toggle="modal" data-target="#category-modal"><i class="ti ti-plus"></i> {{__("db.Add Category")}}</button>&nbsp;
+            <button type="button" class="btn btn-outline-info" data-toggle="modal" data-target="#subcategory-modal"><i class="ti ti-plus"></i> {{__("Add Sub Category")}}</button>&nbsp;
         @endcan
         @can('categories-import')
             <button class="btn btn-primary" data-toggle="modal" data-target="#importCategory"><i class="ti ti-copy"></i> {{__('db.Import Category')}}</button>
         @endcan
+
+        <div class="btn-group mt-2 mb-1 float-right" role="group">
+            <button type="button" class="btn btn-sm btn-outline-primary active category-filter-btn" data-type="all">{{__('All')}}</button>
+            <button type="button" class="btn btn-sm btn-outline-primary category-filter-btn" data-type="parent">{{__('Main Categories')}}</button>
+            <button type="button" class="btn btn-sm btn-outline-primary category-filter-btn" data-type="subcategory">{{__('Sub Categories')}}</button>
+        </div>
     </div>
     <div class="table-responsive">
         <table id="category-table" class="table" style="width: 100%">
@@ -208,13 +215,36 @@
         });
     });
 
-    $('#category-table').DataTable( {
+    var currentFilterType = '{{ request()->get("filter") == "subcategory" ? "subcategory" : (request()->get("filter") == "parent" ? "parent" : "all") }}';
+    if (currentFilterType !== 'all') {
+        $('.category-filter-btn').removeClass('active');
+        $('.category-filter-btn[data-type="' + currentFilterType + '"]').addClass('active');
+    }
+
+    $('.category-filter-btn').on('click', function() {
+        $('.category-filter-btn').removeClass('active');
+        $(this).addClass('active');
+        currentFilterType = $(this).data('type');
+        categoryTable.ajax.reload();
+    });
+
+    $(document).on("click", ".open-AddSubCategoryDialog", function(){
+        var parentId = $(this).data('parent-id');
+        $("#subcategory-modal select[name='parent_id']").val(parentId);
+        $('.selectpicker').selectpicker('refresh');
+        $("#subcategory-modal").modal('show');
+    });
+
+    var categoryTable = $('#category-table').DataTable( {
         "processing": true,
         "serverSide": true,
         "ajax":{
             url:"category/category-data",
             dataType: "json",
-            type:"post"
+            type:"post",
+            data: function(d) {
+                d.category_type = currentFilterType;
+            }
         },
         "createdRow": function( row, data, dataIndex ) {
             $(row).attr('data-id', data['id']);

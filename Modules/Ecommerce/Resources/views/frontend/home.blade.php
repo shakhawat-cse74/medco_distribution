@@ -51,12 +51,12 @@
 @include('ecommerce::frontend.includes.category-slider-widget')
 @endif
 
-<!-- @if($widget->name == 'brand-slider-widget')
+@if($widget->name == 'brand-slider-widget')
 @include('ecommerce::frontend.includes.brand-slider-widget')
-@endif -->
+@endif
 
 @if($widget->name == 'product-category-widget')
-<!-- @include('ecommerce::frontend.includes.product-category-widget') -->
+@include('ecommerce::frontend.includes.product-category-widget')
 @endif
 
 @if($widget->name == 'product-collection-widget')

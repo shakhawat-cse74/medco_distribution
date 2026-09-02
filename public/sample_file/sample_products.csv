@@ -1,4 +1,4 @@
-Product Name,Product Code,Parent Category,Category,Brand,Product Unit,Product Cost,Profit Margin Type,Profit Margin,Product Price,Variant Option,Variant Value,Alert Quantity,Product Details,Image
-Napa Extra,MED-1001,Medicine,Tablet,Beximco,pc,20,percentage,25,25,Dose,"500mg, 1000mg",10,Paracetamol + Caffeine fast pain relief,napa_extra.jpg
-Ace Plus,MED-1002,Medicine,Tablet,Square,pc,18,percentage,20,21.60,,,15,Paracetamol 500mg and Caffeine 65mg,ace_plus.jpg
-Premium Cotton Polo Shirt,APP-2001,Clothing,Men Fashion,Apex,pc,450,flat,200,650,Size | Color,"S, M, L | Red, Blue, Black",5,100% combed cotton breathable polo shirt with multi size and color,polo_shirt.jpg
+Product Name,Product Code,Parent Category,Category,Sub Category,Brand,Product Unit,Product Cost,Profit Margin Type,Profit Margin,Product Price,Variant Option,Variant Value,Alert Quantity,Product Details,Image
+Napa Extra,MED-1001,Health & Medicine,Medicine,Tablet,Beximco,pc,20,percentage,25,25,Dose,"500mg, 1000mg",10,Paracetamol + Caffeine fast pain relief,napa_extra.jpg
+Ace Plus,MED-1002,Health & Medicine,Medicine,Syrup,Square,pc,18,percentage,20,21.60,,,15,Paracetamol 500mg and Caffeine 65mg,ace_plus.jpg
+Premium Cotton Polo Shirt,APP-2001,Fashion & Apparel,Clothing,Men Fashion,Apex,pc,450,flat,200,650,Size | Color,"S, M, L | Red, Blue, Black",5,100% combed cotton breathable polo shirt with multi size and color,polo_shirt.jpg

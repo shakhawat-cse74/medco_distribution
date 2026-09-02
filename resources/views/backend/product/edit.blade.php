@@ -300,6 +300,23 @@ body.dark-mode .dropzone .dz-message {
                             </div>
                             @endif
                         </div>
+
+                        <div class="row mt-3 pt-3" style="border-top: 1px dashed #e2e8f0;">
+                            <div class="col-md-12">
+                                <label style="font-weight:600; font-size:13px; color:#1e293b;">
+                                    <i class="ti ti-box" style="color:#0284c7; font-size:16px;"></i> 3D Model File (.glb, .gltf)
+                                    @if(!empty($lims_product_data->file))
+                                    <span class="badge badge-success ml-2">Current 3D: {{ $lims_product_data->file }}</span>
+                                    @else
+                                    <span class="badge badge-light text-muted font-weight-normal ml-1">Optional</span>
+                                    @endif
+                                </label>
+                                <input type="file" name="file" class="form-control" accept=".glb,.gltf">
+                                <small class="form-text text-muted">
+                                    Upload a new <code>.glb</code> or <code>.gltf</code> model to replace or enable the real 3D interactive preview on the storefront.
+                                </small>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1017,15 +1034,55 @@ body.dark-mode .dropzone .dz-message {
                                     <option value="{{$brand->id}}">{{$brand->title}}</option>
                                 @endforeach
                             </select>
+                        @php
+                            $currentCategory = \App\Models\Category::find($lims_product_data->category_id);
+                            $selectedParentId = null;
+                            $selectedSubId = null;
+                            if ($currentCategory) {
+                                if ($currentCategory->parent_id) {
+                                    $selectedParentId = $currentCategory->parent_id;
+                                    $selectedSubId = $currentCategory->id;
+                                } else {
+                                    $selectedParentId = $currentCategory->id;
+                                    $selectedSubId = $lims_product_data->sub_category_id ?? null;
+                                }
+                            }
+                            $mainCategories = \App\Models\Category::where('is_active', true)->whereNull('parent_id')->orderBy('name', 'asc')->get();
+                            $subCategories = $selectedParentId ? \App\Models\Category::where('is_active', true)->where('parent_id', $selectedParentId)->orderBy('name', 'asc')->get() : collect();
+                        @endphp
+                        <div class="form-group">
+                            <label>{{ __('Category') }} <span class="text-danger">*</span></label>
+                            <div class="input-group pos">
+                                <select name="parent_category_id" id="parent_category_id" required class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Category...">
+                                    @foreach ($mainCategories as $mCat)
+                                        <option value="{{$mCat->id}}" {{ $selectedParentId == $mCat->id ? 'selected' : '' }}>{{$mCat->name}}</option>
+                                    @endforeach
+                                </select>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-default btn-sm category-model" data-toggle="modal" data-target="#category-modal" title="{{ __('Add Category') }}">
+                                        <i class="ti ti-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <span class="validation-msg"></span>
                         </div>
+
                         <div class="form-group mb-0">
-                            <input type="hidden" name="category" value="{{$lims_product_data->category_id}}">
-                            <label>Category <span class="text-danger">*</span></label>
-                            <select name="category_id" required class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Category...">
-                                @foreach (get_active_categories() as $category)
-                                    <option value="{{$category->id}}">{{$category->name}}</option>
-                                @endforeach
-                            </select>
+                            <label>{{ __('Sub Category') }}</label>
+                            <div class="input-group pos">
+                                <select name="sub_category_id" id="sub_category_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Sub Category...">
+                                    <option value="">{{ __('No Sub Category') }}</option>
+                                    @foreach ($subCategories as $sCat)
+                                        <option value="{{$sCat->id}}" {{ $selectedSubId == $sCat->id ? 'selected' : '' }}>{{$sCat->name}}</option>
+                                    @endforeach
+                                </select>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-default btn-sm subcategory-model" data-toggle="modal" data-target="#subcategory-modal" title="{{ __('Add Sub Category') }}">
+                                        <i class="ti ti-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="hidden" name="category_id" id="final_category_id" value="{{ $selectedSubId ?: $selectedParentId }}" required>
                             <span class="validation-msg"></span>
                         </div>
                     </div>
@@ -1716,8 +1773,104 @@ body.dark-mode .dropzone .dz-message {
     var brand = $("input[name='brand']").val();
     $('select[name=brand_id]').val(brand);
 
-    var cat = $("input[name='category']").val();
-    $('select[name=category_id]').val(cat);
+    function loadSubCategories(parentId, selectedSubId = null) {
+        var subCatSelect = $('#sub_category_id');
+        subCatSelect.empty().append('<option value="">{{ __("No Sub Category") }}</option>');
+
+        if (!parentId) {
+            $('#final_category_id').val('');
+            subCatSelect.selectpicker('refresh');
+            return;
+        }
+
+        $('#final_category_id').val(parentId);
+
+        $.ajax({
+            type: 'GET',
+            url: '{{ url("category/subcategories") }}/' + parentId,
+            success: function(data) {
+                if (data && data.length > 0) {
+                    $.each(data, function(index, subcat) {
+                        var isSel = (selectedSubId && selectedSubId == subcat.id) ? ' selected' : '';
+                        subCatSelect.append('<option value="' + subcat.id + '"' + isSel + '>' + subcat.name + '</option>');
+                    });
+                    if (selectedSubId) {
+                        subCatSelect.val(selectedSubId);
+                        $('#final_category_id').val(selectedSubId);
+                    }
+                }
+                subCatSelect.selectpicker('refresh');
+            }
+        });
+    }
+
+    $('#parent_category_id').on('change', function() {
+        var parentId = $(this).val();
+        loadSubCategories(parentId);
+    });
+
+    $('#sub_category_id').on('change', function() {
+        var subId = $(this).val();
+        var parentId = $('#parent_category_id').val();
+        if (subId) {
+            $('#final_category_id').val(subId);
+        } else {
+            $('#final_category_id').val(parentId);
+        }
+    });
+
+    $('.category-model').on("click", function() {
+        $('.category-submit-btn').prop('type', 'button');
+        $('.category-ajax-check').val(1);
+    });
+
+    $('.category-submit-btn').on("click", function() {
+        $.ajax({
+            type: 'POST',
+            url: '{{route('category.store')}}',
+            data: $("#category-form").serialize(),
+            success: function(response) {
+                var key = response['id'];
+                var value = response['name'];
+                $('#parent_category_id').append('<option value="' + key + '">' + value + '</option>');
+                $('#parent_category_id').val(key);
+                $('#parent_category_id').selectpicker('refresh');
+                loadSubCategories(key);
+                $("#category-modal").modal('hide');
+                $("#category-form")[0].reset();
+            }
+        });
+    });
+
+    $('.subcategory-model').on("click", function() {
+        $('.subcategory-submit-btn').prop('type', 'button');
+        $('.subcategory-ajax-check').val(1);
+        var curParent = $('#parent_category_id').val();
+        if (curParent) {
+            $('#subcategory_parent_id').val(curParent);
+            $('#subcategory_parent_id').selectpicker('refresh');
+        }
+    });
+
+    $('.subcategory-submit-btn').on("click", function() {
+        $.ajax({
+            type: 'POST',
+            url: '{{route('category.store')}}',
+            data: $("#subcategory-form").serialize(),
+            success: function(response) {
+                var key = response['id'];
+                var value = response['name'];
+                var parentId = response['parent_id'];
+                if (parentId && $('#parent_category_id').val() != parentId) {
+                    $('#parent_category_id').val(parentId);
+                    $('#parent_category_id').selectpicker('refresh');
+                }
+                loadSubCategories(parentId || $('#parent_category_id').val(), key);
+                $("#subcategory-modal").modal('hide');
+                $("#subcategory-form")[0].reset();
+            }
+        });
+    });
 
     if($("input[name='unit']").val()) {
         $('select[name=unit_id]').val($("input[name='unit']").val());

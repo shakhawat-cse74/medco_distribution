@@ -477,6 +477,17 @@ class ProductController extends Controller
         try {
             $data = $request->except('image', 'file');
 
+            // Handle category & subcategory
+            if ($request->filled('sub_category_id')) {
+                $data['sub_category_id'] = $request->sub_category_id;
+                $data['category_id'] = $request->sub_category_id;
+            } elseif ($request->filled('parent_category_id') && (!$request->filled('category_id') || $request->category_id == '')) {
+                $data['category_id'] = $request->parent_category_id;
+                $data['sub_category_id'] = null;
+            } else {
+                $data['sub_category_id'] = $request->sub_category_id ?: null;
+            }
+
             // handle warranty and guarantee
             if (!isset($data['warranty'])) {
                 unset($data['warranty']);
@@ -1415,6 +1426,18 @@ class ProductController extends Controller
         try {
             $lims_product_data = Product::findOrFail($request->input('id'));
             $data = $request->except('image', 'file', 'prev_img');
+
+            // Handle category & subcategory
+            if ($request->filled('sub_category_id')) {
+                $data['sub_category_id'] = $request->sub_category_id;
+                $data['category_id'] = $request->sub_category_id;
+            } elseif ($request->filled('parent_category_id') && (!$request->filled('category_id') || $request->category_id == '')) {
+                $data['category_id'] = $request->parent_category_id;
+                $data['sub_category_id'] = null;
+            } else {
+                $data['sub_category_id'] = $request->sub_category_id ?: null;
+            }
+
             $data['name'] = htmlspecialchars(trim($data['name']), ENT_QUOTES);
             $data['code'] = htmlspecialchars(trim($data['code']), ENT_QUOTES);
             $data['profit_margin_type'] = $request->input('profit_margin_type', 'percentage');
@@ -2030,10 +2053,12 @@ class ProductController extends Controller
             'category'              => 'category',
             'categoryname'          => 'category',
             'category_name'         => 'category',
-            'subcategory'           => 'category',
-            'sub_category'          => 'category',
-            'subcategoryname'       => 'category',
-            'sub_category_name'     => 'category',
+
+            'subcategory'           => 'sub_category',
+            'sub_category'          => 'sub_category',
+            'subcategoryname'       => 'sub_category',
+            'sub_category_name'     => 'sub_category',
+            'subcat'                => 'sub_category',
 
             'brand'                 => 'brand',
             'brandname'             => 'brand',
@@ -2264,15 +2289,33 @@ class ProductController extends Controller
 
             $pCat = trim($mappedRow['parent_category'] ?? '');
             $cat = trim($mappedRow['category'] ?? '');
+            $subCat = trim($mappedRow['sub_category'] ?? '');
 
-            if (!empty($pCat)) {
+            // 3-Tier taxonomy: Parent Category -> Category -> Sub Category
+            if (!empty($pCat) && !empty($cat) && !empty($subCat)) {
                 $allParentCategories[] = $pCat;
-            }
-            if (!empty($cat)) {
                 $allCategories[] = $cat;
-            }
-            if (!empty($pCat) || !empty($cat)) {
-                $allCategoryPairs[] = ['parent' => $pCat, 'name' => $cat];
+                $allCategories[] = $subCat;
+                $allCategoryPairs[] = ['parent' => $pCat, 'child' => $cat];
+                $allCategoryPairs[] = ['parent' => $cat, 'child' => $subCat];
+            } elseif (!empty($pCat) && !empty($cat)) {
+                $allParentCategories[] = $pCat;
+                $allCategories[] = $cat;
+                $allCategoryPairs[] = ['parent' => $pCat, 'child' => $cat];
+            } elseif (!empty($cat) && !empty($subCat)) {
+                $allParentCategories[] = $cat;
+                $allCategories[] = $subCat;
+                $allCategoryPairs[] = ['parent' => $cat, 'child' => $subCat];
+            } elseif (!empty($pCat) && !empty($subCat)) {
+                $allParentCategories[] = $pCat;
+                $allCategories[] = $subCat;
+                $allCategoryPairs[] = ['parent' => $pCat, 'child' => $subCat];
+            } elseif (!empty($cat)) {
+                $allCategories[] = $cat;
+            } elseif (!empty($pCat)) {
+                $allParentCategories[] = $pCat;
+            } elseif (!empty($subCat)) {
+                $allCategories[] = $subCat;
             }
 
             if (!empty($mappedRow['brand']) && trim($mappedRow['brand']) !== 'N/A') {
@@ -2317,21 +2360,31 @@ class ProductController extends Controller
                 );
             }
 
-            // 2. Create subcategories under parents
+            // 2. Create / link subcategories under parents
             foreach ($allCategoryPairs as $pair) {
                 $pName = $pair['parent'];
-                $cName = $pair['name'];
+                $cName = $pair['child'];
                 if (!empty($pName) && !empty($cName)) {
                     $parentCat = Category::where('name', $pName)->first();
-                    Category::firstOrCreate(
-                        ['name' => $cName, 'parent_id' => $parentCat ? $parentCat->id : null],
-                        ['is_active' => true]
-                    );
+                    if ($parentCat) {
+                        $existingChild = Category::where('name', $cName)->first();
+                        if ($existingChild) {
+                            if (empty($existingChild->parent_id)) {
+                                $existingChild->parent_id = $parentCat->id;
+                                $existingChild->save();
+                            }
+                        } else {
+                            Category::create([
+                                'name' => $cName,
+                                'parent_id' => $parentCat->id,
+                                'is_active' => true
+                            ]);
+                        }
+                    } else {
+                        Category::firstOrCreate(['name' => $cName], ['is_active' => true]);
+                    }
                 } elseif (!empty($cName)) {
-                    Category::firstOrCreate(
-                        ['name' => $cName],
-                        ['is_active' => true]
-                    );
+                    Category::firstOrCreate(['name' => $cName], ['is_active' => true]);
                 }
             }
 
@@ -2392,29 +2445,142 @@ class ProductController extends Controller
         $defaultMargin = $general_setting->default_margin_value ?? 25;
         $addonsConfig = config('addons') ?? '';
 
-        $categoryResolver = function ($parentName, $catName) use ($defaultCategory) {
+        $categoryResolver = function ($parentName, $catName, $subCatName = '') use ($defaultCategory) {
             $parentName = trim($parentName ?? '');
             $catName = trim($catName ?? '');
+            $subCatName = trim($subCatName ?? '');
 
-            if ($parentName !== '' && $catName !== '') {
+            // 1. If all 3 are provided: Parent Category -> Category -> Sub Category
+            if (!empty($parentName) && !empty($catName) && !empty($subCatName)) {
+                $parent = Category::whereRaw('LOWER(name) = ?', [strtolower($parentName)])->first();
+
+                // Find mid category
+                $midCat = null;
+                if ($parent) {
+                    $midCat = Category::whereRaw('LOWER(name) = ?', [strtolower($catName)])
+                        ->where('parent_id', $parent->id)
+                        ->first();
+                }
+                if (!$midCat) {
+                    $midCat = Category::whereRaw('LOWER(name) = ?', [strtolower($catName)])->first();
+                    if ($midCat && $parent && empty($midCat->parent_id)) {
+                        $midCat->parent_id = $parent->id;
+                        $midCat->save();
+                    }
+                }
+
+                // Find sub category
+                $leaf = null;
+                if ($midCat) {
+                    $leaf = Category::whereRaw('LOWER(name) = ?', [strtolower($subCatName)])
+                        ->where('parent_id', $midCat->id)
+                        ->first();
+                }
+                if (!$leaf) {
+                    $leaf = Category::whereRaw('LOWER(name) = ?', [strtolower($subCatName)])->first();
+                    if ($leaf && $midCat && empty($leaf->parent_id)) {
+                        $leaf->parent_id = $midCat->id;
+                        $leaf->save();
+                    }
+                }
+
+                if ($leaf) {
+                    return [
+                        'category_id'     => $leaf->id,
+                        'sub_category_id' => $leaf->id
+                    ];
+                }
+                if ($midCat) {
+                    return [
+                        'category_id'     => $midCat->id,
+                        'sub_category_id' => null
+                    ];
+                }
+            }
+
+            // 2. If Category & Sub Category provided:
+            if (!empty($catName) && !empty($subCatName)) {
+                $parent = Category::whereRaw('LOWER(name) = ?', [strtolower($catName)])->first();
+                if ($parent) {
+                    $child = Category::whereRaw('LOWER(name) = ?', [strtolower($subCatName)])
+                        ->where('parent_id', $parent->id)
+                        ->first();
+                    if ($child) {
+                        return [
+                            'category_id'     => $child->id,
+                            'sub_category_id' => $child->id
+                        ];
+                    }
+                }
+                $cat = Category::whereRaw('LOWER(name) = ?', [strtolower($subCatName)])->first();
+                if ($cat) {
+                    return [
+                        'category_id'     => $cat->id,
+                        'sub_category_id' => $cat->id
+                    ];
+                }
+            }
+
+            // 3. If Parent Category & Category provided:
+            if (!empty($parentName) && !empty($catName)) {
                 $parent = Category::whereRaw('LOWER(name) = ?', [strtolower($parentName)])->first();
                 if ($parent) {
                     $child = Category::whereRaw('LOWER(name) = ?', [strtolower($catName)])
                         ->where('parent_id', $parent->id)
                         ->first();
-                    if ($child) return $child->id;
+                    if ($child) {
+                        return [
+                            'category_id'     => $child->id,
+                            'sub_category_id' => $child->id
+                        ];
+                    }
                 }
                 $cat = Category::whereRaw('LOWER(name) = ?', [strtolower($catName)])->first();
-                if ($cat) return $cat->id;
-            } elseif ($catName !== '') {
-                $cat = Category::whereRaw('LOWER(name) = ?', [strtolower($catName)])->first();
-                if ($cat) return $cat->id;
-            } elseif ($parentName !== '') {
-                $parent = Category::whereRaw('LOWER(name) = ?', [strtolower($parentName)])->first();
-                if ($parent) return $parent->id;
+                if ($cat) {
+                    return [
+                        'category_id'     => $cat->id,
+                        'sub_category_id' => null
+                    ];
+                }
             }
 
-            return $defaultCategory->id;
+            // 4. If only Sub Category provided:
+            if (!empty($subCatName)) {
+                $cat = Category::whereRaw('LOWER(name) = ?', [strtolower($subCatName)])->first();
+                if ($cat) {
+                    return [
+                        'category_id'     => $cat->id,
+                        'sub_category_id' => $cat->id
+                    ];
+                }
+            }
+
+            // 5. If only Category provided:
+            if (!empty($catName)) {
+                $cat = Category::whereRaw('LOWER(name) = ?', [strtolower($catName)])->first();
+                if ($cat) {
+                    return [
+                        'category_id'     => $cat->id,
+                        'sub_category_id' => $cat->parent_id ? $cat->id : null
+                    ];
+                }
+            }
+
+            // 6. If only Parent Category provided:
+            if (!empty($parentName)) {
+                $parent = Category::whereRaw('LOWER(name) = ?', [strtolower($parentName)])->first();
+                if ($parent) {
+                    return [
+                        'category_id'     => $parent->id,
+                        'sub_category_id' => null
+                    ];
+                }
+            }
+
+            return [
+                'category_id'     => $defaultCategory->id,
+                'sub_category_id' => null
+            ];
         };
 
         // --- PASS 2: GENERATOR DRIVEN CHUNK STREAMING ---
@@ -2617,7 +2783,10 @@ class ProductController extends Controller
                 // Category Resolution
                 $parentCatName = trim($rowRef['parent_category'] ?? '');
                 $catName = trim($rowRef['category'] ?? '');
-                $categoryId = $categoryResolver($parentCatName, $catName);
+                $subCatName = trim($rowRef['sub_category'] ?? '');
+                $catResolution = $categoryResolver($parentCatName, $catName, $subCatName);
+                $categoryId = $catResolution['category_id'];
+                $subCategoryId = $catResolution['sub_category_id'];
 
                 // Image processing
                 $stagedImages = [];
@@ -2700,6 +2869,7 @@ class ProductController extends Controller
                     'name'                   => $name,
                     'type'                   => strtolower($rowRef['type'] ?? 'standard'),
                     'category_id'            => $categoryId,
+                    'sub_category_id'        => $subCategoryId,
                     'brand'                  => strtolower(trim($rowRef['brand'] ?? '')),
                     'unit_id'                => $units[$unitKey],
                     'productdetails'         => $rowRef['productdetails'] ?? '',
@@ -2755,6 +2925,7 @@ class ProductController extends Controller
                         'barcode_symbology'     => 'C128',
                         'brand_id'              => $brandId,
                         'category_id'           => $data['category_id'],
+                        'sub_category_id'       => $data['sub_category_id'] ?? null,
                         'unit_id'               => $data['unit_id'],
                         'purchase_unit_id'      => $data['unit_id'],
                         'sale_unit_id'          => $data['unit_id'],

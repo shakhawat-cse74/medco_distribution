@@ -567,6 +567,7 @@
                         <div class="mt-2 text-muted" style="font-size:12px;">
                             <span class="badge" style="background:#dc2626;color:#fff;padding:3px 6px;">Red</span> Mandatory &nbsp;|&nbsp; <span class="badge" style="background:#16a34a;color:#fff;padding:3px 6px;">Green</span> Optional
                         </div>
+                        <small class="text-muted d-block mt-1"><i class="ti ti-info-circle"></i> Supports <b>Parent Category</b>, <b>Category</b>, and <b>Sub Category</b></small>
                     </div>
                 </div>
           </div>

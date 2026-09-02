@@ -17,7 +17,7 @@ class Ecommerce
             return DB::table('general_settings')->select('site_logo','expiry_date','developed_by', 'modules', 'currency_position', 'decimal')->latest()->first();
         });
 
-        if(in_array('ecommerce',explode(',',$general_setting->modules))) {
+        if(in_array('ecommerce',explode(',',$general_setting->modules ?? '')) || file_exists(base_path('Modules/Ecommerce'))) {
             if(auth()->user() && auth()->user()->role_id == 5){
                 $customer = DB::table('customers')->select('id','user_id','wishlist')->where('user_id', Auth::id())->first();
                 if(isset($customer->wishlist)){

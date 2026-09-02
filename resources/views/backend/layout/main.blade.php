@@ -443,6 +443,7 @@
         @include('backend.layout.modals.notification')
 
         @include('backend.layout.modals.category')
+        @include('backend.layout.modals.subcategory')
 
         @include('backend.layout.modals.expense')
         @include('backend.layout.modals.income')

@@ -1,6 +1,8 @@
     @php
-        $brands = DB::table('brands')->where('is_active', true)->whereIn('id',explode(',',$widget->brand_slider_ids))->get();
+        $brand_ids = !empty($widget->brand_slider_ids) ? array_filter(explode(',', $widget->brand_slider_ids)) : [];
+        $brands = !empty($brand_ids) ? DB::table('brands')->where('is_active', true)->whereIn('id', $brand_ids)->get() : collect();
     @endphp
+    @if($brands->isNotEmpty())
     <section class="category-tab-section mb-3">
         <div class="container-fluid" style="overflow-x:hidden">
             <div class="section-title mb-3">
@@ -35,5 +37,6 @@
             </div>
         </div>
     </section>
+    @endif
     
     

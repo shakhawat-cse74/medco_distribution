@@ -36,85 +36,107 @@ class CategoryController extends Controller
     public function categoryData(Request $request)
     {
         $columns = array(
-            0 =>'id',
-            2 =>'name',
-            3=> 'parent_id',
-            4=> 'is_active',
+            0 => 'id',
+            2 => 'name',
+            3 => 'parent_id',
+            4 => 'is_active',
         );
 
-        $totalData = DB::table('categories')->where('is_active', true)->count();
+        $typeFilter = $request->input('category_type', $request->input('type', 'all'));
+
+        $query = Category::where('is_active', true);
+        if ($typeFilter === 'parent') {
+            $query->whereNull('parent_id');
+        } elseif ($typeFilter === 'subcategory') {
+            $query->whereNotNull('parent_id');
+        }
+
+        $totalData = $query->count();
         $totalFiltered = $totalData;
 
-        if($request->input('length') != -1)
+        if ($request->input('length') != -1)
             $limit = $request->input('length');
         else
             $limit = $totalData;
-        $start = $request->input('start');
-        $order = $columns[$request->input('order.0.column')];
-        $dir = $request->input('order.0.dir');
-        if(empty($request->input('search.value')))
-            $categories = Category::offset($start)
-                        ->where('is_active', true)
-                        ->limit($limit)
-                        ->orderBy($order,$dir)
-                        ->get();
-        else
-        {
-            $search = $request->input('search.value');
-            $categories =  Category::where([
-                            ['name', 'LIKE', "%{$search}%"],
-                            ['is_active', true]
-                        ])->offset($start)
-                        ->limit($limit)
-                        ->orderBy($order,$dir)->get();
 
-            $totalFiltered = Category::where([
-                            ['name','LIKE',"%{$search}%"],
-                            ['is_active', true]
-                        ])->count();
+        $start = $request->input('start', 0);
+        $orderColIndex = $request->input('order.0.column', 2);
+        $order = $columns[$orderColIndex] ?? 'name';
+        $dir = $request->input('order.0.dir', 'asc');
+
+        if (empty($request->input('search.value'))) {
+            $categories = $query->offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
+        } else {
+            $search = $request->input('search.value');
+            $categories = $query->where('name', 'LIKE', "%{$search}%")
+                ->offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)->get();
+
+            $searchQuery = Category::where('name', 'LIKE', "%{$search}%")->where('is_active', true);
+            if ($typeFilter === 'parent') {
+                $searchQuery->whereNull('parent_id');
+            } elseif ($typeFilter === 'subcategory') {
+                $searchQuery->whereNotNull('parent_id');
+            }
+            $totalFiltered = $searchQuery->count();
         }
+
+        // Preload parent category names
+        $parentIds = $categories->pluck('parent_id')->filter()->unique();
+        $parentMap = !empty($parentIds) ? Category::whereIn('id', $parentIds)->pluck('name', 'id')->toArray() : [];
+
         $data = array();
-        if(!empty($categories))
-        {
-            foreach ($categories as $key=>$category)
-            {
+        if (!empty($categories)) {
+            foreach ($categories as $key => $category) {
                 $nestedData['id'] = $category->id;
                 $nestedData['key'] = $key;
 
-                if($category->image)
-                    $image = '<img src="'.url('images/category', $category->image).'" height="80" width="80" style="object-fit: cover; border-radius: 4px;">';
+                if ($category->image)
+                    $image = '<img src="' . url('images/category', $category->image) . '" height="80" width="80" style="object-fit: cover; border-radius: 4px;">';
                 else
-                    $image = '<img src="'.url('images/zummXD2dvAtI.png').'" height="80" width="80" style="object-fit: cover; border-radius: 4px;">';
+                    $image = '<img src="' . url('images/zummXD2dvAtI.png') . '" height="80" width="80" style="object-fit: cover; border-radius: 4px;">';
 
-                $nestedData['name'] = '<div class="d-flex align-items-center">' . $image . '<span style="margin:0 15px;font-weight: 500;">' . $category->name . '</span></div>';
+                $nestedData['name'] = '<div class="d-flex align-items-center">' . $image . '<span style="margin:0 15px;font-weight: 500;">' . e($category->name) . '</span></div>';
 
-
-                if($category->parent_id)
-                    $nestedData['parent_id'] = Category::find($category->parent_id)->name;
-                else
-                    $nestedData['parent_id'] = "N/A";
+                if ($category->parent_id) {
+                    $pName = $parentMap[$category->parent_id] ?? 'N/A';
+                    $nestedData['parent_id'] = '<span class="badge badge-info" style="font-size:12px;padding:5px 9px;"><i class="ti ti-corner-down-right"></i> ' . e($pName) . '</span>';
+                } else {
+                    $nestedData['parent_id'] = '<span class="badge badge-secondary" style="font-size:12px;padding:5px 9px;">' . __('Main Category') . '</span>';
+                }
 
                 $nestedData['number_of_product'] = $category->product()->where('is_active', true)->count();
                 $nestedData['stock_qty'] = $category->product()->where('is_active', true)->sum('qty');
                 $total_price = $category->product()->where('is_active', true)->sum(DB::raw('price * qty'));
                 $total_cost = $category->product()->where('is_active', true)->sum(DB::raw('cost * qty'));
 
-                $nestedData['stock_worth'] = format_currency($total_price).' / '.format_currency($total_cost);
+                $nestedData['stock_worth'] = format_currency($total_price) . ' / ' . format_currency($total_cost);
 
+                $addSubAction = '';
+                if (!$category->parent_id) {
+                    $addSubAction = '<li>
+                        <button type="button" data-parent-id="' . $category->id . '" data-parent-name="' . htmlspecialchars($category->name, ENT_QUOTES) . '" class="open-AddSubCategoryDialog btn btn-link text-info"><i class="ti ti-plus"></i> ' . __("Add Sub Category") . '</button>
+                    </li><li class="divider"></li>';
+                }
 
                 $nestedData['options'] = '<div class="btn-group">
-                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'.__("db.action").'
+                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' . __("db.action") . '
                               <span class="caret"></span>
                               <span class="sr-only">Toggle Dropdown</span>
                             </button>
                             <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
+                                ' . $addSubAction . '
                                 <li>
-                                    <button type="button" data-id="'.$category->id.'" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> '.__("db.edit").'</button>
+                                    <button type="button" data-id="' . $category->id . '" class="open-EditCategoryDialog btn btn-link" data-toggle="modal" data-target="#editModal" ><i class="ti ti-edit"></i> ' . __("db.edit") . '</button>
                                 </li>
                                 <li class="divider"></li>
-                                <form action="' . route("category.destroy", $category->id) . '" method="POST">'.csrf_field().'' . method_field("DELETE") . '
+                                <form action="' . route("category.destroy", $category->id) . '" method="POST">' . csrf_field() . '' . method_field("DELETE") . '
                                 <li>
-                                  <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="ti ti-trash"></i> '.__("db.delete").'</button>
+                                  <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="ti ti-trash"></i> ' . __("db.delete") . '</button>
                                 </li></form>
                             </ul>
                         </div>';
@@ -122,13 +144,35 @@ class CategoryController extends Controller
             }
         }
         $json_data = array(
-                    "draw"            => intval($request->input('draw')),
-                    "recordsTotal"    => intval($totalData),
-                    "recordsFiltered" => intval($totalFiltered),
-                    "data"            => $data
-                    );
+            "draw"            => intval($request->input('draw')),
+            "recordsTotal"    => intval($totalData),
+            "recordsFiltered" => intval($totalFiltered),
+            "data"            => $data
+        );
 
-        echo json_encode($json_data);
+        return response()->json($json_data);
+    }
+
+    public function getSubCategories($parentId)
+    {
+        $subcategories = Category::where('is_active', true)
+            ->where('parent_id', $parentId)
+            ->select('id', 'name')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return response()->json($subcategories);
+    }
+
+    public function getParentCategories()
+    {
+        $parents = Category::where('is_active', true)
+            ->whereNull('parent_id')
+            ->select('id', 'name')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return response()->json($parents);
     }
 
     public function store(StoreCategoryRequest $request)
@@ -178,7 +222,7 @@ class CategoryController extends Controller
             $lims_category_data['icon'] = $iconName;
         }
         $lims_category_data['name'] = preg_replace('/\s+/', ' ', $request->name);
-        $lims_category_data['parent_id'] = $request->parent_id;
+        $lims_category_data['parent_id'] = $request->parent_id ?: null;
         $lims_category_data['is_active'] = true;
         if(isset($request->ajax))
             $lims_category_data['ajax'] = $request->ajax;
@@ -201,6 +245,7 @@ class CategoryController extends Controller
         $category = Category::create($lims_category_data);
 
         $this->cacheForget('category_list');
+        $this->cacheForget('categories_list');
         if($lims_category_data['ajax'])
             return $category;
         else
@@ -292,8 +337,14 @@ class CategoryController extends Controller
             $input['short_description'] = $request->short_description;
         }
 
+        if (array_key_exists('parent_id', $input)) {
+            $input['parent_id'] = $input['parent_id'] ?: null;
+        }
+
         DB::table('categories')->where('id', $request->category_id)->update($input);
         
+        $this->cacheForget('category_list');
+        $this->cacheForget('categories_list');
         return redirect('category')->with('message', __('db.Category updated successfully'));
     }
 
@@ -342,6 +393,7 @@ class CategoryController extends Controller
             $category->save();
         }
         $this->cacheForget('category_list');
+        $this->cacheForget('categories_list');
         return redirect('category')->with('message', __('db.Category imported successfully'));
     }
 
@@ -362,6 +414,7 @@ class CategoryController extends Controller
             $this->fileDelete(public_path('images/category/icons/'),$lims_category_data->icon);
         }
         $this->cacheForget('category_list');
+        $this->cacheForget('categories_list');
         return 'Category deleted successfully!';
     }
 
@@ -380,6 +433,7 @@ class CategoryController extends Controller
 
         $lims_category_data->save();
         $this->cacheForget('category_list');
+        $this->cacheForget('categories_list');
         return redirect('category')->with('not_permitted', __('db.Category deleted successfully'));
     }
 }

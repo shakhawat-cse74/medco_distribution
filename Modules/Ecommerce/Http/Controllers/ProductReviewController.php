@@ -35,30 +35,41 @@ class ProductReviewController extends Controller
      * @param Request $request
      * @return Renderable
      */
-     public function store(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'rating' => 'required|integer|min:1|max:5',
-            'review' => 'required|string|max:1000',
+            'review' => 'nullable|string|max:1000',
+            'comment' => 'nullable|string|max:1000',
         ]);
         try{
             DB::beginTransaction();
+            $customer_name = auth()->check() ? auth()->user()->name : ($request->customer_name ?? 'Verified Buyer');
+            $customer_id = auth()->check() ? auth()->id() : 0;
+            $review_text = $request->review ?? $request->comment;
+
             ProductReview::create([
                 'product_id' => $request->product_id,
-                'customer_id' => auth()->id(),
-                'customer_name' => auth()->user()->name,
+                'customer_id' => $customer_id,
+                'customer_name' => $customer_name,
                 'rating' => $request->rating,
-                'review' => $request->review,
-                'approved' => 0,
+                'review' => $review_text,
+                'approved' => 0, // Pending by default until admin approves
             ]);
 
             DB::commit();
-            return response()->json(['message' => 'Review submitted successfully!']);
+            return response()->json([
+                'status' => 'pending',
+                'message' => 'Thank you! Your review has been submitted and is pending admin approval.'
+            ]);
 
         }catch(\Throwable $e){
             DB::rollBack();
-            return response()->json(['message' => 'Review submitted successfully!']);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to submit review. Please try again.'
+            ], 500);
         }
     }
 
@@ -120,9 +131,12 @@ class ProductReviewController extends Controller
         return response()->json([
             'success' => true,
             'new_status' => $review->approved,
-            'label' => $review->approved ? 'Approved' : 'Pending',
-            'btn_class' => $review->approved ? 'btn-success' : 'btn-warning'
+            'status_label' => $review->approved ? 'Approved' : 'Pending',
+            'status_badge' => $review->approved ? 'badge-success' : 'badge-warning',
+            'status_icon' => $review->approved ? 'ti-circle-check' : 'ti-clock',
+            'action_label' => $review->approved ? 'Set Pending' : 'Approve',
+            'action_btn_class' => $review->approved ? 'btn-warning' : 'btn-success',
+            'action_icon' => $review->approved ? 'ti-rotate' : 'ti-check'
         ]);
     }
-
 }

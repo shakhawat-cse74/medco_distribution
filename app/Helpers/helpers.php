@@ -106,6 +106,9 @@ if (! function_exists('gen_setting')) {
         if (!isset($setting->date_format) || empty($setting->date_format)) $setting->date_format = 'd-m-Y';
         if (!isset($setting->theme)) $setting->theme = 'default.css';
         if (!isset($setting->modules)) $setting->modules = '';
+        if (file_exists(base_path('Modules/Ecommerce')) && !in_array('ecommerce', explode(',', $setting->modules))) {
+            $setting->modules = trim($setting->modules . ',ecommerce', ',');
+        }
 
         return $setting;
     }

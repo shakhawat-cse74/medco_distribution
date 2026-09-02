@@ -432,8 +432,23 @@
                             </small>
                         </div>
                         <div class="sp-card-body">
-                            <div id="imageUpload" class="dropzone"></div>
-                            <span class="validation-msg" id="image-error"></span>
+                            <div class="form-group mb-3">
+                                <label style="font-weight:600; font-size:13px;">{{__('db.Product Image')}}</label>
+                                <div id="imageUpload" class="dropzone"></div>
+                                <span class="validation-msg" id="image-error"></span>
+                            </div>
+
+                            <div class="form-group mb-0 mt-3 pt-3" style="border-top: 1px dashed #e2e8f0;">
+                                <label style="font-weight:600; font-size:13px; color:#1e293b;">
+                                    <i class="ti ti-box" style="color:#0284c7; font-size:16px;"></i> 3D Model File (.glb, .gltf)
+                                    <span class="badge badge-light text-muted font-weight-normal ml-1">Optional</span>
+                                </label>
+                                <input type="file" name="file" class="form-control" accept=".glb,.gltf">
+                                <small class="form-text text-muted">
+                                    Upload a 3D model (<code>.glb</code> or <code>.gltf</code>) to display photorealistic 360° interactive 3D in the storefront. If left empty, the storefront will display the product's main photo in the 3D interactive stage.
+                                </small>
+                            </div>
+
                             <input type="hidden" name="qty" value="{{number_format(0, gen_setting()->decimal, '.', '')}}">
                         </div>
                     </div>
@@ -1038,20 +1053,39 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="form-group mb-0">
-                                <label>Category <span class="text-danger">*</span></label>
+                            <div class="form-group">
+                                <label>{{ __('Category') }} <span class="text-danger">*</span></label>
                                 <div class="input-group pos">
-                                    <select name="category_id" required class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Category...">
-                                        @foreach (get_active_categories() as $category)
-                                        <option value="{{$category->id}}">{{$category->name}}</option>
+                                    <select name="parent_category_id" id="parent_category_id" required class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Category...">
+                                        @php
+                                            $mainCategories = \App\Models\Category::where('is_active', true)->whereNull('parent_id')->orderBy('name', 'asc')->get();
+                                        @endphp
+                                        @foreach ($mainCategories as $mCat)
+                                        <option value="{{$mCat->id}}">{{$mCat->name}}</option>
                                         @endforeach
                                     </select>
                                     <div class="input-group-append">
-                                        <button type="button" class="btn btn-default btn-sm category-model" data-toggle="modal" data-target="#category-modal">
+                                        <button type="button" class="btn btn-default btn-sm category-model" data-toggle="modal" data-target="#category-modal" title="{{ __('Add Category') }}">
                                             <i class="ti ti-plus"></i>
                                         </button>
                                     </div>
                                 </div>
+                                <span class="validation-msg"></span>
+                            </div>
+
+                            <div class="form-group mb-0">
+                                <label>{{ __('Sub Category') }}</label>
+                                <div class="input-group pos">
+                                    <select name="sub_category_id" id="sub_category_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Sub Category...">
+                                        <option value="">{{ __('No Sub Category') }}</option>
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-default btn-sm subcategory-model" data-toggle="modal" data-target="#subcategory-modal" title="{{ __('Add Sub Category') }}">
+                                            <i class="ti ti-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="category_id" id="final_category_id" required>
                                 <span class="validation-msg"></span>
                             </div>
                         </div>
@@ -2468,23 +2502,109 @@
             }
         });
     });
+    // Dynamic Subcategory loading when Category changes
+    function loadSubCategories(parentId, selectedSubId = null) {
+        var subCatSelect = $('#sub_category_id');
+        subCatSelect.empty().append('<option value="">{{ __("No Sub Category") }}</option>');
+
+        if (!parentId) {
+            $('#final_category_id').val('');
+            subCatSelect.selectpicker('refresh');
+            return;
+        }
+
+        $('#final_category_id').val(parentId);
+
+        $.ajax({
+            type: 'GET',
+            url: '{{ url("category/subcategories") }}/' + parentId,
+            success: function(data) {
+                if (data && data.length > 0) {
+                    $.each(data, function(index, subcat) {
+                        var isSel = (selectedSubId && selectedSubId == subcat.id) ? ' selected' : '';
+                        subCatSelect.append('<option value="' + subcat.id + '"' + isSel + '>' + subcat.name + '</option>');
+                    });
+                    if (selectedSubId) {
+                        subCatSelect.val(selectedSubId);
+                        $('#final_category_id').val(selectedSubId);
+                    }
+                }
+                subCatSelect.selectpicker('refresh');
+            }
+        });
+    }
+
+    $('#parent_category_id').on('change', function() {
+        var parentId = $(this).val();
+        loadSubCategories(parentId);
+    });
+
+    $('#sub_category_id').on('change', function() {
+        var subId = $(this).val();
+        var parentId = $('#parent_category_id').val();
+        if (subId) {
+            $('#final_category_id').val(subId);
+        } else {
+            $('#final_category_id').val(parentId);
+        }
+    });
+
+    // Initial check if parent_category_id has value
+    if ($('#parent_category_id').val()) {
+        $('#final_category_id').val($('#parent_category_id').val());
+    }
+
     $('.category-model').on("click", function() {
         $('.category-submit-btn').prop('type', 'button');
         $('.category-ajax-check').val(1);
     });
-    // category create ajax start
+
+    // Category create ajax
     $('.category-submit-btn').on("click", function() {
         $.ajax({
             type: 'POST',
             url: '{{route('category.store')}}',
             data: $("#category-form").serialize(),
             success: function(response) {
-                key = response['id'];
-                value = response['name'];
-                $('select[name="category_id"]').append('<option value="' + key + '">' + value + '</option>');
-                $('select[name="category_id"]').val(key);
-                $('.selectpicker').selectpicker('refresh');
+                var key = response['id'];
+                var value = response['name'];
+                $('#parent_category_id').append('<option value="' + key + '">' + value + '</option>');
+                $('#parent_category_id').val(key);
+                $('#parent_category_id').selectpicker('refresh');
+                loadSubCategories(key);
                 $("#category-modal").modal('hide');
+                $("#category-form")[0].reset();
+            }
+        });
+    });
+
+    // Subcategory create ajax
+    $('.subcategory-model').on("click", function() {
+        $('.subcategory-submit-btn').prop('type', 'button');
+        $('.subcategory-ajax-check').val(1);
+        var curParent = $('#parent_category_id').val();
+        if (curParent) {
+            $('#subcategory_parent_id').val(curParent);
+            $('#subcategory_parent_id').selectpicker('refresh');
+        }
+    });
+
+    $('.subcategory-submit-btn').on("click", function() {
+        $.ajax({
+            type: 'POST',
+            url: '{{route('category.store')}}',
+            data: $("#subcategory-form").serialize(),
+            success: function(response) {
+                var key = response['id'];
+                var value = response['name'];
+                var parentId = response['parent_id'];
+                if (parentId && $('#parent_category_id').val() != parentId) {
+                    $('#parent_category_id').val(parentId);
+                    $('#parent_category_id').selectpicker('refresh');
+                }
+                loadSubCategories(parentId || $('#parent_category_id').val(), key);
+                $("#subcategory-modal").modal('hide');
+                $("#subcategory-form")[0].reset();
             }
         });
     });

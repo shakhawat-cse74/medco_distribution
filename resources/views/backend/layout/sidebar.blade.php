@@ -113,7 +113,8 @@
 
         <ul id="product" class="collapse list-unstyled ">
             @can('categories-index')
-            <li id="category-menu"><a class="{{ request()->is('category') ? 'active' : '' }}" href="{{route('category.index')}}">{{__('db.category')}}</a></li>
+            <li id="category-menu"><a class="{{ request()->is('category') && request()->get('filter') != 'subcategory' ? 'active' : '' }}" href="{{route('category.index')}}">{{__('db.category')}}</a></li>
+            <li id="subcategory-menu"><a class="{{ request()->is('category') && request()->get('filter') == 'subcategory' ? 'active' : '' }}" href="{{route('category.index', ['filter' => 'subcategory'])}}">{{__('Sub Category')}}</a></li>
             @endcan
             @can('brand')
             <li id="brand-menu"><a class="{{ request()->is('brand') ? 'active' : '' }}" href="{{route('brand.index')}}">{{__('db.Brand')}}</a></li>

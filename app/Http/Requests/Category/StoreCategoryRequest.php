@@ -15,6 +15,13 @@ class StoreCategoryRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('parent_id') && ($this->parent_id === '' || $this->parent_id === '0' || $this->parent_id === 0)) {
+            $this->merge(['parent_id' => null]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

@@ -58,6 +58,8 @@ if (session()->get('currency_code')) {
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" rel="stylesheet" />
 
     <link href="https://fonts.googleapis.com/css2?family={{$ecommerce_setting->theme_font ?? 'Inter'}}:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
 
     <style>
         @if(!empty($ecommerce_setting->is_rtl))
@@ -358,6 +360,122 @@ if (session()->get('currency_code')) {
             #whatsapp-btn:hover {
                 transform: scale(1.1);
                 color: #fff;
+            }
+
+            /* Footer Styling & Logo Constraints */
+            .footer-wrapper {
+                background-color: #ffffff !important;
+                border-top: 1px solid #e5e7eb;
+                padding: 35px 0 20px 0;
+                color: #4b5563;
+                font-size: 14px;
+            }
+            .footer-logo {
+                margin-bottom: 12px;
+            }
+            .footer-logo img {
+                max-height: 48px !important;
+                max-width: 170px !important;
+                width: auto !important;
+                height: auto !important;
+                object-fit: contain;
+                display: block;
+            }
+            .footer-text {
+                margin-bottom: 6px;
+                line-height: 1.4;
+            }
+            .footer-text p {
+                margin: 0 0 5px 0;
+                color: #4b5563;
+                font-size: 13px;
+                line-height: 1.45;
+            }
+            .footer-text h5 {
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #9ca3af;
+                margin: 8px 0 2px 0;
+                font-weight: 600;
+            }
+            .footer-text a {
+                color: #111827;
+                text-decoration: none;
+            }
+            .footer-text a h4 {
+                font-size: 15px;
+                font-weight: 700;
+                color: #111827;
+                margin: 0;
+            }
+            .footer-widget h3 {
+                font-size: 14px;
+                font-weight: 700;
+                color: #111827;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 14px;
+            }
+            .footer-menu {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            .footer-menu li {
+                margin-bottom: 6px;
+            }
+            .footer-menu li a {
+                color: #4b5563;
+                text-decoration: none;
+                font-size: 13px;
+                transition: color 0.15s ease;
+            }
+            .footer-menu li a:hover {
+                color: #15803d;
+            }
+            .newsletter h4 {
+                font-size: 15px;
+                font-weight: 700;
+                color: #111827;
+                margin-bottom: 6px;
+            }
+            .newsletter p {
+                font-size: 13px;
+                color: #4b5563;
+                margin-bottom: 10px;
+                line-height: 1.4;
+            }
+            .newsletter form {
+                margin-top: 6px !important;
+            }
+            .newsletter .input-group {
+                max-width: 320px;
+            }
+            .newsletter .input-group input {
+                height: 38px;
+                font-size: 13px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px 0 0 4px;
+                padding: 0 12px;
+            }
+            .newsletter .input-group button {
+                height: 38px;
+                background: #ea580c;
+                color: #ffffff;
+                font-weight: 700;
+                border: none;
+                padding: 0 16px;
+                border-radius: 0 4px 4px 0;
+                font-size: 13px;
+                cursor: pointer;
+            }
+            .footer-bottom {
+                margin-top: 25px;
+                padding-top: 16px;
+                border-top: 1px solid #f1f5f9;
+                font-size: 12.5px;
+                color: #6b7280;
             }
     </style>
 
@@ -1056,6 +1174,20 @@ if (session()->get('currency_code')) {
                     $('.alert').removeClass('show');
                 }, 4000);
             @endif
+        });
+
+        function loadDataSrcImages() {
+            $('img[data-src]').each(function() {
+                var src = $(this).attr('src');
+                var dataSrc = $(this).attr('data-src');
+                if ((!src || src === '') && dataSrc) {
+                    $(this).attr('src', dataSrc);
+                }
+            });
+        }
+        loadDataSrcImages();
+        $(document).ajaxComplete(function() {
+            loadDataSrcImages();
         });
 
         @if(isset($ecommerce_setting->online_order) && $ecommerce_setting->online_order == 1)
