@@ -4,36 +4,34 @@
 @endpush
 
 @section('content')
-<style>
-    .btn-icon i{margin-right:5px}
-    .top-fields{margin-top:10px;position: relative;}
-    .top-fields label {font-size:11px;font-weight:600;margin-left:10px;padding:0 3px;position:absolute;top:-8px;z-index:9;background:#fff}
-    .top-fields input, .top-fields select{font-size:13px;height:45px}
-</style>
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
 <section>
     <div class="container-fluid">
-        @can('delivery-sales-sale-return')
-            <a href="#" data-toggle="modal" data-target="#add-delivery-sale-return" class="btn btn-info"><i class="ti ti-plus"></i> {{ __('db.Add Return') }}</a>
-        @endcan
-
-        <div class="card mt-3 mb-2">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">{{ __('db.Delivery Return List') }}</h3>
+                @can('delivery-sales-sale-return')
+                    <a href="#" data-toggle="modal" data-target="#add-delivery-sale-return" class="btn btn-info"><i class="ti ti-plus"></i> {{ __('db.Add Return') }}</a>
+                @endcan
+            </div>
             <div class="card-body">
                 <form action="{{ route('delivery-return.index') }}" method="get">
-                <div class="row mt-2">
-                    <div class="col-md-3">
-                        <div class="form-group top-fields">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
                             <label>{{ __('db.date') }}</label>
-                            <input type="text" class="daterangepicker-field form-control" value="{{ $starting_date }} To {{ $ending_date }}" required />
-                            <input type="hidden" name="starting_date" value="{{ $starting_date }}" />
-                            <input type="hidden" name="ending_date" value="{{ $ending_date }}" />
+                            <div class="input-group">
+                                <input type="text" class="daterangepicker-field form-control" value="{{ $starting_date }} To {{ $ending_date }}" required />
+                                <input type="hidden" name="starting_date" value="{{ $starting_date }}" />
+                                <input type="hidden" name="ending_date" value="{{ $ending_date }}" />
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group top-fields">
+                        <div class="form-group">
                             <label>{{ __('db.Warehouse') }}</label>
                             <select id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true">
                                 <option value="0">{{ __('db.All Warehouse') }}</option>
@@ -44,7 +42,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group top-fields">
+                        <div class="form-group">
                             <label>{{ __('db.Delivery Man') }}</label>
                             <select id="delivery_man_id" name="delivery_man_id" class="selectpicker form-control" data-live-search="true">
                                 <option value="0">{{ __('db.All Delivery Man') }}</option>
@@ -54,8 +52,8 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> {{ __('db.Filter') }}</button>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-block"><i class="ti ti-filter"></i> {{ __('db.Filter') }}</button>
                     </div>
                 </div>
                 </form>
@@ -198,25 +196,23 @@
 </script>
 
 <div id="add-delivery-sale-return" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
+    <div role="document" class="modal-dialog modal-sm">
         <div class="modal-content">
             <form action="{{ route('delivery-return.create') }}" method="get">
             <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">Add Delivery Sale Return</h5>
+                <h5 id="exampleModalLabel" class="modal-title">{{ __('db.Add Delivery Return') }}</h5>
                 <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="ti ti-x"></i></span></button>
             </div>
             <div class="modal-body">
-                <p class="italic">
-                    <small>{{ __('The field labels marked with are required input fields') }}.</small></p>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>{{ __('Sale Reference') }} *</label>
-                            <input type="text" name="reference_no" class="form-control" required>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label>{{ __('db.Sale Reference') }} *</label>
+                    <input type="text" name="reference_no" class="form-control" placeholder="DSR-XXXXX" required>
                 </div>
-                <button type="submit" class="btn btn-primary">{{ __('db.submit') }}</button>
+                <small class="text-muted">{{ __('Enter the delivery sale reference number to create return') }}</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-dismiss="modal" class="btn btn-secondary">{{ __('db.Cancel') }}</button>
+                <button type="submit" class="btn btn-primary">{{ __('db.Continue') }}</button>
             </div>
             </form>
         </div>
