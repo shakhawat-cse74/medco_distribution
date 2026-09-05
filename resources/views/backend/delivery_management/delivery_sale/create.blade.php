@@ -2948,7 +2948,7 @@ $(document).on('submit', '.payment-form', function(e) {
                 }else if(response.payment_method === 'moneipoint'){
                 }else if ($('select[name="sale_status"]').val() == 1 && response !== 'pesapal') {
                     let saleId = response.sale_id || response;
-                    let link = "{{ route('delivery-sale.show', '') }}/" + saleId;
+                    let link = "{{ url('delivery-sale') }}/" + saleId;
                     location.href = link;
                 }
                 else if($('select[name="sale_status"]').val() != 1){
