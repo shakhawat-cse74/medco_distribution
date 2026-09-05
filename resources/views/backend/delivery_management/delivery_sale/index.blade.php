@@ -214,12 +214,86 @@
         'lengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
         dom: '<"row"lfB>rtip',
         buttons: [
-            { extend: 'pdf', text: '<i title="export to pdf" class="ti ti-file-type-pdf"></i>' },
-            { extend: 'excel', text: '<i title="export to excel" class="ti ti-file-type-xls"></i>' },
-            { extend: 'csv', text: '<i title="export to csv" class="ti ti-file-type-csv"></i>' },
-            { extend: 'print', text: '<i title="print" class="ti ti-printer"></i>' },
+            {
+                extend: 'pdf',
+                text: '<i title="export to pdf" class="ti ti-file-type-pdf"></i>',
+                exportOptions: {
+                    columns: ":visible:Not(.not-exported)",
+                    rows: ":visible"
+                },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.pdfHtml5.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
+            {
+                extend: 'excel',
+                text: '<i title="export to excel" class="ti ti-file-type-xls"></i>',
+                exportOptions: {
+                    columns: ":visible:Not(.not-exported)",
+                    rows: ":visible"
+                },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
+            {
+                extend: 'csv',
+                text: '<i title="export to csv" class="ti ti-file-type-csv"></i>',
+                exportOptions: {
+                    columns: ":visible:Not(.not-exported)",
+                    rows: ":visible"
+                },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.csvHtml5.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
+            {
+                extend: 'print',
+                text: '<i title="print" class="ti ti-printer"></i>',
+                exportOptions: {
+                    columns: ":visible:Not(.not-exported)",
+                    rows: ":visible"
+                },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.print.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
             { extend: 'colvis', text: '<i title="column visibility" class="ti ti-eye"></i>' }
         ]
+    });
+
+    function datatable_sum(dt_selector, is_calling_first) {
+        var rows;
+        if (dt_selector.rows('.selected').any() && is_calling_first) {
+            rows = dt_selector.rows('.selected').indexes();
+        } else {
+            rows = dt_selector.rows({ page: 'current' }).indexes();
+        }
+        $(dt_selector.column(8).footer()).html(
+            formatCurrency(dt_selector.cells(rows, 8).data().sum())
+        );
+        $(dt_selector.column(9).footer()).html(
+            formatCurrency(dt_selector.cells(rows, 9).data().sum())
+        );
+        $(dt_selector.column(10).footer()).html(
+            formatCurrency(dt_selector.cells(rows, 10).data().sum())
+        );
+    }
+
+    table.on('draw', function() {
+        datatable_sum(table, false);
     });
 
     $('#warehouse_id, #delivery_man_id, #route_id, #sale-status, #payment-status').on('change', function() {

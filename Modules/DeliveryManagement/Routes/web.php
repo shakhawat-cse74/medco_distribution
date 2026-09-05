@@ -16,6 +16,8 @@ use Modules\DeliveryManagement\Http\Controllers\DeliverySettingController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryReportController;
 use Modules\DeliveryManagement\Http\Controllers\DeliverySaleController;
 use Modules\DeliveryManagement\Http\Controllers\DeliveryInstallmentController;
+use Modules\DeliveryManagement\Http\Controllers\DeliveryReturnController;
+use Modules\DeliveryManagement\Http\Controllers\DeliveryExchangeController;
 
 Route::group(['middleware' => ['common', 'auth', 'active']], function () {
 
@@ -194,5 +196,28 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('{id}/edit', 'edit')->name('edit');
         Route::post('update/{id}', 'update')->name('update');
         Route::post('delete/{id}', 'destroy')->name('delete');
+    });
+
+    Route::controller(DeliveryReturnController::class)->prefix('delivery-return')->name('delivery-return.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::post('store', 'store')->name('store');
+        Route::post('return-data', 'returnData')->name('returnData');
+        Route::get('getcustomergroup/{id}', 'getCustomerGroup')->name('getcustomergroup');
+        Route::get('getproduct/{id}', 'getProduct')->name('getproduct');
+        Route::get('lims_product_search', 'limsProductSearch')->name('limsProductSearch');
+        Route::get('product_return/{id}', 'productReturnData')->name('productReturnData');
+        Route::post('sendmail', 'sendMail')->name('sendmail');
+        Route::get('{id}', 'show')->name('show');
+    });
+
+    Route::controller(DeliveryExchangeController::class)->prefix('delivery-exchange')->name('delivery-exchange.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::post('store', 'store')->name('store');
+        Route::post('exchange-data', 'exchangeData')->name('exchangeData');
+        Route::get('product_exchange/{id}', 'productExchange')->name('productExchange');
+        Route::get('getcustomergroup/{id}', 'getCustomerGroup')->name('getcustomergroup');
+        Route::get('{id}', 'show')->name('show');
     });
 });

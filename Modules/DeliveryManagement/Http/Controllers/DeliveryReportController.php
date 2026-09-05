@@ -4,6 +4,7 @@ namespace Modules\DeliveryManagement\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Sale;
 use Modules\DeliveryManagement\Models\DeliveryMan;
 use Modules\DeliveryManagement\Models\FieldOrder;
 use Modules\DeliveryManagement\Models\FieldPayment;
@@ -33,7 +34,7 @@ class DeliveryReportController extends Controller
             if (empty($all_permission))
                 $all_permission[] = 'dummy text';
 
-            $lims_delivery_man_list = User::where('is_active', true)->where('role_id', Role::where('name', 'Delivery Man')->value('id'))->get();
+            $lims_delivery_man_list = DeliveryMan::active()->get();
             $lims_route_list        = DeliveryManRoute::where('is_active', true)->get();
 
             $period = $request->input('period', 'today');
@@ -81,7 +82,8 @@ class DeliveryReportController extends Controller
                 $query->where('id', $selectedDeliveryManId);
             })->pluck('id')->toArray();
 
-            $baseQuery = FieldOrder::query()
+            $baseQuery = Sale::query()
+                ->whereNotNull('delivery_man_id')
                 ->whereIn('delivery_man_id', $activeDeliveryManIds)
                 ->whereBetween('created_at', [$startDateTime, $endDateTime]);
 
@@ -98,10 +100,10 @@ class DeliveryReportController extends Controller
                 'pending_deliveries' => DeliveryManDelivery::whereIn('delivery_man_id', $activeDeliveryManIds)->where('status', 'assigned')->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
                     $query->where('delivery_man_id', $selectedDeliveryManId);
                 })->count(),
-                'completed_orders' => (clone $baseQuery)->where('status', 'completed')->count(),
-                'pending_orders' => (clone $baseQuery)->where('status', 'pending')->count(),
-                'total_due' => (float) ((clone $baseQuery)->sum('due_amount') ?? 0),
-                'cancelled_orders' => (clone $baseQuery)->where('status', 'cancelled')->count(),
+                'completed_orders' => (clone $baseQuery)->where('sale_status', 1)->count(),
+                'pending_orders' => (clone $baseQuery)->where('sale_status', 2)->count(),
+                'total_due' => (float) ((clone $baseQuery)->sum(DB::raw('grand_total - paid_amount')) ?? 0),
+                'cancelled_orders' => (clone $baseQuery)->where('sale_status', 4)->count(),
             ];
 
             $deliveryManStats = [];
@@ -110,7 +112,8 @@ class DeliveryReportController extends Controller
                 $deliveryMenQuery->where('id', $selectedDeliveryManId);
             }
 
-            $allOrders = FieldOrder::query()
+            $allOrders = Sale::query()
+                ->whereNotNull('delivery_man_id')
                 ->whereIn('delivery_man_id', $activeDeliveryManIds)
                 ->whereBetween('created_at', [$startDateTime, $endDateTime])
                 ->get()
@@ -118,14 +121,18 @@ class DeliveryReportController extends Controller
 
             foreach ($deliveryMenQuery->get() as $deliveryMan) {
                 $orders = $allOrders->get($deliveryMan->id, collect());
+                $totalDue = 0;
+                foreach ($orders as $order) {
+                    $totalDue += ($order->grand_total - $order->paid_amount);
+                }
                 $deliveryManStats[] = [
                     'delivery_man' => $deliveryMan,
                     'total_orders' => $orders->count(),
-                    'completed_orders' => $orders->where('status', 'completed')->count(),
-                    'pending_orders' => $orders->where('status', 'pending')->count(),
-                    'cancelled_orders' => $orders->where('status', 'cancelled')->count(),
+                    'completed_orders' => $orders->where('sale_status', 1)->count(),
+                    'pending_orders' => $orders->where('sale_status', 2)->count(),
+                    'cancelled_orders' => $orders->where('sale_status', 4)->count(),
                     'total_collection' => (float) ($orders->sum('paid_amount') ?? 0),
-                    'total_due' => (float) ($orders->sum('due_amount') ?? 0),
+                    'total_due' => (float) $totalDue,
                 ];
             }
 
@@ -192,7 +199,8 @@ class DeliveryReportController extends Controller
             $query->where('id', $selectedDeliveryManId);
         })->pluck('id')->toArray();
 
-        $baseQuery = FieldOrder::query()
+        $baseQuery = Sale::query()
+            ->whereNotNull('delivery_man_id')
             ->whereIn('delivery_man_id', $activeDeliveryManIds)
             ->whereBetween('created_at', [$startDateTime, $endDateTime]);
 
@@ -203,10 +211,10 @@ class DeliveryReportController extends Controller
         $stats = [
             'total_orders' => (clone $baseQuery)->count(),
             'total_collection' => (float) ((clone $baseQuery)->sum('paid_amount') ?? 0),
-            'completed_orders' => (clone $baseQuery)->where('status', 'completed')->count(),
-            'pending_orders' => (clone $baseQuery)->where('status', 'pending')->count(),
-            'total_due' => (float) ((clone $baseQuery)->sum('due_amount') ?? 0),
-            'cancelled_orders' => (clone $baseQuery)->where('status', 'cancelled')->count(),
+            'completed_orders' => (clone $baseQuery)->where('sale_status', 1)->count(),
+            'pending_orders' => (clone $baseQuery)->where('sale_status', 2)->count(),
+            'total_due' => (float) ((clone $baseQuery)->sum(DB::raw('grand_total - paid_amount')) ?? 0),
+            'cancelled_orders' => (clone $baseQuery)->where('sale_status', 4)->count(),
             'pending_deliveries' => DeliveryManDelivery::whereIn('delivery_man_id', $activeDeliveryManIds)->where('status', 'assigned')->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
                 $query->where('delivery_man_id', $selectedDeliveryManId);
             })->count(),
@@ -221,7 +229,8 @@ class DeliveryReportController extends Controller
             $deliveryMenQuery->where('id', $selectedDeliveryManId);
         }
 
-        $allOrders = FieldOrder::query()
+        $allOrders = Sale::query()
+            ->whereNotNull('delivery_man_id')
             ->whereIn('delivery_man_id', $activeDeliveryManIds)
             ->whereBetween('created_at', [$startDateTime, $endDateTime])
             ->get()
@@ -229,14 +238,18 @@ class DeliveryReportController extends Controller
 
         foreach ($deliveryMenQuery->get() as $deliveryMan) {
             $orders = $allOrders->get($deliveryMan->id, collect());
+            $totalDue = 0;
+            foreach ($orders as $order) {
+                $totalDue += ($order->grand_total - $order->paid_amount);
+            }
             $deliveryManStats[] = [
                 'delivery_man' => $deliveryMan,
                 'total_orders' => $orders->count(),
-                'completed_orders' => $orders->where('status', 'completed')->count(),
-                'pending_orders' => $orders->where('status', 'pending')->count(),
-                'cancelled_orders' => $orders->where('status', 'cancelled')->count(),
+                'completed_orders' => $orders->where('sale_status', 1)->count(),
+                'pending_orders' => $orders->where('sale_status', 2)->count(),
+                'cancelled_orders' => $orders->where('sale_status', 4)->count(),
                 'total_collection' => (float) ($orders->sum('paid_amount') ?? 0),
-                'total_due' => (float) ($orders->sum('due_amount') ?? 0),
+                'total_due' => (float) $totalDue,
             ];
         }
 
@@ -260,7 +273,8 @@ class DeliveryReportController extends Controller
         $collectionData = [];
         $dueData = [];
 
-        $query = FieldOrder::query()
+        $query = Sale::query()
+            ->whereNotNull('delivery_man_id')
             ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->whereIn('delivery_man_id', $activeDeliveryManIds);
         if ($deliveryManId) {
@@ -278,7 +292,7 @@ class DeliveryReportController extends Controller
                     ->sum('paid_amount') ?? 0);
                 $dueData[] = (float) ((clone $query)->whereDate('created_at', date('Y-m-d'))
                     ->whereRaw('HOUR(created_at) = ?', [$i])
-                    ->sum('due_amount') ?? 0);
+                    ->sum(DB::raw('grand_total - paid_amount')) ?? 0);
             }
         } elseif ($period === 'week') {
             $start = new \DateTime($startDate);
@@ -292,7 +306,7 @@ class DeliveryReportController extends Controller
                 $dateStr = $date->format('Y-m-d');
                 $ordersData[] = (clone $query)->whereDate('created_at', $dateStr)->count();
                 $collectionData[] = (float) ((clone $query)->whereDate('created_at', $dateStr)->sum('paid_amount') ?? 0);
-                $dueData[] = (float) ((clone $query)->whereDate('created_at', $dateStr)->sum('due_amount') ?? 0);
+                $dueData[] = (float) ((clone $query)->whereDate('created_at', $dateStr)->sum(DB::raw('grand_total - paid_amount')) ?? 0);
             }
         } elseif ($period === 'month') {
             $start = new \DateTime($startDate);
@@ -306,7 +320,7 @@ class DeliveryReportController extends Controller
                 $dateStr = $date->format('Y-m-d');
                 $ordersData[] = (clone $query)->whereDate('created_at', $dateStr)->count();
                 $collectionData[] = (float) ((clone $query)->whereDate('created_at', $dateStr)->sum('paid_amount') ?? 0);
-                $dueData[] = (float) ((clone $query)->whereDate('created_at', $dateStr)->sum('due_amount') ?? 0);
+                $dueData[] = (float) ((clone $query)->whereDate('created_at', $dateStr)->sum(DB::raw('grand_total - paid_amount')) ?? 0);
             }
         } else {
             $start = new \DateTime($startDate);
@@ -320,7 +334,7 @@ class DeliveryReportController extends Controller
                 $dateStr = $date->format('Y-m-d');
                 $ordersData[] = (clone $query)->whereDate('created_at', $dateStr)->count();
                 $collectionData[] = (float) ((clone $query)->whereDate('created_at', $dateStr)->sum('paid_amount') ?? 0);
-                $dueData[] = (float) ((clone $query)->whereDate('created_at', $dateStr)->sum('due_amount') ?? 0);
+                $dueData[] = (float) ((clone $query)->whereDate('created_at', $dateStr)->sum(DB::raw('grand_total - paid_amount')) ?? 0);
             }
         }
 
@@ -340,10 +354,10 @@ class DeliveryReportController extends Controller
         foreach ($lims_delivery_man_list as $deliveryMan) {
             $report[] = [
                 'delivery_man' => $deliveryMan,
-                'total_orders' => $deliveryMan->fieldOrders()->count(),
-                'completed_orders' => $deliveryMan->fieldOrders()->where('status', 'completed')->count(),
-                'pending_orders' => $deliveryMan->fieldOrders()->where('status', 'pending')->count(),
-                'cancelled_orders' => $deliveryMan->fieldOrders()->where('status', 'cancelled')->count(),
+                'total_orders' => Sale::where('delivery_man_id', $deliveryMan->id)->count(),
+                'completed_orders' => Sale::where('delivery_man_id', $deliveryMan->id)->where('sale_status', 1)->count(),
+                'pending_orders' => Sale::where('delivery_man_id', $deliveryMan->id)->where('sale_status', 2)->count(),
+                'cancelled_orders' => Sale::where('delivery_man_id', $deliveryMan->id)->where('sale_status', 4)->count(),
             ];
         }
 
@@ -356,8 +370,8 @@ class DeliveryReportController extends Controller
         $report = [];
 
         foreach ($lims_delivery_man_list as $deliveryMan) {
-            $total_collection = $deliveryMan->fieldOrders()->sum('paid_amount');
-            $total_due = $deliveryMan->fieldOrders()->sum('due_amount');
+            $total_collection = Sale::where('delivery_man_id', $deliveryMan->id)->sum('paid_amount');
+            $total_due = Sale::where('delivery_man_id', $deliveryMan->id)->sum(DB::raw('grand_total - paid_amount'));
             $report[] = [
                 'delivery_man' => $deliveryMan,
                 'total_collection' => $total_collection,
@@ -374,7 +388,7 @@ class DeliveryReportController extends Controller
         $report = [];
 
         foreach ($lims_delivery_man_list as $deliveryMan) {
-            $total_due = $deliveryMan->fieldOrders()->sum('due_amount');
+            $total_due = Sale::where('delivery_man_id', $deliveryMan->id)->sum(DB::raw('grand_total - paid_amount'));
             $report[] = [
                 'delivery_man' => $deliveryMan,
                 'total_due' => $total_due,
@@ -386,8 +400,9 @@ class DeliveryReportController extends Controller
 
     public function areaWiseSales()
     {
-        $areaSales = FieldOrder::select('delivery_city', DB::raw('COUNT(*) as total_orders'), DB::raw('SUM(grand_total) as total_sales'))
-            ->groupBy('delivery_city')
+        $areaSales = Sale::whereNotNull('delivery_man_id')
+            ->select('shipping_city', DB::raw('COUNT(*) as total_orders'), DB::raw('SUM(grand_total) as total_sales'), DB::raw('SUM(paid_amount) as total_collection'))
+            ->groupBy('shipping_city')
             ->get();
 
         return view('backend.delivery_management.delivery_report.area_wise_sales', compact('areaSales'));
@@ -471,12 +486,12 @@ class DeliveryReportController extends Controller
 
     public function deliveryManDashboard($id)
     {
-        $lims_delivery_man_data = DeliveryMan::with(['fieldOrders', 'deliveries', 'commissions', 'cashDeposits', 'visits', 'schedules'])->findOrFail($id);
+        $lims_delivery_man_data = DeliveryMan::with(['deliveries', 'commissions', 'cashDeposits', 'visits', 'schedules'])->findOrFail($id);
 
-        $totalOrders = $lims_delivery_man_data->fieldOrders()->count();
-        $completedOrders = $lims_delivery_man_data->fieldOrders()->where('status', 'completed')->count();
-        $totalCollection = $lims_delivery_man_data->fieldOrders()->sum('paid_amount');
-        $totalDue = $lims_delivery_man_data->fieldOrders()->sum('due_amount');
+        $totalOrders = Sale::where('delivery_man_id', $id)->count();
+        $completedOrders = Sale::where('delivery_man_id', $id)->where('sale_status', 1)->count();
+        $totalCollection = Sale::where('delivery_man_id', $id)->sum('paid_amount');
+        $totalDue = Sale::where('delivery_man_id', $id)->sum(DB::raw('grand_total - paid_amount'));
         $totalCommission = $lims_delivery_man_data->commissions()->sum('commission_amount');
         $totalDeposits = $lims_delivery_man_data->cashDeposits()->sum('amount');
         $totalVisits = $lims_delivery_man_data->visits()->count();
