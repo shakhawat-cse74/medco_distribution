@@ -182,7 +182,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('invoice/{id}', 'invoice')->name('invoice');
         Route::get('{id}', 'show')->name('show');
         Route::get('{id}/edit', 'edit')->name('edit');
-        Route::post('update/{id}', 'update')->name('update');
+        Route::put('{id}', 'update')->name('update');
         Route::post('delete/{id}', 'destroy')->name('delete');
         Route::post('toggle-status/{id}', 'toggleStatus')->name('toggleStatus');
     });

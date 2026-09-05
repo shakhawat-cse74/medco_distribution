@@ -1164,8 +1164,26 @@ class DeliverySaleController extends Controller
         $lims_warehouse_list = Warehouse::where('is_active', true)->get();
         $lims_customer_list = Customer::where('is_active', true)->get();
         $lims_biller_list = User::where('is_active', true)->get();
-        $lims_delivery_man_list = DeliveryMan::active()->get();
         $lims_route_list = DeliveryArea::active()->get();
+        $lims_tax_list = Tax::where('is_active', true)->get();
+        $currency_list = cache()->get('currency_list');
+        $lims_pos_setting_data = PosSetting::latest()->first();
+        $lims_reward_point_setting_data = RewardPointSetting::first();
+        $lims_account_list = Account::where('is_active', true)->get();
+        $lims_customer_group_all = CustomerGroup::where('is_active', true)->get();
+        $custom_fields = CustomField::where('belongs_to', 'sale')->get();
+
+        if ($lims_pos_setting_data)
+            $options = explode(',', $lims_pos_setting_data->payment_options);
+        else
+            $options = ['cash'];
+
+        $all_permission = Role::findByName($role->name)->permissions->pluck('name');
+
+        $lims_delivery_man_list = DeliveryMan::active()->with('routes')->get()->map(function ($dm) {
+            $dm->assigned_routes = $dm->routes->pluck('id')->toArray();
+            return $dm;
+        });
 
         return view('backend.delivery_management.delivery_sale.edit', compact(
             'lims_sale_data',
@@ -1173,7 +1191,16 @@ class DeliverySaleController extends Controller
             'lims_customer_list',
             'lims_biller_list',
             'lims_delivery_man_list',
-            'lims_route_list'
+            'lims_route_list',
+            'lims_tax_list',
+            'currency_list',
+            'lims_pos_setting_data',
+            'lims_reward_point_setting_data',
+            'lims_account_list',
+            'lims_customer_group_all',
+            'custom_fields',
+            'all_permission',
+            'options'
         ));
     }
 
@@ -1182,7 +1209,7 @@ class DeliverySaleController extends Controller
         $role = Role::find(Auth::user()->role_id);
 
         if (!$role->hasPermissionTo('delivery-sales-edit')) {
-            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+            return redirect()->back()->with('not_permitted', __('db Sorry! You are not allowed to access this module'));
         }
 
         $this->validate($request, [
@@ -1206,20 +1233,22 @@ class DeliverySaleController extends Controller
                 'biller_id',
                 'route_id',
                 'delivery_man_id',
-                'sale_date',
-                'due_date',
-                'payment_status',
                 'sale_status',
+                'payment_status',
                 'paid_amount',
                 'order_tax_rate',
+                'order_discount_type',
                 'order_discount_value',
+                'order_discount',
                 'shipping_cost',
-                'sale_note'
+                'sale_note',
+                'staff_note',
+                'paid_amount',
             ])->toArray());
 
             DB::commit();
 
-            return redirect('delivery-sale.index')->with('message', __('db.Delivery sale updated successfully'));
+            return redirect()->route('delivery-sale.index')->with('message', __('db.Delivery sale updated successfully'));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Delivery sale update failed: ' . $e->getMessage());
