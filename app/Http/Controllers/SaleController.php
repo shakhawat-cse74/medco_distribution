@@ -152,6 +152,7 @@ class SaleController extends Controller
             else
                 $options = [];
             $numberOfInvoice = Sale::whereNull('deleted_at')
+                ->whereNull('delivery_man_id')
                 ->where(function ($q) {
                     $q->where('sale_type', '!=', 'opening balance')
                         ->orWhereNull('sale_type');
@@ -235,6 +236,7 @@ class SaleController extends Controller
         // --- 2. BASE QUERY FOR TOTAL COUNT AND INITIAL FILTERING ---
         // Start with the basic sales query (no payments join yet)
         $qBase = Sale::whereNull('sales.deleted_at')
+            ->whereNull('sales.delivery_man_id')    
             ->where(function ($q) {
                 $q->where('sales.sale_type', '!=', 'opening balance')
                     ->orWhereNull('sales.sale_type');
@@ -309,6 +311,7 @@ class SaleController extends Controller
                     'user:id,name'
                 ])
                 ->whereNull('sales.deleted_at')
+                ->whereNull('sales.delivery_man_id')
                 ->where(function ($q) {
                     $q->where('sales.sale_type', '!=', 'opening balance')
                         ->orWhereNull('sales.sale_type');
@@ -390,6 +393,7 @@ class SaleController extends Controller
                 ->leftJoin('customers', 'sales.customer_id', '=', 'customers.id')
                 ->leftJoin('products', 'product_sales.product_id', '=', 'products.id')
                 ->whereNull('sales.deleted_at')
+                ->whereNull('sales.delivery_man_id')
                 ->where(function ($q) {
                     $q->where('sales.sale_type', '!=', 'opening balance')
                         ->orWhereNull('sales.sale_type');
@@ -845,6 +849,7 @@ class SaleController extends Controller
             $currency_list = cache()->get('currency_list');
 
             $numberOfInvoice = Sale::whereNull('sales.deleted_at')
+                ->whereNull('sales.delivery_man_id')
                 ->where(function ($q) {
                     $q->where('sales.sale_type', '!=', 'opening balance')
                         ->orWhereNull('sales.sale_type');
@@ -927,7 +932,7 @@ class SaleController extends Controller
             }
 
             if (!empty($data['draft']) && !empty($data['sale_id'])) {
-                $lims_sale_data = Sale::find($data['sale_id']);
+                $lims_sale_data = Sale::whereNull('delivery_man_id')->find($data['sale_id']);
                 if ($lims_sale_data) {
                     $lims_product_sale_data = Product_Sale::where('sale_id', $data['sale_id'])->get();
                     foreach ($lims_product_sale_data as $product_sale_data) {
@@ -969,6 +974,7 @@ class SaleController extends Controller
         if (isset($data['table_id'])) {
             $latest_sale = Sale::whereNotNull('table_id')
                 ->whereNull('deleted_at')
+                ->whereNull('delivery_man_id')
                 ->where(function ($q) {
                     $q->where('sale_type', '!=', 'opening balance')
                         ->orWhereNull('sale_type');
@@ -1023,7 +1029,7 @@ class SaleController extends Controller
                 }
             }
 
-            $lims_sale_data = Sale::create($data);
+            $lims_sale_data = Sale::whereNull('delivery_man_id')->create($data);
 
             $data['paid_amount'] = $new_data['paid_amount'];
 
@@ -1040,7 +1046,7 @@ class SaleController extends Controller
                 }
             }
             if (count($custom_field_data))
-                DB::table('sales')->where('id', $lims_sale_data->id)->update($custom_field_data);
+                DB::table('sales')->where('id', $lims_sale_data->id)->whereNull('delivery_man_id')->update($custom_field_data);
 
             $lims_customer_data = Customer::find($data['customer_id']);
 
@@ -1667,7 +1673,7 @@ class SaleController extends Controller
 
     public function getSoldItem($id)
     {
-        $sale = Sale::select('warehouse_id')->find($id);
+        $sale = Sale::select('warehouse_id')->whereNull('delivery_man_id')->find($id);
         $product_sale_data = Product_Sale::where('sale_id', $id)->get();
         $data = [];
         $data['amount'] = $sale->shipping_cost - $sale->sale_discount;
@@ -1753,7 +1759,7 @@ class SaleController extends Controller
     public function sendMail(Request $request)
     {
         $data = $request->all();
-        $lims_sale_data = Sale::find($data['sale_id']);
+        $lims_sale_data = Sale::whereNull('delivery_man_id')->find($data['sale_id']);
         $lims_product_sale_data = Product_Sale::where('sale_id', $data['sale_id'])->get();
         $lims_customer_data = Customer::find($lims_sale_data->customer_id);
         $mail_setting = MailSetting::latest()->first();
@@ -1818,7 +1824,7 @@ class SaleController extends Controller
         }
 
         // Find the sale record by sale_id
-        $sale = Sale::find($data['sale_id']);
+        $sale = Sale::whereNull('delivery_man_id')->find($data['sale_id']);
         if (!$sale) {
             return response()->json(['error' => 'Sale not found'], 404);
         }
@@ -1865,8 +1871,8 @@ class SaleController extends Controller
 
     public function paypalSuccess(Request $request)
     {
-        $lims_sale_data = Sale::latest()->first();
-        $lims_payment_data = Payment::latest()->first();
+        $lims_sale_data = Sale::whereNull('delivery_man_id')->latest()->first();
+        $lims_payment_data = Payment::whereNull('delivery_man_id')->latest()->first();
         $lims_product_sale_data = Product_Sale::where('sale_id', $lims_sale_data->id)->get();
         $provider = new ExpressCheckout;
         $token = $request->token;
@@ -1924,7 +1930,7 @@ class SaleController extends Controller
 
     public function paypalPaymentSuccess(Request $request, $id)
     {
-        $lims_payment_data = Payment::find($id);
+        $lims_payment_data = Payment::whereNull('delivery_man_id')->find($id);
         $provider = new ExpressCheckout;
         $token = $request->token;
         $payerID = $request->PayerID;
@@ -2245,6 +2251,7 @@ class SaleController extends Controller
             $currency_list = cache()->get('currency_list');
 
             $numberOfInvoice = Sale::whereNull('sales.deleted_at')
+                ->whereNull('sales.delivery_man_id')
                 ->where(function ($q) {
                     $q->where('sales.sale_type', '!=', 'opening balance')
                         ->orWhereNull('sales.sale_type');
@@ -2254,7 +2261,7 @@ class SaleController extends Controller
             $variables = ['currency_list', 'role', 'all_permission', 'lims_customer_list', 'lims_customer_group_all', 'lims_warehouse_list', 'lims_reward_point_setting_data', 'lims_tax_list', 'lims_biller_list', 'lims_pos_setting_data', 'options', 'lims_brand_list', 'lims_category_list', 'lims_table_list', 'lims_coupon_list', 'flag', 'numberOfInvoice', 'custom_fields', 'lims_account_list', 'lims_expense_category_list'];
 
             if (!empty($id)) {
-                $lims_sale_data = Sale::find($id);
+                $lims_sale_data = Sale::whereNull('delivery_man_id')->find($id);
                 $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
                 $variables[] = 'lims_sale_data';
                 $variables[] = 'lims_product_sale_data';
@@ -2335,6 +2342,7 @@ class SaleController extends Controller
                     ['sales.user_id', Auth::id()]
                 ])
                     ->whereNull('sales.deleted_at')
+                    ->whereNull('sales.delivery_man_id')
                     ->where(function ($q) {
                         $q->where('sales.sale_type', '!=', 'opening balance')
                             ->orWhereNull('sales.sale_type');
@@ -2346,6 +2354,7 @@ class SaleController extends Controller
                 $recent_sale = Sale::join('customers', 'sales.customer_id', '=', 'customers.id')->select('sales.id', 'sales.reference_no', 'sales.customer_id', 'sales.grand_total', 'sales.created_at', 'customers.name')
                     ->where('sale_status', 1)
                     ->whereNull('sales.deleted_at')
+                    ->whereNull('sales.delivery_man_id')
                     ->where(function ($q) {
                         $q->where('sales.sale_type', '!=', 'opening balance')
                             ->orWhereNull('sales.sale_type');
@@ -2363,6 +2372,7 @@ class SaleController extends Controller
                         ['sales.user_id', Auth::id()]
                     ])
                     ->whereNull('sales.deleted_at')
+                    ->whereNull('sales.delivery_man_id')
                     ->where(function ($q) {
                         $q->where('sales.sale_type', '!=', 'opening balance')
                             ->orWhereNull('sales.sale_type');
@@ -2374,6 +2384,7 @@ class SaleController extends Controller
             } else {
                 $recent_sale = Sale::join('customers', 'sales.customer_id', '=', 'customers.id')->select('sales.id', 'sales.reference_no', 'sales.customer_id', 'sales.grand_total', 'sales.created_at', 'customers.name')
                     ->whereNull('sales.deleted_at')
+                    ->whereNull('sales.delivery_man_id')
                     ->where(function ($q) {
                         $q->where('sales.sale_type', '!=', 'opening balance')
                             ->orWhereNull('sales.sale_type');
@@ -2393,10 +2404,12 @@ class SaleController extends Controller
             $recent_draft = Sale::join('customers', 'sales.customer_id', '=', 'customers.id')->select('sales.id', 'sales.reference_no', 'sales.customer_id', 'sales.grand_total', 'sales.created_at', 'customers.name')->where([
                 ['sales.sale_status', 3],
                 ['sales.user_id', Auth::id()]
-            ])->whereNull('sales.deleted_at')->orderBy('id', 'desc')->take(10)->get();
+            ])->whereNull('sales.deleted_at')
+            ->whereNull('sales.delivery_man_id')
+            ->orderBy('id', 'desc')->take(10)->get();
             return response()->json($recent_draft);
         } else {
-            $recent_draft = Sale::join('customers', 'sales.customer_id', '=', 'customers.id')->select('sales.id', 'sales.reference_no', 'sales.customer_id', 'sales.grand_total', 'sales.created_at', 'customers.name')->whereNull('sales.deleted_at')->where('sale_status', 3)->orderBy('id', 'desc')->take(10)->get();
+            $recent_draft = Sale::join('customers', 'sales.customer_id', '=', 'customers.id')->select('sales.id', 'sales.reference_no', 'sales.customer_id', 'sales.grand_total', 'sales.created_at', 'customers.name')->whereNull('sales.deleted_at')->whereNull('sales.delivery_man_id')->where('sale_status', 3)->orderBy('id', 'desc')->take(10)->get();
             return response()->json($recent_draft);
         }
     }
@@ -2411,7 +2424,7 @@ class SaleController extends Controller
             $lims_customer_group_all = CustomerGroup::where('is_active', true)->get();
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
-            $lims_sale_data = Sale::find($id);
+            $lims_sale_data = Sale::wehereNull('delivery_man_id')->find($id);
             $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
             $lims_product_list = Product::where([
                 ['featured', 1],
@@ -3258,7 +3271,7 @@ class SaleController extends Controller
 
     public function productSaleData($id)
     {
-        $sale = Sale::select('created_at')->find($id);
+        $sale = Sale::select('created_at')->whereNull('delivery_man_id')->find($id);
         $productSaleQuery = Product_Sale::where('sale_id', $id);
         if ($this->restaurantModifiersAvailable()) {
             $productSaleQuery->with('modifiers');
@@ -3389,7 +3402,7 @@ class SaleController extends Controller
 
     public function getSale($id)
     {
-        $saleData = Sale::findOrFail($id);
+        $saleData = Sale::whereNull('delivery_man_id')->findOrFail($id);
 
         $warehouse = Warehouse::findOrFail($saleData->warehouse_id);
         $currency = Currency::findOrFail($saleData->currency_id);
@@ -3476,7 +3489,7 @@ class SaleController extends Controller
             $lims_tax_list = Tax::where('is_active', true)->get();
             $currency_list = Currency::where('is_active', true)->get();
             $currency = Currency::where('code', 'USD')->first();
-            $numberOfInvoice = Sale::whereNull('sales.deleted_at')
+            $numberOfInvoice = Sale::whereNull('sales.deleted_at')->whereNull('sales.delivery_man_id')
                 ->where(function ($q) {
                     $q->where('sales.sale_type', '!=', 'opening balance')
                         ->orWhereNull('sales.sale_type');
@@ -3580,7 +3593,7 @@ class SaleController extends Controller
             $data['shipping_cost'] = $request->shipping_cost / $exchange_rate;
             $grand_total = $data['shipping_cost'];
             Sale::create($data);
-            $lims_sale_data = Sale::latest()->first();
+            $lims_sale_data = Sale::whereNull('delivery_man_id')->latest()->first();
             $lims_customer_data = Customer::find($lims_sale_data->customer_id);
 
             $counter = 1;
@@ -3696,12 +3709,12 @@ class SaleController extends Controller
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             $lims_biller_list = Biller::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
-            $numberOfInvoice = Sale::whereNull('sales.deleted_at')
+            $numberOfInvoice = Sale::whereNull('sales.deleted_at')->whereNull('sales.delivery_man_id')
                 ->where(function ($q) {
                     $q->where('sales.sale_type', '!=', 'opening balance')
                         ->orWhereNull('sales.sale_type');
                 })->count();
-            $lims_sale_data = Sale::find($id);
+            $lims_sale_data = Sale::wehreNull('delivery_man_id')->find($id);
             $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
             if ($lims_sale_data->exchange_rate)
                 $currency = Currency::find($lims_sale_data->currency_id);
@@ -3718,7 +3731,7 @@ class SaleController extends Controller
     {
         $data = $request->except('document');
         $document = $request->document;
-        $lims_sale_data = Sale::find($id);
+        $lims_sale_data = Sale::whereNull('delivery_man_id')->find($id);
 
         if (isset($data['created_at'])) {
             $data['created_at'] = normalize_to_sql_datetime($data['created_at']);
@@ -4365,12 +4378,15 @@ class SaleController extends Controller
     public function printLastReciept()
     {
         if (in_array('restaurant', explode(',', gen_setting()->modules))) {
-            $sale = Sale::where('sale_status', 5)->whereNull('deleted_at')->where(function ($q) {
+            $sale = Sale::where('sale_status', 5)->whereNull('deleted_at')
+            ->whereNull('delivery_man_id')
+            ->where(function ($q) {
                 $q->where('sales.sale_type', '!=', 'opening balance')
                     ->orWhereNull('sales.sale_type');
             })->latest()->first();
         } else {
-            $sale = Sale::where('sale_status', 1)->whereNull('deleted_at')->where(function ($q) {
+            $sale = Sale::where('sale_status', 1)->whereNull('deleted_at')->whereNull('delivery_man_id')
+            ->where(function ($q) {
                 $q->where('sales.sale_type', '!=', 'opening balance')
                     ->orWhereNull('sales.sale_type');
             })->latest()->first();
@@ -4658,7 +4674,7 @@ class SaleController extends Controller
 
         try {
             // ── 1. Core sale — eager-load currency + user (avoids lazy query later) ──
-            $lims_sale_data = Sale::with(['currency', 'user'])->find($id);
+            $lims_sale_data = Sale::with(['currency', 'user'])->whereNull('delivery_man_id')->find($id);
 
             // ── 2. Line items ──────────────────────────────────────────────────────
             $is_restaurant_active = $this->restaurantModifiersAvailable();
@@ -5097,7 +5113,7 @@ class SaleController extends Controller
         if (!$data['amount'])
             $data['amount'] = 0.00;
 
-        $lims_sale_data = Sale::find($data['sale_id']);
+        $lims_sale_data = Sale::whereNull('delivery_man_id')->find($data['sale_id']);
 
         $lims_customer_data = Customer::find($lims_sale_data->customer_id);
         $lims_sale_data->paid_amount += $data['amount'];
@@ -5316,7 +5332,7 @@ class SaleController extends Controller
     public function paymentReceipt($id)
     {
         $lims_payment_data = Payment::find($id);
-        $lims_sale_data = Sale::find($lims_payment_data->sale_id);
+        $lims_sale_data = Sale::whereNull('delivery_man_id')->find($lims_payment_data->sale_id);
         $lims_customer_data = Customer::find($lims_sale_data->customer_id);
         $general_setting = gen_setting();
         $invoice_settings = InvoiceSetting::latest()->first();
@@ -5359,7 +5375,7 @@ class SaleController extends Controller
             $installment_id[] = $payment->installment_id ?? 0;
             // added currency for previously inserted data
             if (!$payment->currency_id) {
-                $lims_sale_data = Sale::find($payment->sale_id);
+                $lims_sale_data = Sale::whereNull('delivery_man_id')->find($payment->sale_id);
                 if ($lims_sale_data) {
                     // dd($lims_sale_data);
                     $payment->currency_id = $lims_sale_data->currency_id;
@@ -5424,7 +5440,7 @@ class SaleController extends Controller
     {
         $data = $request->all();
         $lims_payment_data = Payment::find($data['payment_id']);
-        $lims_sale_data = Sale::find($lims_payment_data->sale_id);
+        $lims_sale_data = Sale::whereNull('delivery_man_id')->find($lims_payment_data->sale_id);
         $lims_customer_data = Customer::find($lims_sale_data->customer_id);
         //updating sale table
         $amount_dif = $lims_payment_data->amount - $data['edit_amount'];
@@ -5654,7 +5670,7 @@ class SaleController extends Controller
     public function deletePayment(Request $request)
     {
         $lims_payment_data = Payment::find($request['id']);
-        $lims_sale_data = Sale::where('id', $lims_payment_data->sale_id)->whereNull('deleted_at')->first();
+        $lims_sale_data = Sale::where('id', $lims_payment_data->sale_id)->whereNull('deleted_at')->whereNull('delivery_man_id')->first();
         $lims_sale_data->paid_amount -= $lims_payment_data->amount;
         $balance = $lims_sale_data->grand_total - $lims_sale_data->paid_amount;
         if ($balance > 0 || $balance < 0)
@@ -5718,6 +5734,7 @@ class SaleController extends Controller
         $data['total_sale_amount'] = Sale::whereDate('created_at', date("Y-m-d"))
             ->select(DB::raw('SUM(grand_total  / COALESCE(NULLIF(exchange_rate, 0), 1)) as total'))
             ->whereNull('deleted_at')
+            ->whereNull('delivery_man_id')
             ->where(function ($q) {
                 $q->where('sales.sale_type', '!=', 'opening balance')
                     ->orWhereNull('sales.sale_type');
@@ -5784,6 +5801,7 @@ class SaleController extends Controller
                     SUM(product_sales.total  / COALESCE(NULLIF(sales.exchange_rate, 0), 1)) as sold_amount
                 '))
                 ->whereNull('sales.deleted_at')
+                ->whereNull('sales.delivery_man_id')
                 ->where('sales.warehouse_id', $warehouse_id)
                 ->whereDate('sales.created_at', date("Y-m-d"))
                 ->groupBy('product_sales.product_id', 'product_sales.product_batch_id')
@@ -5874,7 +5892,7 @@ class SaleController extends Controller
     {
         $sale_id = $request['saleIdArray'];
         foreach ($sale_id as $id) {
-            $lims_sale_data = Sale::find($id);
+            $lims_sale_data = Sale::whereNull('delivery_man_id')->find($id);
             $return_ids = Returns::where('sale_id', $id)->pluck('id')->toArray();
             if (count($return_ids)) {
                 ProductReturn::whereIn('return_id', $return_ids)->delete();
@@ -6050,7 +6068,7 @@ class SaleController extends Controller
         try {
         DB::beginTransaction();
 
-        $lims_sale_data = Sale::find($id);
+        $lims_sale_data = Sale::whereNull('delivery_man_id')->find($id);
 
         // remove this sale reward point
         $lims_reward_point = RewardPoint::query()->where('sale_id', $lims_sale_data->id)->first();
@@ -6270,7 +6288,7 @@ class SaleController extends Controller
             if (!$revRes->success) {
                 throw new \App\Exceptions\AccountingException($revRes->error);
             }
-            $deletedSale = \App\Models\Sale::withTrashed()->find($id);
+            $deletedSale = \App\Models\Sale::withTrashed()->whereNull('delivery_man_id')->find($id);
             if ($deletedSale && \Schema::hasColumn($deletedSale->getTable(), 'accounting_status')) {
                 $deletedSale->accounting_status = 'reversed';
                 $deletedSale->save();
@@ -6535,6 +6553,7 @@ class SaleController extends Controller
     public function showDeletedSales()
     {
         $lims_deleted_data = Sale::onlyTrashed()
+            ->whereNull('delivery_man_id')  
             ->with(['user', 'customer', 'warehouse', 'deleter'])
             ->get();
 
@@ -6546,7 +6565,7 @@ class SaleController extends Controller
         $ids = $request->ids ?? [];
 
         if (!empty($ids)) {
-            Sale::withTrashed()->whereIn('id', $ids)->forceDelete();
+            Sale::withTrashed()->whereNull('delivery_man_id')->whereIn('id', $ids)->forceDelete();
             return back()->with('not_permitted', 'Selected sales permanently deleted!');
         }
 
@@ -7100,6 +7119,7 @@ class SaleController extends Controller
     {
         $sales = Sale::with('customer')
             ->whereNull('deleted_at')
+            ->whereNull('delivery_man_id')
             ->where(function ($q) {
                 $q->where('sale_type', '!=', 'opening balance')
                     ->orWhereNull('sale_type');
