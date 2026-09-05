@@ -300,7 +300,7 @@ class DeliverySaleController extends Controller
             }
         } else {
             if (!isset($data['reference_no']))
-                $data['reference_no'] = $this->invoiceService->generateInvoiceName('dsr-');
+                $data['reference_no'] = $this->invoiceService->generateInvoiceName('DSR-');
         }
 
         $document = $request->document;
