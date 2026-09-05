@@ -3714,7 +3714,7 @@ class SaleController extends Controller
                     $q->where('sales.sale_type', '!=', 'opening balance')
                         ->orWhereNull('sales.sale_type');
                 })->count();
-            $lims_sale_data = Sale::wehreNull('delivery_man_id')->find($id);
+            $lims_sale_data = Sale::whereNull('delivery_man_id')->find($id);
             $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
             if ($lims_sale_data->exchange_rate)
                 $currency = Currency::find($lims_sale_data->currency_id);
