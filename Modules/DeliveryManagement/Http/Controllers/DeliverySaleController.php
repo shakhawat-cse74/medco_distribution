@@ -1160,9 +1160,9 @@ class DeliverySaleController extends Controller
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
 
-        $lims_sale_data = Sale::with(['customer', 'warehouse', 'biller', 'deliveryMan', 'route', 'products.product'])->findOrFail($id);
+        $lims_sale_data = Sale::with(['customer', 'warehouse', 'biller', 'deliveryMan', 'route', 'productSales.product'])->findOrFail($id);
         $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-        $lims_customer_list = Customer::active()->get();
+        $lims_customer_list = Customer::where('is_active', true)->get();
         $lims_biller_list = User::where('is_active', true)->get();
         $lims_delivery_man_list = DeliveryMan::active()->get();
         $lims_route_list = DeliveryArea::active()->get();
