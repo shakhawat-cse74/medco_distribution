@@ -19,11 +19,6 @@
         @can('delivery-sales-add')
             <a href="{{route('delivery-sale.create')}}" class="btn btn-info add-sale-btn btn-icon"><i class="ti ti-plus"></i> {{__('db.Add Sale')}}</a>
         @endcan
-        @can('delivery-sales-delete')
-            <a href="{{ url('sales/deleted_data') }}" class="btn btn-secondary add-sale-btn btn-icon">
-                <i class="ti ti-trash"></i> {{ __('Deleted Sales') }}
-            </a>
-        @endcan
 
         <button type="button" class="btn btn-warning btn-icon" id="toggle-filter">
             <i class="ti ti-filter"></i> {{ __('db.Filter Sales') }}
@@ -80,7 +75,6 @@
                                 <option value="0">{{__('db.All')}}</option>
                                 <option value="1">{{__('db.Completed')}}</option>
                                 <option value="2">{{__('db.Pending')}}</option>
-                                <option value="3">{{__('db.Draft')}}</option>
                                 <option value="4">{{__('db.Returned')}}</option>
                             </select>
                         </div>
@@ -146,11 +140,46 @@
     $("ul#delivery").addClass("show");
     $("ul#delivery #delivery-sale-menu").addClass("active");
 
+    var show_products_details = false;
+    let columns = [
+        { "data": "key" },
+        { "data": "sale_date" },
+        { "data": "reference_no" },
+        { "data": "customer" },
+        { "data": "warehouse" },
+        { "data": "delivery_man" },
+        { "data": "sale_status" },
+        { "data": "payment_status" },
+        { "data": "grand_total" },
+        { "data": "paid_amount" },
+        { "data": "due_amount" },
+        { "data": "options" }
+    ];
+
+    var all_permission = <?php echo json_encode($all_permission ?? []); ?>;
+    var sale_id = [];
+    var user_verified = <?php echo json_encode(config('app.user_verified')); ?>;
+    var starting_date = <?php echo json_encode($starting_date ?? date('Y-m-d')); ?>;
+    var ending_date = <?php echo json_encode($ending_date ?? date('Y-m-d')); ?>;
+    var warehouse_id = 0;
+    var sale_status = 0;
+    var payment_status = 0;
+
+    function confirmDelete() {
+        return confirm("Are you sure you want to delete this sale?");
+    }
+
     $('#toggle-filter').on('click', function() {
         $('#filter-card').slideToggle('slow');
     });
 
-    var table = $('#sale-table').DataTable({
+    $(function () {
+        $("#warehouse_id").val(warehouse_id);
+        $("#sale-status").val(sale_status);
+        $("#payment-status").val(payment_status);
+    });
+
+    let table = $('#sale-table').DataTable({
         "processing": true,
         "serverSide": true,
         "ajax": {
@@ -167,20 +196,11 @@
             dataType: "json",
             type: "GET"
         },
-        "columns": [
-            { "data": "key" },
-            { "data": "sale_date" },
-            { "data": "reference_no" },
-            { "data": "customer" },
-            { "data": "warehouse" },
-            { "data": "delivery_man" },
-            { "data": "sale_status" },
-            { "data": "payment_status" },
-            { "data": "grand_total" },
-            { "data": "paid_amount" },
-            { "data": "due_amount" },
-            { "data": "options" }
-        ],
+        "createdRow": function( row, data, dataIndex ) {
+            $(row).addClass('sale-link');
+            $(row).attr('data-sale', data['sale']);
+        },
+        "columns": columns,
         'language': {
             'lengthMenu': '_MENU_ {{ __("db.records per page") }}',
             "info": '<small>{{ __("db.Showing") }} _START_ - _END_ (_TOTAL_)</small>',
@@ -213,6 +233,7 @@
         'select': { style: 'multi', selector: 'td:first-child' },
         'lengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
         dom: '<"row"lfB>rtip',
+        rowId: 'ObjectID',
         buttons: [
             {
                 extend: 'pdf',
@@ -271,7 +292,11 @@
                 footer: true
             },
             { extend: 'colvis', text: '<i title="column visibility" class="ti ti-eye"></i>' }
-        ]
+        ],
+        drawCallback: function () {
+            var api = this.api();
+            datatable_sum(api, false);
+        }
     });
 
     function datatable_sum(dt_selector, is_calling_first) {
@@ -281,15 +306,24 @@
         } else {
             rows = dt_selector.rows({ page: 'current' }).indexes();
         }
-        $(dt_selector.column(8).footer()).html(
-            formatCurrency(dt_selector.cells(rows, 8).data().sum())
-        );
-        $(dt_selector.column(9).footer()).html(
-            formatCurrency(dt_selector.cells(rows, 9).data().sum())
-        );
-        $(dt_selector.column(10).footer()).html(
-            formatCurrency(dt_selector.cells(rows, 10).data().sum())
-        );
+
+        var grandTotal = 0;
+        var paidAmount = 0;
+        var dueAmount = 0;
+
+        dt_selector.cells(rows, 8).data().each(function(value) {
+            grandTotal += parseFloat(String(value).replace(/,/g, '')) || 0;
+        });
+        dt_selector.cells(rows, 9).data().each(function(value) {
+            paidAmount += parseFloat(String(value).replace(/,/g, '')) || 0;
+        });
+        dt_selector.cells(rows, 10).data().each(function(value) {
+            dueAmount += parseFloat(String(value).replace(/,/g, '')) || 0;
+        });
+
+        $(dt_selector.column(8).footer()).html(formatCurrency(grandTotal));
+        $(dt_selector.column(9).footer()).html(formatCurrency(paidAmount));
+        $(dt_selector.column(10).footer()).html(formatCurrency(dueAmount));
     }
 
     table.on('draw', function() {

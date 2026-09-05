@@ -66,7 +66,8 @@ class DeliveryReturnController extends Controller
             }
 
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-            $lims_delivery_man_list = DeliveryMan::active()->get();
+            $deliveryManIds = Sale::whereNotNull('delivery_man_id')->distinct()->pluck('delivery_man_id');
+            $lims_delivery_man_list = DeliveryMan::active()->whereIn('id', $deliveryManIds)->get();
 
             return view('backend.delivery_management.delivery_return.index', compact(
                 'starting_date',
@@ -85,29 +86,37 @@ class DeliveryReturnController extends Controller
     public function returnData(Request $request)
     {
         $columns = [
-            1 => 'created_at',
-            2 => 'reference_no',
-            3 => 'customer_id',
-            4 => 'warehouse_id',
-            5 => 'delivery_man_id',
-            6 => 'grand_total',
+            1 => 'returns.created_at',
+            2 => 'returns.reference_no',
+            3 => 'customers.name',
+            4 => 'warehouses.name',
+            5 => 'sales.delivery_man_id',
+            6 => 'returns.grand_total',
         ];
 
         $warehouse_id = $request->input('warehouse_id', 0);
         $delivery_man_id = $request->input('delivery_man_id', 0);
 
-        $query = Returns::with(['biller', 'customer', 'warehouse', 'user', 'sale.deliveryMan']);
+        $query = Returns::with(['biller', 'customer', 'warehouse', 'user', 'sale.deliveryMan'])
+            ->join('sales', 'returns.sale_id', '=', 'sales.id')
+            ->join('customers', 'returns.customer_id', '=', 'customers.id')
+            ->leftJoin('warehouses', 'returns.warehouse_id', '=', 'warehouses.id')
+            ->whereNotNull('sales.delivery_man_id');
 
         if (Auth::user()->role_id > 2 && config('staff_access') == 'own') {
-            $query->where('user_id', Auth::id());
+            $query->where('returns.user_id', Auth::id());
         }
 
         if ($warehouse_id != 0) {
-            $query->where('warehouse_id', $warehouse_id);
+            $query->where('returns.warehouse_id', $warehouse_id);
         }
 
-        $query->whereDate('created_at', '>=', $request->input('starting_date'))
-            ->whereDate('created_at', '<=', $request->input('ending_date'));
+        if ($delivery_man_id != 0) {
+            $query->where('sales.delivery_man_id', $delivery_man_id);
+        }
+
+        $query->whereDate('returns.created_at', '>=', $request->input('starting_date'))
+            ->whereDate('returns.created_at', '<=', $request->input('ending_date'));
 
         $totalData = $query->count();
         $totalFiltered = $totalData;
@@ -115,18 +124,17 @@ class DeliveryReturnController extends Controller
         $limit = $request->input('length') != -1 ? $request->input('length') : $totalData;
         $start = $request->input('start');
         $orderColumnIndex = $request->input('order.0.column');
-        $order = $columns[$orderColumnIndex] ?? 'created_at';
+        $order = $columns[$orderColumnIndex] ?? 'returns.created_at';
         $dir = $request->input('order.0.dir') ?? 'desc';
 
         if (!empty($request->input('search.value'))) {
             $search = $request->input('search.value');
 
-            $query->join('customers', 'returns.customer_id', '=', 'customers.id')
-                ->where(function ($q) use ($search) {
-                    $q->where('returns.reference_no', 'LIKE', "%{$search}%")
-                        ->orWhere('customers.name', 'LIKE', "%{$search}%")
-                        ->orWhere('customers.phone_number', 'LIKE', "%{$search}%");
-                });
+            $query->where(function ($q) use ($search) {
+                $q->where('returns.reference_no', 'LIKE', "%{$search}%")
+                    ->orWhere('customers.name', 'LIKE', "%{$search}%")
+                    ->orWhere('customers.phone_number', 'LIKE', "%{$search}%");
+            });
 
             $totalFiltered = $query->distinct('returns.id')->count('returns.id');
         }
@@ -309,41 +317,55 @@ class DeliveryReturnController extends Controller
                 $this->accountingService->recordPayment($refundPayment);
             }
 
-            $product_sale_ids = $data['product_sale_id'];
-            $imei_number = $data['imei_number'];
-            $product_batch_id = $data['product_batch_id'];
-            $product_code = $data['product_code'];
-            $qty = $data['qty'];
-            $sale_unit = $data['sale_unit'];
-            $net_unit_price = $data['net_unit_price'];
-            $discount = $data['discount'];
-            $tax_rate = $data['tax_rate'];
-            $tax = $data['tax'];
-            $total = $data['subtotal'];
+            $product_sale_ids = $data['product_sale_id'] ?? [];
+            $imei_number = $data['imei_number'] ?? [];
+            $product_batch_id = $data['product_batch_id'] ?? [];
+            $product_code = $data['product_code'] ?? [];
+            $qty = $data['qty'] ?? [];
+            $sale_unit = $data['sale_unit'] ?? [];
+            $net_unit_price = $data['net_unit_price'] ?? [];
+            $discount = $data['discount'] ?? [];
+            $tax_rate = $data['tax_rate'] ?? [];
+            $tax = $data['tax_value'] ?? [];
+            $total = $data['subtotal_value'] ?? [];
+
+            if (empty($product_sale_ids) || empty($qty)) {
+                return redirect()->back()->with('not_permitted', 'No products to return');
+            }
 
             foreach ($product_sale_ids as $key => $product_sale_id) {
-                $pro_id = $data['product_id'][$key];
+                $pro_id = $data['product_id'][$key] ?? null;
+                if (!$pro_id) {
+                    continue;
+                }
                 $lims_product_data = Product::find($pro_id);
+                if (!$lims_product_data) {
+                    continue;
+                }
                 $variant_id = null;
                 $sale_unit_id = 0;
 
-                if ($sale_unit[$key] != 'n/a') {
+                $qty_val = $qty[$key] ?? 0;
+                $code_val = $product_code[$key] ?? null;
+                $batch_val = $product_batch_id[$key] ?? null;
+
+                if (isset($sale_unit[$key]) && $sale_unit[$key] != 'n/a') {
                     $lims_sale_unit_data = Unit::where('unit_name', $sale_unit[$key])->first();
                     if ($lims_sale_unit_data) {
                         $sale_unit_id = $lims_sale_unit_data->id;
                         if ($lims_sale_unit_data->operator == '*') {
-                            $quantity = $qty[$key] * $lims_sale_unit_data->operation_value;
+                            $quantity = $qty_val * $lims_sale_unit_data->operation_value;
                         } elseif ($lims_sale_unit_data->operator == '/') {
-                            $quantity = $qty[$key] / $lims_sale_unit_data->operation_value;
+                            $quantity = $qty_val / $lims_sale_unit_data->operation_value;
                         }
                     }
                 } else {
-                    $quantity = $qty[$key];
+                    $quantity = $qty_val;
                 }
 
                 if ($lims_product_data->is_variant) {
                     $lims_product_variant_data = ProductVariant::select('id', 'variant_id', 'qty')
-                        ->FindExactProductWithCode($pro_id, $product_code[$key])
+                        ->FindExactProductWithCode($pro_id, $code_val)
                         ->first();
                     $lims_product_warehouse_data = Product_Warehouse::FindProductWithVariant($pro_id, $lims_product_variant_data->variant_id, $data['warehouse_id'])->first();
                     if ($lims_product_variant_data) {
@@ -352,12 +374,12 @@ class DeliveryReturnController extends Controller
                     }
                     $variant_data = Variant::find($lims_product_variant_data->variant_id);
                     $variant_id = $variant_data->id;
-                } elseif ($product_batch_id[$key]) {
+                } elseif ($batch_val) {
                     $lims_product_warehouse_data = Product_Warehouse::where([
-                        ['product_batch_id', $product_batch_id[$key]],
+                        ['product_batch_id', $batch_val],
                         ['warehouse_id', $data['warehouse_id']]
                     ])->first();
-                    $lims_product_batch_data = ProductBatch::find($product_batch_id[$key]);
+                    $lims_product_batch_data = ProductBatch::find($batch_val);
                     if ($lims_product_batch_data) {
                         $lims_product_batch_data->qty += $quantity;
                         $lims_product_batch_data->save();
@@ -374,11 +396,12 @@ class DeliveryReturnController extends Controller
                 $lims_product_data->qty += $quantity;
                 $lims_product_data->save();
 
-                if ($imei_number[$key] && !str_contains($imei_number[$key], "null")) {
+                $imei_val = $imei_number[$key] ?? null;
+                if ($imei_val && !str_contains($imei_val, "null")) {
                     if ($lims_product_warehouse_data->imei_number) {
-                        $lims_product_warehouse_data->imei_number .= ',' . $imei_number[$key];
+                        $lims_product_warehouse_data->imei_number .= ',' . $imei_val;
                     } else {
-                        $lims_product_warehouse_data->imei_number = $imei_number[$key];
+                        $lims_product_warehouse_data->imei_number = $imei_val;
                     }
                     $lims_product_warehouse_data->save();
                 }
@@ -386,16 +409,16 @@ class DeliveryReturnController extends Controller
                 ProductReturn::insert([
                     'return_id' => $lims_return_data->id,
                     'product_id' => $pro_id,
-                    'product_batch_id' => $product_batch_id[$key] ?? null,
+                    'product_batch_id' => $batch_val,
                     'variant_id' => $variant_id,
-                    'imei_number' => $imei_number[$key] ?? null,
-                    'qty' => $qty[$key],
+                    'imei_number' => $imei_val,
+                    'qty' => $qty_val,
                     'sale_unit_id' => $sale_unit_id,
-                    'net_unit_price' => $net_unit_price[$key],
-                    'discount' => $discount[$key],
-                    'tax_rate' => $tax_rate[$key],
-                    'tax' => $tax[$key],
-                    'total' => $total[$key],
+                    'net_unit_price' => $net_unit_price[$key] ?? 0,
+                    'discount' => $discount[$key] ?? 0,
+                    'tax_rate' => $tax_rate[$key] ?? 0,
+                    'tax' => $tax[$key] ?? 0,
+                    'total' => $total[$key] ?? 0,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
@@ -405,7 +428,7 @@ class DeliveryReturnController extends Controller
                     ['sale_id', $data['sale_id']]
                 ])->select('id', 'return_qty')->first();
                 if ($product_sale_data) {
-                    $product_sale_data->return_qty += $qty[$key];
+                    $product_sale_data->return_qty += $qty_val;
                     $product_sale_data->save();
                 }
             }

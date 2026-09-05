@@ -16,16 +16,8 @@
 
 <section>
     <div class="container-fluid">
-        @can('delivery-sales-sale-return')
-            <a href="{{ route('delivery-return.create') }}" class="btn btn-info add-sale-btn btn-icon"><i class="ti ti-plus"></i> {{ __('db.Add Return') }}</a>
-        @endcan
-
-        <button type="button" class="btn btn-warning btn-icon" id="toggle-filter">
-            <i class="ti ti-filter"></i> {{ __('db.Filter Sales') }}
-        </button>
-
         <div class="card mt-3 mb-2">
-            <div class="card-body" id="filter-card" style="display: none;">
+            <div class="card-body">
                 <form action="{{ route('delivery-return.index') }}" method="get">
                 <div class="row mt-2">
                     <div class="col-md-3">
@@ -57,6 +49,9 @@
                                 @endforeach
                             </select>
                         </div>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> {{ __('db.Filter') }}</button>
                     </div>
                 </div>
                 </form>
@@ -99,10 +94,6 @@
     $("ul#delivery").siblings('a').attr('aria-expanded', 'true');
     $("ul#delivery").addClass("show");
     $("ul#delivery #delivery-sale-return-menu").addClass("active");
-
-    $('#toggle-filter').on('click', function() {
-        $('#filter-card').slideToggle('slow');
-    });
 
     var all_permission = <?php echo json_encode($all_permission); ?>;
     var starting_date = $("input[name=starting_date]").val();

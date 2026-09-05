@@ -1354,32 +1354,35 @@ class DeliverySaleController extends Controller
                 $nestedData['sale_date'] = date(config('date_format'), strtotime($sale->created_at));
                 $nestedData['sale_status'] = $this->getSaleStatusLabel($sale->sale_status);
                 $nestedData['payment_status'] = $this->getPaymentStatusLabel($sale->payment_status);
-                $nestedData['grand_total'] = $sale->grand_total;
-                $nestedData['paid_amount'] = $sale->paid_amount;
-                $nestedData['due_amount'] = $sale->grand_total - $sale->paid_amount;
+                $nestedData['grand_total'] = number_format($sale->grand_total, config('decimal'));
+                $nestedData['paid_amount'] = number_format($sale->paid_amount, config('decimal'));
+                $nestedData['due_amount'] = number_format($sale->grand_total - $sale->paid_amount, config('decimal'));
+
                 $nestedData['options'] = '<div class="btn-group">
-                              <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' . __('db.action') . '
-                                <span class="caret"></span>
-                                <span class="sr-only">Toggle Dropdown</span>
-                              </button>
-                               <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
-                                   <li>
-                                       <a href="' . route("delivery-sale.show", $sale->id) . '" class="btn btn-link"><i class="ti ti-eye"></i> ' . __("db.View") . '</a>
-                                   </li>
-                                   <li>
-                                       <a href="' . route("delivery-sale.edit", $sale->id) . '" class="btn btn-link"><i class="ti ti-edit"></i> ' . __("db.edit") . '</a>
-                                   </li>
-                                   <li class="divider"></li>
-                                   <li>
-                                       <button type="button" class="toggle-status btn btn-link" data-id="' . $sale->id . '"><i class="ti ti-toggle-left"></i> ' . __("db.Toggle Status") . '</button>
-                                   </li>
-                                   <li class="divider"></li>
-                                   <form action="' . route("delivery-sale.delete", $sale->id) . '" method="POST">' . csrf_field() . '' . method_field("POST") . '
-                                   <li>
-                                     <button type="submit" class="btn btn-link confirm-delete-btn" data-id="' . $sale->id . '" data-name="' . $sale->reference_no . '"><i class="ti ti-trash"></i> ' . __("db.delete") . '</button>
-                                   </li></form>
-                               </ul>
-                           </div>';
+                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' . __('db.action') . '
+                    <span class="caret"></span>
+                    <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
+                        <li><a href="' . route("delivery-sale.invoice", $sale->id) . '" class="btn btn-link" target="_blank"><i class="ti ti-copy"></i> ' . __('db.Generate Invoice') . '</a></li>
+                        <li><a href="' . route("delivery-sale.show", $sale->id) . '" class="btn btn-link"><i class="ti ti-eye"></i> ' . __('db.View') . '</a></li>
+                        <li><a href="' . route("delivery-sale.edit", $sale->id) . '" class="btn btn-link"><i class="ti ti-edit"></i> ' . __('db.edit') . '</a></li>';
+
+                if ($sale->sale_status != 4) {
+                    $nestedData['options'] .= '<li>
+                            <a href="' . route("delivery-return.create") . '?reference_no=' . $sale->reference_no . '" class="btn btn-link"><i class="ti ti-arrow-back"></i> ' . __('db.Add Return') . '</a>
+                        </li>';
+                }
+
+                $nestedData['options'] .= '<li>
+                            <form action="' . route("delivery-sale.delete", $sale->id) . '" method="POST">' . csrf_field() . '' . method_field("POST") . '
+                            <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="ti ti-trash"></i> ' . __('db.delete') . '</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>';
+
+                $nestedData['sale'] = $sale->id;
                 $data[] = $nestedData;
             }
         }
