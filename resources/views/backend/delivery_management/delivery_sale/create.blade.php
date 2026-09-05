@@ -87,15 +87,6 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>
-                                            {{__('db.Reference No')}}
-                                        </label>
-                                        <input type="text" name="reference_no" class="form-control" />
-                                    </div>
-                                    <x-validation-error fieldName="reference_no" />
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
                                         <label>{{__('db.customer')}} *</label>
                                         <div class="input-group pos">
                                             @php
