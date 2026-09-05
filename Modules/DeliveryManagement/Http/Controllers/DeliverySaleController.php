@@ -990,7 +990,7 @@ class DeliverySaleController extends Controller
 
     public function show($id)
     {
-        $lims_sale_data = Sale::with(['customer', 'warehouse', 'biller', 'deliveryMan', 'route', 'products.product', 'payments'])->findOrFail($id);
+        $lims_sale_data = Sale::with(['customer', 'warehouse', 'biller', 'deliveryMan', 'route', 'productSales', 'payments'])->findOrFail($id);
 
         $role = Role::find(Auth::user()->role_id);
 
