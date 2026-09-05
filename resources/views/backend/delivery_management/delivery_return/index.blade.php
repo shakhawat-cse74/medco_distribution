@@ -16,6 +16,10 @@
 
 <section>
     <div class="container-fluid">
+        @can('delivery-sales-sale-return')
+            <a href="#" data-toggle="modal" data-target="#add-delivery-sale-return" class="btn btn-info"><i class="ti ti-plus"></i> {{ __('db.Add Return') }}</a>
+        @endcan
+
         <div class="card mt-3 mb-2">
             <div class="card-body">
                 <form action="{{ route('delivery-return.index') }}" method="get">
@@ -66,6 +70,7 @@
                     <th class="not-exported"></th>
                     <th>{{ __('db.date') }}</th>
                     <th>{{ __('db.reference') }}</th>
+                    <th>{{ __('db.Sale Reference') }}</th>
                     <th>{{ __('db.customer') }}</th>
                     <th>{{ __('db.Warehouse') }}</th>
                     <th>{{ __('db.Delivery Man') }}</th>
@@ -76,6 +81,7 @@
             <tfoot class="tfoot active">
                 <th></th>
                 <th>{{ __('db.Total') }}</th>
+                <th></th>
                 <th></th>
                 <th></th>
                 <th></th>
@@ -119,6 +125,7 @@
             { "data": "key" },
             { "data": "date" },
             { "data": "reference_no" },
+            { "data": "sale_reference" },
             { "data": "customer" },
             { "data": "warehouse" },
             { "data": "delivery_man" },
@@ -173,9 +180,9 @@
     function datatable_sum(dt_selector, is_calling_first) {
         if (dt_selector.rows('.selected').any() && is_calling_first) {
             var rows = dt_selector.rows('.selected').indexes();
-            $(dt_selector.column(6).footer()).html(dt_selector.cells(rows, 6, { page: 'current' }).data().sum().toFixed({{ config('decimal') }}));
+            $(dt_selector.column(7).footer()).html(dt_selector.cells(rows, 7, { page: 'current' }).data().sum().toFixed({{ config('decimal') }}));
         } else {
-            $(dt_selector.column(6).footer()).html(dt_selector.cells(rows, 6, { page: 'current' }).data().sum().toFixed({{ config('decimal') }}));
+            $(dt_selector.column(7).footer()).html(dt_selector.cells(rows, 7, { page: 'current' }).data().sum().toFixed({{ config('decimal') }}));
         }
     }
 
@@ -189,4 +196,30 @@
         table.ajax.reload();
     });
 </script>
+
+<div id="add-delivery-sale-return" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('delivery-return.create') }}" method="get">
+            <div class="modal-header">
+                <h5 id="exampleModalLabel" class="modal-title">Add Delivery Sale Return</h5>
+                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="ti ti-x"></i></span></button>
+            </div>
+            <div class="modal-body">
+                <p class="italic">
+                    <small>{{ __('The field labels marked with are required input fields') }}.</small></p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>{{ __('Sale Reference') }} *</label>
+                            <input type="text" name="reference_no" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">{{ __('db.submit') }}</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endpush

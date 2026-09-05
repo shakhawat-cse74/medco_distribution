@@ -88,10 +88,11 @@ class DeliveryReturnController extends Controller
         $columns = [
             1 => 'returns.created_at',
             2 => 'returns.reference_no',
-            3 => 'customers.name',
-            4 => 'warehouses.name',
-            5 => 'sales.delivery_man_id',
-            6 => 'returns.grand_total',
+            3 => 'sales.reference_no',
+            4 => 'customers.name',
+            5 => 'warehouses.name',
+            6 => 'sales.delivery_man_id',
+            7 => 'returns.grand_total',
         ];
 
         $warehouse_id = $request->input('warehouse_id', 0);
@@ -162,6 +163,7 @@ class DeliveryReturnController extends Controller
                 $nestedData['key'] = $key;
                 $nestedData['date'] = date(config('date_format'), strtotime($return->created_at->toDateString()));
                 $nestedData['reference_no'] = $return->reference_no;
+                $nestedData['sale_reference'] = $return->sale ? $return->sale->reference_no : 'N/A';
                 $nestedData['customer'] = $return->customer ? $return->customer->name : 'N/A';
                 $nestedData['warehouse'] = $return->warehouse ? $return->warehouse->name : 'N/A';
                 $nestedData['delivery_man'] = $deliveryManName;
