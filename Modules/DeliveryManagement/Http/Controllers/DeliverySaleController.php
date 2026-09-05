@@ -1261,11 +1261,11 @@ class DeliverySaleController extends Controller
     {
         $columns = array(
             0 => 'id',
-            1 => 'reference_no',
-            2 => 'customer',
-            3 => 'warehouse',
-            4 => 'delivery_man',
-            5 => 'sale_date',
+            1 => 'created_at',
+            2 => 'reference_no',
+            3 => 'customer',
+            4 => 'warehouse',
+            5 => 'delivery_man',
             6 => 'sale_status',
             7 => 'payment_status',
             8 => 'grand_total',
@@ -1281,8 +1281,9 @@ class DeliverySaleController extends Controller
         else
             $limit = $totalData;
         $start = $request->input('start');
-        $order = $columns[$request->input('order.0.column')];
-        $dir = $request->input('order.0.dir');
+        $orderColumnIndex = $request->input('order.0.column');
+        $order = $columns[$orderColumnIndex] ?? 'id';
+        $dir = $request->input('order.0.dir') ?? 'desc';
 
         $query = Sale::with(['customer', 'warehouse', 'deliveryMan'])
             ->whereNotNull('delivery_man_id');
@@ -1321,12 +1322,12 @@ class DeliverySaleController extends Controller
                 $nestedData['customer'] = $sale->customer ? $sale->customer->name : 'N/A';
                 $nestedData['warehouse'] = $sale->warehouse ? $sale->warehouse->name : 'N/A';
                 $nestedData['delivery_man'] = $sale->deliveryMan ? $sale->deliveryMan->name : 'N/A';
-                $nestedData['sale_date'] = date(config('date_format'), strtotime($sale->sale_date));
-                $nestedData['sale_status'] = ucfirst($sale->sale_status);
-                $nestedData['payment_status'] = ucfirst($sale->payment_status);
+                $nestedData['sale_date'] = date(config('date_format'), strtotime($sale->created_at));
+                $nestedData['sale_status'] = $this->getSaleStatusLabel($sale->sale_status);
+                $nestedData['payment_status'] = $this->getPaymentStatusLabel($sale->payment_status);
                 $nestedData['grand_total'] = $sale->grand_total;
                 $nestedData['paid_amount'] = $sale->paid_amount;
-                $nestedData['due_amount'] = $sale->due_amount;
+                $nestedData['due_amount'] = $sale->grand_total - $sale->paid_amount;
                 $nestedData['options'] = '<div class="btn-group">
                               <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' . __('db.action') . '
                                 <span class="caret"></span>
@@ -1616,5 +1617,30 @@ class DeliverySaleController extends Controller
         $lims_sale_data->save();
 
         return response()->json(['success' => true, 'message' => __('db.Status updated successfully')]);
+    }
+
+    private function getSaleStatusLabel($status)
+    {
+        return match ($status) {
+            1 => __('db.Completed'),
+            2 => __('db.Pending'),
+            3 => __('db.Draft'),
+            4 => __('db.Returned'),
+            5 => __('db.Processing'),
+            6 => __('db.Cooked'),
+            7 => __('db.Served'),
+            default => ucfirst($status),
+        };
+    }
+
+    private function getPaymentStatusLabel($status)
+    {
+        return match ($status) {
+            1 => __('db.Pending'),
+            2 => __('db.Due'),
+            3 => __('db.Partial'),
+            4 => __('db.Paid'),
+            default => ucfirst($status),
+        };
     }
 }
