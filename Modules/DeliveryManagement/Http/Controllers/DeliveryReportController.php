@@ -97,9 +97,7 @@ class DeliveryReportController extends Controller
                 })->count(),
                 'total_orders' => (clone $baseQuery)->count(),
                 'total_collection' => (float) ((clone $baseQuery)->sum('paid_amount') ?? 0),
-                'pending_deliveries' => DeliveryManDelivery::whereIn('delivery_man_id', $activeDeliveryManIds)->where('status', 'assigned')->when($selectedDeliveryManId, function ($query) use ($selectedDeliveryManId) {
-                    $query->where('delivery_man_id', $selectedDeliveryManId);
-                })->count(),
+                'pending_deliveries' => (clone $baseQuery)->where('sale_status', 2)->count(),
                 'completed_orders' => (clone $baseQuery)->where('sale_status', 1)->count(),
                 'pending_orders' => (clone $baseQuery)->where('sale_status', 2)->count(),
                 'total_due' => (float) ((clone $baseQuery)->sum(DB::raw('grand_total - paid_amount')) ?? 0),
