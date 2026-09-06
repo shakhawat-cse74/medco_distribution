@@ -2,7 +2,7 @@
 
 namespace Modules\DeliveryManagement\Database\Seeders;
 
-use Illuminate\Database\Seeders\Seeder;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -23,6 +23,8 @@ class DeliveryManagementPermissionsSeeder extends Seeder
             'delivery-sales-challan-slip-list',
             'delivery-sales-packing-slip-list',
             'delivery-sales-sale-return',
+            'delivery-sales-sale-return-edit',
+            'delivery-sales-sale-return-delete',
             'delivery-sales-installment-list',
             'delivery-sales-coupon-list',
             'delivery-sales-cupon-list',

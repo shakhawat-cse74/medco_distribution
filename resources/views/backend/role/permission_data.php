@@ -314,6 +314,8 @@ return [
         "delivery-sales-challan-slip-list" => "Challan Slip List",
         "delivery-sales-packing-slip-list" => "Packing Slip List",
         "delivery-sales-sale-return"       => "Sale Return",
+        "delivery-sales-sale-return-edit" => "Edit Sale Return",
+        "delivery-sales-sale-return-delete" => "Delete Sale Return",
         "delivery-sales-installment-list"  => "Installment List",
         "delivery-sales-coupon-list"       => "Coupon List",
         "delivery-sales-cupon-list"        => "Cupon List",
