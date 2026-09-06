@@ -2,12 +2,6 @@
 @push('css')
     @include('backend.layout.partials.datatable_css')
     <style>
-        .dt-buttons { margin-bottom: 10px; display: inline-flex; gap: 5px; }
-        .dt-buttons .btn { border: 1px solid #ddd; padding: 5px 10px; }
-        .btn-default { background: #f8f9fc; }
-        .btn-default:hover { background: #e2e6ea; }
-        .dataTables_filter { margin-bottom: 10px; }
-        .dataTables_length { margin-bottom: 10px; }
     </style>
 @endpush
 
@@ -73,9 +67,6 @@
 
         <div class="card mt-3">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="dt-buttons"></div>
-                </div>
                 <div class="table-responsive">
                     <table id="return-table" class="table sale-list" style="width: 100%">
                         <thead>
@@ -185,13 +176,48 @@
         ],
         'select': { style: 'multi', selector: 'td:first-child' },
         'lengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        dom: '<"row"<"col-sm-12"l>>rt<"row"<"col-sm-12"i><"col-sm-12"p>><"row"<"col-sm-12"B>>',
+        dom: '<"row"lfB>rtip',
         buttons: [
-            { extend: 'pdf', text: '<i class="ti ti-file-type-pdf"></i> PDF', className: 'btn btn-sm btn-default' },
-            { extend: 'excel', text: '<i class="ti ti-file-type-xls"></i> Excel', className: 'btn btn-sm btn-default' },
-            { extend: 'csv', text: '<i class="ti ti-file-type-csv"></i> CSV', className: 'btn btn-sm btn-default' },
-            { extend: 'print', text: '<i class="ti ti-printer"></i> Print', className: 'btn btn-sm btn-default' },
-            { extend: 'colvis', text: '<i class="ti ti-eye"></i> Columns', className: 'btn btn-sm btn-default' }
+            {
+                extend: 'pdf',
+                text: '<i title="export to pdf" class="ti ti-file-type-pdf"></i>',
+                exportOptions: {
+                    columns: ':visible:Not(.not-exported)',
+                    rows: ':visible'
+                },
+                footer: true
+            },
+            {
+                extend: 'excel',
+                text: '<i title="export to excel" class="ti ti-file-type-xls"></i>',
+                exportOptions: {
+                    columns: ':visible:Not(.not-exported)',
+                    rows: ':visible'
+                },
+                footer: true
+            },
+            {
+                extend: 'csv',
+                text: '<i title="export to csv" class="ti ti-file-type-csv"></i>',
+                exportOptions: {
+                    columns: ':visible:Not(.not-exported)',
+                    rows: ':visible'
+                },
+                footer: true
+            },
+            {
+                extend: 'print',
+                text: '<i title="print" class="ti ti-printer"></i>',
+                exportOptions: {
+                    columns: ':visible:Not(.not-exported)',
+                    rows: ':visible'
+                },
+                footer: true
+            },
+            {
+                extend: 'colvis',
+                text: '<i title="column visibility" class="ti ti-eye"></i>'
+            }
         ],
         drawCallback: function() {
             var api = this.api();
@@ -228,17 +254,21 @@
         returnDetails(returns);
     });
 
-    $("#print-btn").on("click", function() {
+    $(document).on('click', '#print-btn', function() {
         var divContents = document.getElementById("return-details").innerHTML;
-        var a = window.open('');
-        a.document.write('<html>');
-        a.document.write('<body>');
-        a.document.write('<style>body{font-family: sans-serif;line-height: 1.15;-webkit-text-size-adjust: 100%;}.text-center{text-align:center}.row{width:100%;margin-right: -15px;margin-left: -15px;}.col-md-12{width:100%;display:block;padding: 5px 15px;}.col-md-6{width: 50%;float:left;padding: 5px 15px;}table{width:100%;margin-top:30px;}th{text-align:left}td{padding:10px}table,th,td{border: 1px solid black; border-collapse: collapse;}</style>');
-        a.document.write(divContents);
-        a.document.write('</body></html>');
-        a.document.close();
-        setTimeout(function() { a.close(); }, 10);
-        a.print();
+        var printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write('<html><head><title>Print</title>');
+        printWindow.document.write('<style>body{font-family: Arial, sans-serif; line-height: 1.5; padding: 20px;}');
+        printWindow.document.write('table{width:100%; border-collapse: collapse; margin-top: 20px;} ');
+        printWindow.document.write('th,td{border: 1px solid #ddd; padding: 8px; text-align: left;} ');
+        printWindow.document.write('th{background-color: #f2f2f2;} .text-center{text-align:center;} ');
+        printWindow.document.write('.modal-header{display:none;} @media print {.modal-dialog{display:none;}}</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(divContents);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(function() { printWindow.print(); }, 250);
     });
 
     function returnDetails(returns) {
