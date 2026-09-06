@@ -2178,6 +2178,28 @@ class ProductController extends Controller
             'highest_price'         => 'product_highest_price',
             'wholesale_price'       => 'wholesale_price',
             'wholesaleprice'        => 'wholesale_price',
+
+            'websiteprice'          => 'website_price',
+            'website_price'         => 'website_price',
+            'onlineprice'           => 'website_price',
+            'online_price'          => 'website_price',
+
+            '3dmodelfile'           => 'file',
+            '3d_model_file'         => 'file',
+            'modelfile'             => 'file',
+            'model_file'            => 'file',
+            'file'                  => 'file',
+
+            'producttags'           => 'tags',
+            'product_tags'          => 'tags',
+            'tags'                  => 'tags',
+            'tag'                   => 'tags',
+
+            'metatitle'             => 'meta_title',
+            'meta_title'            => 'meta_title',
+
+            'metadescription'       => 'meta_description',
+            'meta_description'      => 'meta_description',
         ];
 
         // --- PASS 1: STREAM METRICS, CATEGORIES, BRANDS & VARIANTS FOR CACHE WARM-UP ---
@@ -2749,6 +2771,41 @@ class ProductController extends Controller
                 $alert_quantity = isset($rowRef['alert_quantity']) && trim($rowRef['alert_quantity']) !== '' ? (float)$rowRef['alert_quantity'] : null;
                 $daily_sale_objective = isset($rowRef['daily_sale_objective']) && trim($rowRef['daily_sale_objective']) !== '' ? (float)$rowRef['daily_sale_objective'] : null;
 
+                // Website Price & SEO fields
+                $website_price = isset($rowRef['website_price']) && trim((string)$rowRef['website_price']) !== '' ? (float)$rowRef['website_price'] : null;
+                $tags = isset($rowRef['tags']) && trim((string)$rowRef['tags']) !== '' ? trim($rowRef['tags']) : null;
+                $meta_title = isset($rowRef['meta_title']) && trim((string)$rowRef['meta_title']) !== '' ? trim($rowRef['meta_title']) : null;
+                $meta_description = isset($rowRef['meta_description']) && trim((string)$rowRef['meta_description']) !== '' ? trim($rowRef['meta_description']) : null;
+
+                // 3D Model File handling
+                $stagedModelFile = null;
+                if (!empty($rowRef['file'])) {
+                    $rawModelFile = trim($rowRef['file']);
+                    if (filter_var($rawModelFile, FILTER_VALIDATE_URL)) {
+                        try {
+                            $destDir = public_path('product/files');
+                            if (!file_exists($destDir)) {
+                                @mkdir($destDir, 0755, true);
+                            }
+                            $ext = pathinfo(parse_url($rawModelFile, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'glb';
+                            $genFileName = strtotime(date('Y-m-d H:i:s')) . '_' . uniqid() . '.' . $ext;
+                            $destPath = $destDir . '/' . $genFileName;
+                            $ctx = stream_context_create([
+                                'http' => ['timeout' => 5, 'follow_location' => 1, 'max_redirects' => 3, 'user_agent' => 'Mozilla/5.0']
+                            ]);
+                            $fData = @file_get_contents($rawModelFile, false, $ctx);
+                            if ($fData !== false) {
+                                file_put_contents($destPath, $fData);
+                                $stagedModelFile = $genFileName;
+                            }
+                        } catch (\Exception $e) {
+                            Log::error("Failed to download 3D model file: " . $e->getMessage());
+                        }
+                    } else {
+                        $stagedModelFile = basename($rawModelFile);
+                    }
+                }
+
                 // Variants Option & Values list
                 $vOpt = trim($rowRef['variant_option'] ?? '');
                 $vVal = trim($rowRef['variant_value'] ?? ($rowRef['variantname'] ?? ''));
@@ -2889,6 +2946,11 @@ class ProductController extends Controller
                     'warranty_type'          => $warranty_type,
                     'guarantee'              => $guarantee,
                     'guarantee_type'         => $guarantee_type,
+                    'website_price'          => $website_price,
+                    'model_file'             => $stagedModelFile,
+                    'tags'                   => $tags,
+                    'meta_title'             => $meta_title,
+                    'meta_description'       => $meta_description,
                 ];
             }
 

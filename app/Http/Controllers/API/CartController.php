@@ -542,7 +542,7 @@ class CartController extends Controller
             }
 
             $qty = (float) $row->qty;
-            $regularPrice = (float) $product->price;
+            $regularPrice = (!empty($product->website_price) && $product->website_price > 0) ? (float) $product->website_price : (float) $product->price;
             $isPromo = (bool) $product->promotion && $product->promotion_price > 0;
             $unitPrice = $isPromo ? (float)$product->promotion_price : $regularPrice;
 
@@ -659,7 +659,8 @@ class CartController extends Controller
         $product = $cartItem->product ?? Product::find($cartItem->product_id);
         $images = $product ? $this->parseImages($product->image) : [];
 
-        $unitPrice = (float) ($product->promotion && $product->promotion_price > 0 ? $product->promotion_price : ($product->price ?? 0));
+        $regularPrice = (!empty($product->website_price) && $product->website_price > 0) ? (float) $product->website_price : (float) ($product->price ?? 0);
+        $unitPrice = (float) ($product->promotion && $product->promotion_price > 0 ? $product->promotion_price : $regularPrice);
 
         return [
             'cart_id'     => $cartItem->id,

@@ -831,13 +831,15 @@ if (session()->get('currency_code')) {
                             var url = "{{url('/product')}}/"+value.slug+"/"+value.id;
                             var date = "{{date('Y-m-d')}}";
 
+                            var regularPrice = (value.website_price && parseFloat(value.website_price) > 0) ? value.website_price : value.price;
+
                             if ((value.promotion == 1) && ((value.last_date > date) || (value.last_date == null))) {
                                 var promotionPrice = formatCurrency(value.promotion_price);
-                                var originalPrice = formatCurrency(value.price);
+                                var originalPrice = formatCurrency(regularPrice);
 
                                 var price = '<span class="price">' + promotionPrice + '</span><span class="old-price">' + originalPrice + '</span>';
                             } else {
-                                var normalPrice = formatCurrency(value.price);
+                                var normalPrice = formatCurrency(regularPrice);
                                 var price = '<span class="price">' + normalPrice + '</span>';
                             }
 

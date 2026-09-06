@@ -4,9 +4,11 @@
     $images = !empty($product->image) ? array_filter(explode(',', $product->image)) : [];
     $main_image = count($images) > 0 ? $images[0] : null;
 
+    $effective_price = (!empty($product->website_price) && $product->website_price > 0) ? (float)$product->website_price : (float)$product->price;
+
     $base_price = ($product->promotion == 1 && (!isset($product->last_date) || $product->last_date > date('Y-m-d')) && !empty($product->promotion_price))
         ? (float)$product->promotion_price
-        : (float)$product->price;
+        : $effective_price;
 
     $curr_symbol = $currency->symbol ?? '$';
     $is_prefix = ($general_setting->currency_position ?? 'prefix') == 'prefix';
@@ -1382,7 +1384,7 @@ model-viewer {
                             {{ Str::limit($rel->name, 45) }}
                         </a>
                         <div class="wss-comp-price-tag">
-                            {{ format_curr($rel->price, $curr_symbol, $is_prefix) }}
+                            {{ format_curr((!empty($rel->website_price) && $rel->website_price > 0 ? $rel->website_price : $rel->price), $curr_symbol, $is_prefix) }}
                         </div>
                         <div class="wss-comp-form">
                             <input type="number" class="wss-comp-qty-field" value="1" min="1">

@@ -347,7 +347,7 @@ class CheckoutController extends Controller
                 $product = Product::with(['unit', 'category', 'brand'])->where('id', $pId)->where('is_active', 1)->first();
                 if (!$product) continue;
 
-                $regularPrice = (float) $product->price;
+                $regularPrice = (!empty($product->website_price) && $product->website_price > 0) ? (float) $product->website_price : (float) $product->price;
                 $isPromo = (bool) $product->promotion && $product->promotion_price > 0;
                 $unitPrice = $isPromo ? (float)$product->promotion_price : $regularPrice;
 

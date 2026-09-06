@@ -1,8 +1,11 @@
 <div class="single-product-wrapper">
     <div class="single-product-item">
+        @php
+            $display_regular_price = (!empty($product->website_price) && $product->website_price > 0) ? (float)$product->website_price : (float)$product->price;
+        @endphp
         @if(($product->promotion == 1) && (($product->last_date > date('Y-m-d')) || !isset($product->last_date)))
         <div class="product-promo-text style1 bg-danger">
-            <span>-{{ round(($product->price - $product->promotion_price) / $product->price * 100) }}%</span>
+            <span>-{{ round(($display_regular_price - $product->promotion_price) / $display_regular_price * 100) }}%</span>
         </div>
         @endif
         <a href="{{url('product')}}/{{$product->slug}}/{{$product->id}}"  class="view-details">
@@ -44,19 +47,19 @@
                 {{ $product->promotion_price }} {{$currency->symbol ?? $currency->code}}
                 @endif
             </span>
-            <span class="old-price" data-old_price="{{  $product->price }}">
+            <span class="old-price" data-old_price="{{  $display_regular_price }}">
                 @if($general_setting->currency_position == 'prefix')
-                {{$currency->symbol ?? $currency->code}} {{ $product->price }}
+                {{$currency->symbol ?? $currency->code}} {{ $display_regular_price }}
                 @else
-                {{ $product->price }} {{$currency->symbol ?? $currency->code}}
+                {{ $display_regular_price }} {{$currency->symbol ?? $currency->code}}
                 @endif
             </span>
             @else
-            <span class="price" data-price="{{ $product->price }}">
+            <span class="price" data-price="{{ $display_regular_price }}">
                 @if($general_setting->currency_position == 'prefix')
-                {{$currency->symbol ?? $currency->code}} {{ $product->price }}
+                {{$currency->symbol ?? $currency->code}} {{ $display_regular_price }}
                 @else
-                {{ $product->price }} {{$currency->symbol ?? $currency->code}}
+                {{ $display_regular_price }} {{$currency->symbol ?? $currency->code}}
                 @endif
             </span>
             @endif

@@ -52,7 +52,7 @@ class CartController extends Controller
 		else
 			$variant = 0;
 
-    	$product = Product::select('image', 'name', 'slug', 'price', 'sale_unit_id', 'promotion_price', 'promotion')->find($id);
+    	$product = Product::select('image', 'name', 'slug', 'price', 'website_price', 'sale_unit_id', 'promotion_price', 'promotion')->find($id);
     	$cart = session()->has('cart') ? session()->get('cart') : [];
     	$total_qty = session()->has('total_qty') ? session()->get('total_qty') : 0;
 		$subTotal = session()->has('subTotal') ? session()->get('subTotal') : 0;
@@ -62,6 +62,7 @@ class CartController extends Controller
 			$cart[$cid]['total_price'] += $qty * $cart[$cid]['unit_price'];
     	}
     	else {
+            $effectivePrice = (!empty($product->website_price) && $product->website_price > 0) ? (float)$product->website_price : (float)$product->price;
             if($product->promotion) {
         		$cart[$cid] = [
         			'id' => $id,
@@ -83,8 +84,8 @@ class CartController extends Controller
 					'slug' => $product->slug,
                     'qty' => $qty,
                     'sale_unit_id' => $product->sale_unit_id,
-                    'unit_price' => $product->price,
-                    'total_price' => $qty * $product->price,
+                    'unit_price' => $effectivePrice,
+                    'total_price' => $qty * $effectivePrice,
 					'variant' => $variant
                 ];
             }

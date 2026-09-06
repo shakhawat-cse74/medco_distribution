@@ -21,6 +21,9 @@
             @endif
         </a>
         <div class="product-price">
+            @php
+                $display_regular_price = (!empty($product->website_price) && $product->website_price > 0) ? (float)$product->website_price : (float)$product->price;
+            @endphp
             @if(($product->promotion == 1) && (($product->last_date > date('Y-m-d')) || !isset($product->last_date)))
             <span class="price">
                 @if($general_setting->currency_position == 'prefix')
@@ -31,17 +34,17 @@
             </span>
             <span class="old-price">
                 @if($general_setting->currency_position == 'prefix')
-                {{$currency->symbol ?? $currency->code}} {{ $product->price }}
+                {{$currency->symbol ?? $currency->code}} {{ $display_regular_price }}
                 @else
-                {{ $product->price }} {{$currency->symbol ?? $currency->code}}
+                {{ $display_regular_price }} {{$currency->symbol ?? $currency->code}}
                 @endif
             </span>
             @else
             <span class="price">
                 @if($general_setting->currency_position == 'prefix')
-                {{$currency->symbol ?? $currency->code}} {{ $product->price }}
+                {{$currency->symbol ?? $currency->code}} {{ $display_regular_price }}
                 @else
-                {{ $product->price }} {{$currency->symbol ?? $currency->code}}
+                {{ $display_regular_price }} {{$currency->symbol ?? $currency->code}}
                 @endif
             </span>
             @endif

@@ -263,7 +263,8 @@ class ProductController extends Controller
     {
         $images = $this->parseProductImages($product->image);
 
-        $price = (float) $product->price;
+        $regularPrice = (!empty($product->website_price) && $product->website_price > 0) ? (float) $product->website_price : (float) $product->price;
+        $price = $regularPrice;
         $isPromo = (bool) $product->promotion;
         $promoPrice = $isPromo && $product->promotion_price ? (float) $product->promotion_price : null;
         $currentPrice = $isPromo && $promoPrice ? $promoPrice : $price;

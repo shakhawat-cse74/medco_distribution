@@ -80,6 +80,9 @@
                                                             @endif
                                                         </div>
                                                     </div>
+                                                    @php
+                                                        $eff_wish_price = (!empty($product->website_price) && $product->website_price > 0) ? (float)$product->website_price : (float)$product->price;
+                                                    @endphp
                                                     <div class="d-lg-none d-xl-none d-flex align-items-center justify-content-between">
                                                         @if(($product->promotion == 1) && (($product->last_date > date('Y-m-d')) || !isset($product->last_date)))
                                                         <div>
@@ -90,20 +93,20 @@
                                                                 {{ $product->promotion_price }} {{$currency->symbol ?? $currency->code}}
                                                                 @endif
                                                             </span>
-                                                            <span class="old-price mr-3" data-old_price="{{ $product->price }}">
+                                                            <span class="old-price mr-3" data-old_price="{{ $eff_wish_price }}">
                                                                 @if($general_setting->currency_position == 'prefix')
-                                                                {{$currency->symbol ?? $currency->code}} {{ $product->price }}
+                                                                {{$currency->symbol ?? $currency->code}} {{ $eff_wish_price }}
                                                                 @else
-                                                                {{ $product->price }} {{$currency->symbol ?? $currency->code}}
+                                                                {{ $eff_wish_price }} {{$currency->symbol ?? $currency->code}}
                                                                 @endif
                                                             </span>
                                                         </div>
                                                         @else
-                                                        <span class="price mr-3" data-price="{{ $product->price }}">
+                                                        <span class="price mr-3" data-price="{{ $eff_wish_price }}">
                                                             @if($general_setting->currency_position == 'prefix')
-                                                            {{$currency->symbol ?? $currency->code}} {{ $product->price }}
+                                                            {{$currency->symbol ?? $currency->code}} {{ $eff_wish_price }}
                                                             @else
-                                                            {{ $product->price }} {{$currency->symbol ?? $currency->code}}
+                                                            {{ $eff_wish_price }} {{$currency->symbol ?? $currency->code}}
                                                             @endif
                                                         </span>
                                                         @endif
@@ -134,19 +137,19 @@
                                                         {{ $product->promotion_price }} {{$currency->symbol ?? $currency->code}}
                                                         @endif
                                                     </span>
-                                                    <span class="old-price" data-old_price="{{ $product->price }}">
+                                                    <span class="old-price" data-old_price="{{ $eff_wish_price }}">
                                                         @if($general_setting->currency_position == 'prefix')
-                                                        {{$currency->symbol ?? $currency->code}} {{ $product->price }}
+                                                        {{$currency->symbol ?? $currency->code}} {{ $eff_wish_price }}
                                                         @else
-                                                        {{ $product->price }} {{$currency->symbol ?? $currency->code}}
+                                                        {{ $eff_wish_price }} {{$currency->symbol ?? $currency->code}}
                                                         @endif
                                                     </span>
                                                     @else
-                                                    <span class="price" data-price="{{ $product->price }}">
+                                                    <span class="price" data-price="{{ $eff_wish_price }}">
                                                         @if($general_setting->currency_position == 'prefix')
-                                                        {{$currency->symbol ?? $currency->code}} {{ $product->price }}
+                                                        {{$currency->symbol ?? $currency->code}} {{ $eff_wish_price }}
                                                         @else
-                                                        {{ $product->price }} {{$currency->symbol ?? $currency->code}}
+                                                        {{ $eff_wish_price }} {{$currency->symbol ?? $currency->code}}
                                                         @endif
                                                     </span>
                                                     @endif

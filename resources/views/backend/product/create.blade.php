@@ -498,6 +498,13 @@
                                         <span class="validation-msg"></span>
                                     </div>
                                 </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Website Price</label>
+                                        <input type="number" name="website_price" class="form-control" step="any" placeholder="e.g. 29.99">
+                                        <small class="form-text text-muted">Special price for online store/website</small>
+                                    </div>
+                                </div>
                                 {{-- Product Lowest, Average, Highest Price (Hidden/Commented) --}}
                                 {{--
                                 <div class="col-md-4">

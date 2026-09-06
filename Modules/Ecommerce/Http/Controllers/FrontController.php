@@ -113,7 +113,7 @@ class FrontController extends Controller
     public function search($product)
     {
         $search = $product;
-        $data = DB::table('products')->select('id', 'image', 'name', 'slug','in_stock','qty','price','promotion_price','promotion','last_date','is_variant')
+        $data = DB::table('products')->select('id', 'image', 'name', 'slug','in_stock','qty','price','website_price','promotion_price','promotion','last_date','is_variant')
             ->where('is_active', 1)
             ->where('is_online', 1)
             ->where(function ($query) use ($search) {
@@ -200,10 +200,10 @@ class FrontController extends Controller
         $sub_category = !empty($product->sub_category_id) ? DB::table('categories')->where('id', $product->sub_category_id)->first() : null;
         $unit = !empty($product->unit_id) ? DB::table('units')->where('id', $product->unit_id)->first() : null;
 
-        // Base & tiered bulk pricing
+        $effective_price = (!empty($product->website_price) && $product->website_price > 0) ? (float)$product->website_price : (float)$product->price;
         $base_price = ($product->promotion == 1 && (!isset($product->last_date) || $product->last_date > date('Y-m-d')) && !empty($product->promotion_price))
             ? (float)$product->promotion_price
-            : (float)$product->price;
+            : $effective_price;
 
         $tier_discounts = [
             [
@@ -272,7 +272,7 @@ class FrontController extends Controller
 
     public function allProducts()
     {
-        $data = Product::select('id', 'image', 'name', 'price', 'promotion_price')->where('is_active', 1)->where('is_online', 1)->take(10)->get();
+        $data = Product::select('id', 'image', 'name', 'price', 'website_price', 'promotion_price')->where('is_active', 1)->where('is_online', 1)->take(10)->get();
 
         return response()->json($data);
     }
@@ -412,7 +412,7 @@ class FrontController extends Controller
                         ->values() // Reset keys
                         ->toArray();
         $products = DB::table('products')
-                    ->select('id', 'image', 'name', 'slug','in_stock','qty','price','promotion_price','promotion','last_date','is_variant')
+                    ->select('id', 'image', 'name', 'slug','in_stock','qty','price','website_price','promotion_price','promotion','last_date','is_variant')
                     ->whereIn('id',$product_ids)
                     ->where('is_active', 1)
                     ->where('is_online', 1)
@@ -430,7 +430,7 @@ class FrontController extends Controller
         $product_arr = explode(',',$collection->products);
 
         $products = DB::table('products')
-                    ->select('id', 'image', 'name', 'slug','in_stock','qty','price','promotion_price','promotion','last_date','is_variant')
+                    ->select('id', 'image', 'name', 'slug','in_stock','qty','price','website_price','promotion_price','promotion','last_date','is_variant')
                     ->whereIn('id', $product_arr)
                     ->where('is_active', 1)
                     ->where('is_online', 1)
