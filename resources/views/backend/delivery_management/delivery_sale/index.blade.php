@@ -19,11 +19,6 @@
         @can('delivery-sales-add')
             <a href="{{route('delivery-sale.create')}}" class="btn btn-info add-sale-btn btn-icon"><i class="ti ti-plus"></i> {{__('db.Add Sale')}}</a>
         @endcan
-        <a href="{{route('delivery-sale.pos')}}" class="btn btn-primary add-sale-btn btn-icon"><i class="ti ti-shopping-cart"></i> {{__('db.POS')}}</a>
-        <a href="{{route('delivery-sale.giftCardList')}}" class="btn btn-secondary add-sale-btn btn-icon"><i class="ti ti-gift"></i> {{__('db.Gift Card List')}}</a>
-        <a href="{{route('delivery-sale.challanList')}}" class="btn btn-warning add-sale-btn btn-icon"><i class="ti ti-file"></i> {{__('db.Challan List')}}</a>
-        <a href="{{route('delivery-sale.saleReturn')}}" class="btn btn-info add-sale-btn btn-icon"><i class="ti ti-arrow-back"></i> {{__('db.Sale Return')}}</a>
-        <a href="{{route('delivery-sale.installmentList')}}" class="btn btn-dark add-sale-btn btn-icon"><i class="ti ti-calendar"></i> {{__('db.Installment List')}}</a>
 
         <button type="button" class="btn btn-warning btn-icon" id="toggle-filter">
             <i class="ti ti-filter"></i> {{ __('db.Filter Sales') }}
@@ -80,7 +75,6 @@
                                 <option value="0">{{__('db.All')}}</option>
                                 <option value="1">{{__('db.Completed')}}</option>
                                 <option value="2">{{__('db.Pending')}}</option>
-                                <option value="3">{{__('db.Draft')}}</option>
                                 <option value="4">{{__('db.Returned')}}</option>
                             </select>
                         </div>
@@ -146,11 +140,46 @@
     $("ul#delivery").addClass("show");
     $("ul#delivery #delivery-sale-menu").addClass("active");
 
+    var show_products_details = false;
+    let columns = [
+        { "data": "key" },
+        { "data": "sale_date" },
+        { "data": "reference_no" },
+        { "data": "customer" },
+        { "data": "warehouse" },
+        { "data": "delivery_man" },
+        { "data": "sale_status" },
+        { "data": "payment_status" },
+        { "data": "grand_total" },
+        { "data": "paid_amount" },
+        { "data": "due_amount" },
+        { "data": "options" }
+    ];
+
+    var all_permission = <?php echo json_encode($all_permission ?? []); ?>;
+    var sale_id = [];
+    var user_verified = <?php echo json_encode(config('app.user_verified')); ?>;
+    var starting_date = <?php echo json_encode($starting_date ?? date('Y-m-d')); ?>;
+    var ending_date = <?php echo json_encode($ending_date ?? date('Y-m-d')); ?>;
+    var warehouse_id = 0;
+    var sale_status = 0;
+    var payment_status = 0;
+
+    function confirmDelete() {
+        return confirm("Are you sure you want to delete this sale?");
+    }
+
     $('#toggle-filter').on('click', function() {
         $('#filter-card').slideToggle('slow');
     });
 
-    var table = $('#sale-table').DataTable({
+    $(function () {
+        $("#warehouse_id").val(warehouse_id);
+        $("#sale-status").val(sale_status);
+        $("#payment-status").val(payment_status);
+    });
+
+    let table = $('#sale-table').DataTable({
         "processing": true,
         "serverSide": true,
         "ajax": {
@@ -167,20 +196,11 @@
             dataType: "json",
             type: "GET"
         },
-        "columns": [
-            { "data": "key" },
-            { "data": "date" },
-            { "data": "reference_no" },
-            { "data": "customer" },
-            { "data": "warehouse" },
-            { "data": "delivery_man" },
-            { "data": "sale_status" },
-            { "data": "payment_status" },
-            { "data": "grand_total" },
-            { "data": "paid_amount" },
-            { "data": "due" },
-            { "data": "options" }
-        ],
+        "createdRow": function( row, data, dataIndex ) {
+            $(row).addClass('sale-link');
+            $(row).attr('data-sale', data['sale']);
+        },
+        "columns": columns,
         'language': {
             'lengthMenu': '_MENU_ {{ __("db.records per page") }}',
             "info": '<small>{{ __("db.Showing") }} _START_ - _END_ (_TOTAL_)</small>',
@@ -213,13 +233,101 @@
         'select': { style: 'multi', selector: 'td:first-child' },
         'lengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
         dom: '<"row"lfB>rtip',
+        rowId: 'ObjectID',
         buttons: [
-            { extend: 'pdf', text: '<i title="export to pdf" class="ti ti-file-type-pdf"></i>' },
-            { extend: 'excel', text: '<i title="export to excel" class="ti ti-file-type-xls"></i>' },
-            { extend: 'csv', text: '<i title="export to csv" class="ti ti-file-type-csv"></i>' },
-            { extend: 'print', text: '<i title="print" class="ti ti-printer"></i>' },
+            {
+                extend: 'pdf',
+                text: '<i title="export to pdf" class="ti ti-file-type-pdf"></i>',
+                exportOptions: {
+                    columns: ":visible:Not(.not-exported)",
+                    rows: ":visible"
+                },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.pdfHtml5.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
+            {
+                extend: 'excel',
+                text: '<i title="export to excel" class="ti ti-file-type-xls"></i>',
+                exportOptions: {
+                    columns: ":visible:Not(.not-exported)",
+                    rows: ":visible"
+                },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
+            {
+                extend: 'csv',
+                text: '<i title="export to csv" class="ti ti-file-type-csv"></i>',
+                exportOptions: {
+                    columns: ":visible:Not(.not-exported)",
+                    rows: ":visible"
+                },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.csvHtml5.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
+            {
+                extend: 'print',
+                text: '<i title="print" class="ti ti-printer"></i>',
+                exportOptions: {
+                    columns: ":visible:Not(.not-exported)",
+                    rows: ":visible"
+                },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.print.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
             { extend: 'colvis', text: '<i title="column visibility" class="ti ti-eye"></i>' }
-        ]
+        ],
+        drawCallback: function () {
+            var api = this.api();
+            datatable_sum(api, false);
+        }
+    });
+
+    function datatable_sum(dt_selector, is_calling_first) {
+        var rows;
+        if (dt_selector.rows('.selected').any() && is_calling_first) {
+            rows = dt_selector.rows('.selected').indexes();
+        } else {
+            rows = dt_selector.rows({ page: 'current' }).indexes();
+        }
+
+        var grandTotal = 0;
+        var paidAmount = 0;
+        var dueAmount = 0;
+
+        dt_selector.cells(rows, 8).data().each(function(value) {
+            grandTotal += parseFloat(String(value).replace(/,/g, '')) || 0;
+        });
+        dt_selector.cells(rows, 9).data().each(function(value) {
+            paidAmount += parseFloat(String(value).replace(/,/g, '')) || 0;
+        });
+        dt_selector.cells(rows, 10).data().each(function(value) {
+            dueAmount += parseFloat(String(value).replace(/,/g, '')) || 0;
+        });
+
+        $(dt_selector.column(8).footer()).html(formatCurrency(grandTotal));
+        $(dt_selector.column(9).footer()).html(formatCurrency(paidAmount));
+        $(dt_selector.column(10).footer()).html(formatCurrency(dueAmount));
+    }
+
+    table.on('draw', function() {
+        datatable_sum(table, false);
     });
 
     $('#warehouse_id, #delivery_man_id, #route_id, #sale-status, #payment-status').on('change', function() {

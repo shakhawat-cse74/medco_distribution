@@ -5,7 +5,7 @@
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <h3 class="mb-0">{{ __('db.Sale Details') }} - {{ $lims_sale_data->reference_no }}</h3>
+                <h3 class="mb-0">{{ __('db.Delivery Sale Details') }} - {{ $lims_sale_data->reference_no }}</h3>
             </div>
             <div class="card-body">
                 <div class="row">

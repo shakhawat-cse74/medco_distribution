@@ -16,6 +16,11 @@ class Product_Sale extends Model
         return $this->belongsTo(Sale::class, 'sale_id');
     }
 
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+
     public function modifiers()
     {
         return $this->hasMany(\Modules\Restaurant\Entities\ProductSaleModifier::class, 'product_sale_id');

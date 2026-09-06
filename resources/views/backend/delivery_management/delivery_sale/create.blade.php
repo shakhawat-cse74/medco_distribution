@@ -87,15 +87,6 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>
-                                            {{__('db.Reference No')}}
-                                        </label>
-                                        <input type="text" name="reference_no" class="form-control" />
-                                    </div>
-                                    <x-validation-error fieldName="reference_no" />
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
                                         <label>{{__('db.customer')}} *</label>
                                         <div class="input-group pos">
                                             @php
@@ -1264,9 +1255,9 @@
 </script>
 <script type="text/javascript">
 
-    $("ul#sale").siblings('a').attr('aria-expanded','true');
-    $("ul#sale").addClass("show");
-    $("ul#sale #sale-create-menu").addClass("active");
+    $("ul#delivery-management").siblings('a').attr('aria-expanded','true');
+    $("ul#delivery-management").addClass("show");
+    $("ul#delivery-management #delivery-sales-menu").addClass("active");
 
     @if(config('database.connections.saleprosaas_landlord'))
         numberOfInvoice = <?php echo json_encode($numberOfInvoice)?>;
@@ -2938,43 +2929,38 @@ $(document).on('submit', '.payment-form', function(e) {
             type: $('.payment-form').attr('method'),
             data: $('.payment-form').serialize(),
             success: function(response) {
+                if (response.redirect_url) {
+                    location.href = response.redirect_url;
+                    return;
+                }
 
                 if (response.payment_method === 'pesapal' && response.redirect_url) {
-                    // Redirect to the URL returned for Pesapal payment method
                     location.href = response.redirect_url;
                 }else if(response.payment_method === 'moneipoint'){
                 }else if ($('select[name="sale_status"]').val() == 1 && response !== 'pesapal') {
-                    let link = "{{ url('sales/gen_invoice') }}/" + response + "?is_print=true";
-                    $.ajax({
-                        url: link,
-                        type: 'GET',
-                        success: function(data) {
-                            if (data.trim() === 'receipt_printer') {
-                                alert("{{ __('db.The receipt has been successfully printed') }}");
-                                location.href = "{{route('sales.index')}}";
-                            } else if (data.trim() === 'invoice_settings_error') {
-                                alert("{{ __('db.Please select either the 58mm or 80mm template as the default in Invoice Settings') }}");
-                                location.href = "{{route('sales.index')}}";
-                            } else {
-                                location.href = link;
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error("Error loading invoice:", error);
-                        }
-                    });
+                    let saleId = response.sale_id || response;
+                    let link = "{{ url('delivery-sale') }}/" + saleId;
+                    location.href = link;
                 }
                 else if($('select[name="sale_status"]').val() != 1){
                     localStorage.clear();
-                    location.href = "{{route('sales.index')}}";
+                    location.href = "{{route('delivery-sale.index')}}";
                 }
                 else {
                     localStorage.clear();
-                    location.href = response;
+                    location.href = response.redirect_url || response;
                 }
             },
             error: function(xhr) {
-                alert(xhr.responseJSON.message);
+                let message = 'An error occurred';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    message = xhr.responseJSON.error;
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    message = xhr.responseText;
+                }
+                alert(message);
                 $("#submit-button").prop('disabled', false);
             }
         });
