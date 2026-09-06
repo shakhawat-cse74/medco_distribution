@@ -255,7 +255,7 @@
     });
 
     $(document).on('click', '#print-btn', function() {
-        var divContents = document.getElementById("return-details").innerHTML;
+        var printContent = document.getElementById("return-details").cloneNode(true);
         var printWindow = window.open('', '', 'height=600,width=800');
         printWindow.document.write('<!DOCTYPE html><html><head><title>Print</title>');
         printWindow.document.write('<link rel="stylesheet" href="{{ asset("backend/css/app.css") }}">');
@@ -263,9 +263,9 @@
         printWindow.document.write('table{width:100%; border-collapse: collapse; margin-top: 20px;} ');
         printWindow.document.write('th,td{border: 1px solid #ddd; padding: 8px; text-align: left;} ');
         printWindow.document.write('th{background-color: #f4f4f4;} .text-center{text-align:center;} ');
-        printWindow.document.write('.modal-header{display:none;} .d-print-none{display:none;} @media print {.modal-dialog{display:none;}}</style>');
+        printWindow.document.write('.d-print-none{display:none;}</style>');
         printWindow.document.write('</head><body>');
-        printWindow.document.write(divContents);
+        printWindow.document.body.innerHTML = printContent.innerHTML;
         printWindow.document.write('</body></html>');
         printWindow.document.close();
         printWindow.focus();
