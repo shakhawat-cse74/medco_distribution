@@ -1289,17 +1289,16 @@ class DeliverySaleController extends Controller
     public function saleData(Request $request)
     {
         $columns = array(
-            0 => 'id',
-            1 => 'created_at',
-            2 => 'reference_no',
-            3 => 'customer',
-            4 => 'warehouse',
-            5 => 'delivery_man',
-            6 => 'sale_status',
-            7 => 'payment_status',
-            8 => 'grand_total',
-            9 => 'paid_amount',
-            10 => 'due_amount',
+            0 => 'sales.id',
+            1 => 'sales.created_at',
+            2 => 'sales.reference_no',
+            3 => 'customers.name',
+            4 => 'warehouses.name',
+            5 => 'delivery_men.name',
+            6 => 'sales.sale_status',
+            7 => 'sales.payment_status',
+            8 => 'sales.grand_total',
+            9 => 'sales.paid_amount',
         );
 
         $totalData = Sale::whereNotNull('delivery_man_id')->count();
@@ -1311,31 +1310,33 @@ class DeliverySaleController extends Controller
             $limit = $totalData;
         $start = $request->input('start');
         $orderColumnIndex = $request->input('order.0.column');
-        $order = $columns[$orderColumnIndex] ?? 'id';
+        $order = $columns[$orderColumnIndex] ?? 'sales.id';
         $dir = $request->input('order.0.dir') ?? 'desc';
 
         $query = Sale::with(['customer', 'warehouse', 'deliveryMan'])
-            ->whereNotNull('delivery_man_id');
+            ->leftJoin('customers', 'sales.customer_id', '=', 'customers.id')
+            ->leftJoin('warehouses', 'sales.warehouse_id', '=', 'warehouses.id')
+            ->leftJoin('delivery_men', 'sales.delivery_man_id', '=', 'delivery_men.id')
+            ->whereNotNull('sales.delivery_man_id');
 
         if ($request->has('warehouse_id') && $request->warehouse_id) {
-            $query->where('warehouse_id', $request->warehouse_id);
+            $query->where('sales.warehouse_id', $request->warehouse_id);
         }
 
         if ($request->has('delivery_man_id') && $request->delivery_man_id) {
-            $query->where('delivery_man_id', $request->delivery_man_id);
+            $query->where('sales.delivery_man_id', $request->delivery_man_id);
         }
 
         if (!empty($request->input('search.value'))) {
             $search = $request->input('search.value');
             $query->where(function ($q) use ($search) {
-                $q->where('reference_no', 'LIKE', "%{$search}%")
-                    ->orWhereHas('customer', function ($q2) use ($search) {
-                        $q2->where('name', 'LIKE', "%{$search}%");
-                    });
+                $q->where('sales.reference_no', 'LIKE', "%{$search}%")
+                    ->orWhere('customers.name', 'LIKE', "%{$search}%");
             });
         }
 
-        $sales = $query->offset($start)
+        $sales = $query->select('sales.*')
+            ->offset($start)
             ->limit($limit)
             ->orderBy($order, $dir)
             ->get();
