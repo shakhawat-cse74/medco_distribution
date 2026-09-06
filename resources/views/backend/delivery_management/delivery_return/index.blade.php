@@ -257,12 +257,13 @@
     $(document).on('click', '#print-btn', function() {
         var divContents = document.getElementById("return-details").innerHTML;
         var printWindow = window.open('', '', 'height=600,width=800');
-        printWindow.document.write('<html><head><title>Print</title>');
+        printWindow.document.write('<!DOCTYPE html><html><head><title>Print</title>');
+        printWindow.document.write('<link rel="stylesheet" href="{{ asset("backend/css/app.css") }}">');
         printWindow.document.write('<style>body{font-family: Arial, sans-serif; line-height: 1.5; padding: 20px;}');
         printWindow.document.write('table{width:100%; border-collapse: collapse; margin-top: 20px;} ');
         printWindow.document.write('th,td{border: 1px solid #ddd; padding: 8px; text-align: left;} ');
-        printWindow.document.write('th{background-color: #f2f2f2;} .text-center{text-align:center;} ');
-        printWindow.document.write('.modal-header{display:none;} @media print {.modal-dialog{display:none;}}</style>');
+        printWindow.document.write('th{background-color: #f4f4f4;} .text-center{text-align:center;} ');
+        printWindow.document.write('.modal-header{display:none;} .d-print-none{display:none;} @media print {.modal-dialog{display:none;}}</style>');
         printWindow.document.write('</head><body>');
         printWindow.document.write(divContents);
         printWindow.document.write('</body></html>');
@@ -281,6 +282,11 @@
         if(returns[25])
             htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="documents/sale_return/'+returns[25]+'">Download</a><br>';
         htmltext += '<br><div class="row"><div class="col-md-6"><strong>{{__("db.Biller")}}:</strong><br>'+returns[3]+'<br>'+returns[4]+'<br>'+returns[5]+'<br>'+returns[6]+'<br>'+returns[7]+'<br>'+returns[8]+'</div><div class="col-md-6"><div class="float-right"><strong>{{__("db.Customer")}}:</strong><br>'+returns[9]+'<br>'+returns[10]+'<br>'+returns[11]+'<br>'+returns[12]+'</div></div></div>';
+        
+        $('#return-content').html(htmltext);
+        var htmlfooter = '<p><strong>{{__("db.Return Note")}}:</strong> '+returns[20]+'</p><p><strong>{{__("db.Staff Note")}}:</strong> '+returns[21]+'</p><strong>{{__("db.Created By")}}:</strong><br>'+returns[22]+'<br>'+returns[23];
+        $('#return-footer').html(htmlfooter);
+        
         $.get('/delivery-return/product_return/' + returns[13], function(data){
             $(".product-return-list tbody").remove();
             var name_code = data[0];
@@ -299,7 +305,7 @@
                 cols += '<td>' + name_code[index] + '</td>';
                 cols += '<td>' + (batch_no[index] || 'N/A') + '</td>';
                 cols += '<td>' + qty[index] + ' ' + (unit_code[index] || '') + '</td>';
-                cols += '<td>' + (subtotal[index] / qty[index]) + '</td>';
+                cols += '<td>' + (parseFloat(subtotal[index]) / parseFloat(qty[index])).toFixed({{ config('decimal') }}) + '</td>';
                 cols += '<td>' + tax[index] + '(' + tax_rate[index] + '%)' + '</td>';
                 cols += '<td>' + discount[index] + '</td>';
                 cols += '<td>' + subtotal[index] + '</td>';
@@ -331,11 +337,8 @@
             newBody.append(newRow);
 
             $("table.product-return-list").append(newBody);
+            $('#return-details').modal('show');
         });
-        var htmlfooter = '<p><strong>{{__("db.Return Note")}}:</strong> '+returns[20]+'</p><p><strong>{{__("db.Staff Note")}}:</strong> '+returns[21]+'</p><strong>{{__("db.Created By")}}:</strong><br>'+returns[22]+'<br>'+returns[23];
-        $('#return-content').html(htmltext);
-        $('#return-footer').html(htmlfooter);
-        $('#return-details').modal('show');
     }
 </script>
 
