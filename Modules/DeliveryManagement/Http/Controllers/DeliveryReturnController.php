@@ -98,6 +98,18 @@ class DeliveryReturnController extends Controller
         $warehouse_id = $request->input('warehouse_id', 0);
         $delivery_man_id = $request->input('delivery_man_id', 0);
 
+        $role = Role::find(Auth::user()->role_id);
+        $all_permission = [];
+        if ($role->hasPermissionTo('delivery-sales-sale-return')) {
+            $permissions = Role::findByName($role->name)->permissions;
+            foreach ($permissions as $permission) {
+                $all_permission[] = $permission->name;
+            }
+            if (empty($all_permission)) {
+                $all_permission[] = 'dummy text';
+            }
+        }
+
         $query = Returns::with(['biller', 'customer', 'warehouse', 'user', 'sale.deliveryMan'])
             ->join('sales', 'returns.sale_id', '=', 'sales.id')
             ->join('customers', 'returns.customer_id', '=', 'customers.id')
@@ -168,7 +180,38 @@ class DeliveryReturnController extends Controller
                 $nestedData['warehouse'] = $return->warehouse ? $return->warehouse->name : 'N/A';
                 $nestedData['delivery_man'] = $deliveryManName;
                 $nestedData['grand_total'] = number_format($return->grand_total / $return->exchange_rate, config('decimal'));
-                $nestedData['options'] = $this->buildActionButtons($return);
+                $nestedData['options'] = $this->buildActionButtons($return, $all_permission);
+
+                $nestedData['return'] = array(
+                    date(config('date_format'), strtotime($return->created_at->toDateString())),
+                    $return->reference_no,
+                    $return->warehouse ? $return->warehouse->name : 'N/A',
+                    $return->biller ? $return->biller->name : 'N/A',
+                    $return->biller ? $return->biller->company_name : 'N/A',
+                    $return->biller ? $return->biller->email : 'N/A',
+                    $return->biller ? $return->biller->phone_number : 'N/A',
+                    $return->biller ? $return->biller->address : 'N/A',
+                    $return->biller ? $return->biller->city : 'N/A',
+                    $return->customer ? $return->customer->name : 'N/A',
+                    $return->customer ? $return->customer->phone_number : 'N/A',
+                    $return->customer ? $return->customer->address : 'N/A',
+                    $return->customer ? $return->customer->city : 'N/A',
+                    $return->id,
+                    $return->total_tax,
+                    $return->total_discount,
+                    $return->total_price,
+                    $return->order_tax,
+                    $return->order_tax_rate,
+                    $return->grand_total,
+                    preg_replace('/[\n\r]/', "<br>", $return->return_note ?? ''),
+                    preg_replace('/[\n\r]/', "<br>", $return->staff_note ?? ''),
+                    $return->user ? $return->user->name : 'N/A',
+                    $return->user ? $return->user->email : 'N/A',
+                    $nestedData['sale_reference'],
+                    $return->document,
+                    $return->currency_id ? Currency::find($return->currency_id)->code : config('currency'),
+                    $return->exchange_rate
+                );
                 $data[] = $nestedData;
             }
         }
@@ -183,18 +226,29 @@ class DeliveryReturnController extends Controller
         return response()->json($json_data);
     }
 
-    private function buildActionButtons($return)
+    private function buildActionButtons($return, $all_permission = [])
     {
         $html = '<div class="btn-group">
-            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' . __("db.action") . '
+            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspupup="true" aria-expanded="false">' . __("db.action") . '
               <span class="caret"></span>
               <span class="sr-only">Toggle Dropdown</span>
             </button>
             <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
                 <li>
-                    <a href="' . route('delivery-return.show', $return->id) . '" class="btn btn-link"><i class="ti ti-eye"></i> ' . __('db.View') . '</a>
-                </li>
-            </ul>
+                    <button type="button" class="btn btn-link view"><i class="ti ti-eye"></i> ' . __('db.View') . '</button>
+                </li>';
+        if (in_array("delivery-sales-sale-return-edit", $all_permission)) {
+            $html .= '<li>
+                    <a href="' . route('delivery-return.edit', $return->id) . '" class="btn btn-link"><i class="ti ti-edit"></i> ' . __('db.edit') . '</a>
+                </li>';
+        }
+        if (in_array("delivery-sales-sale-return-delete", $all_permission)) {
+            $html .= '<form action="' . route("delivery-return.destroy", $return->id) . '" method="POST">' . csrf_field() . '' . method_field("DELETE") . '
+                    <li>
+                      <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="ti ti-trash"></i> ' . __("db.delete") . '</button>
+                    </li></form>';
+        }
+        $html .= '</ul>
         </div>';
 
         return $html;
@@ -464,6 +518,138 @@ class DeliveryReturnController extends Controller
         ));
     }
 
+    public function edit($id)
+    {
+        $role = Role::find(Auth::user()->role_id);
+        if (!$role->hasPermissionTo('delivery-sales-sale-return-edit')) {
+            return redirect()->back()->with('not_permitted', __('db Sorry! You are not allowed to access this module'));
+        }
+
+        $lims_customer_list = Customer::where('is_active', true)->get();
+        $lims_warehouse_list = Warehouse::where('is_active', true)->get();
+        $lims_biller_list = Biller::where('is_active', true)->get();
+        $lims_tax_list = Tax::where('is_active', true)->get();
+        $lims_account_list = Account::where('is_active', true)->get();
+        $lims_return_data = Returns::with(['sale.deliveryMan'])->find($id);
+        $lims_product_return_data = ProductReturn::where('return_id', $id)->get();
+
+        return view('backend.delivery_management.delivery_return.edit', compact(
+            'lims_customer_list',
+            'lims_warehouse_list',
+            'lims_biller_list',
+            'lims_tax_list',
+            'lims_account_list',
+            'lims_return_data',
+            'lims_product_return_data'
+        ));
+    }
+
+    public function update(Request $request, $id)
+    {
+        DB::beginTransaction();
+        try {
+            $data = $request->except('document', 'total_sale_discount', '_method', '_token');
+            $document = $request->document;
+            $lims_return_data = Returns::find($id);
+            $data['total_discount'] = $request->input('total_discount') + ($lims_return_data->total_discount ?? 0);
+
+            if ($document) {
+                $v = Validator::make(
+                    ['extension' => strtolower($request->document->getClientOriginalExtension())],
+                    ['extension' => 'in:jpg,jpeg,png,gif,pdf,csv,docx,xlsx,txt']
+                );
+                if ($v->fails()) {
+                    return redirect()->back()->withErrors($v->errors());
+                }
+
+                if ($lims_return_data->document && file_exists(public_path('documents/sale_return/' . $lims_return_data->document))) {
+                    unlink(public_path('documents/sale_return/' . $lims_return_data->document));
+                }
+
+                $ext = pathinfo($document->getClientOriginalName(), PATHINFO_EXTENSION);
+                $documentName = date("Ymdhis") . '.' . $ext;
+                $document->move(public_path('documents/sale_return'), $documentName);
+                $data['document'] = $documentName;
+            }
+
+            $lims_return_data->update($data);
+
+            return redirect('delivery-return')->with('message', __('db.Return updated successfully'));
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Delivery Return update failed: ' . $e->getMessage());
+            return redirect()->back()->with('not_permitted', 'Something went wrong: ' . $e->getMessage());
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $lims_return_data = Returns::find($id);
+            $refund = Payment::where('return_id', $lims_return_data->id)->latest()->first();
+
+            if ($refund) {
+                $refund->delete();
+            }
+
+            $lims_product_return_data = ProductReturn::where('return_id', $id)->get();
+
+            foreach ($lims_product_return_data as $product_return_data) {
+                $lims_product_data = Product::find($product_return_data->product_id);
+
+                if ($lims_product_data->type == 'combo') {
+                    continue;
+                }
+
+                if ($product_return_data->sale_unit_id != 0) {
+                    $lims_sale_unit_data = Unit::find($product_return_data->sale_unit_id);
+                    if ($lims_sale_unit_data) {
+                        if ($lims_sale_unit_data->operator == '*') {
+                            $quantity = $product_return_data->qty * $lims_sale_unit_data->operation_value;
+                        } elseif ($lims_sale_unit_data->operator == '/') {
+                            $quantity = $product_return_data->qty / $lims_sale_unit_data->operation_value;
+                        }
+                    } else {
+                        $quantity = $product_return_data->qty;
+                    }
+                } else {
+                    $quantity = $product_return_data->qty;
+                }
+
+                if ($product_return_data->variant_id) {
+                    $lims_product_variant_data = ProductVariant::select('id', 'qty')
+                        ->FindExactProduct($product_return_data->product_id, $product_return_data->variant_id)
+                        ->first();
+                    if ($lims_product_variant_data) {
+                        $lims_product_variant_data->qty -= $quantity;
+                        $lims_product_variant_data->save();
+                    }
+                }
+
+                $lims_product_warehouse_data = Product_Warehouse::FindProductWithoutVariant($product_return_data->product_id, $lims_return_data->warehouse_id)->first();
+                if ($lims_product_warehouse_data) {
+                    $lims_product_warehouse_data->qty -= $quantity;
+                    $lims_product_warehouse_data->save();
+                }
+
+                $lims_product_data->qty -= $quantity;
+                $lims_product_data->save();
+            }
+
+            ProductReturn::where('return_id', $id)->delete();
+            $lims_return_data->delete();
+
+            DB::commit();
+            return redirect('delivery-return')->with('message', __('db.Return deleted successfully'));
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Delivery Return delete failed: ' . $e->getMessage());
+            return redirect()->back()->with('not_permitted', 'Something went wrong: ' . $e->getMessage());
+        }
+    }
+
     public function getCustomerGroup($id)
     {
         $lims_customer_data = Customer::find($id);
@@ -634,6 +820,7 @@ class DeliveryReturnController extends Controller
     public function productReturnData($id)
     {
         $lims_product_return_data = ProductReturn::where('return_id', $id)->get();
+        $product_return = [];
         foreach ($lims_product_return_data as $key => $product_return_data) {
             $product = Product::find($product_return_data->product_id);
             if ($product_return_data->sale_unit_id != 0) {

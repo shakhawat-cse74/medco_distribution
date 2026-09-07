@@ -1,6 +1,8 @@
 @extends('backend.layout.main')
 @push('css')
     @include('backend.layout.partials.datatable_css')
+    <style>
+    </style>
 @endpush
 
 @section('content')
@@ -19,10 +21,10 @@
             </div>
             <div class="card-body">
                 <form action="{{ route('delivery-return.index') }}" method="get">
-                <div class="row">
+                <div class="row align-items-end">
                     <div class="col-md-4">
-                        <div class="form-group">
-                            <label>{{ __('db.date') }}</label>
+                        <div class="form-group mb-0">
+                            <label>{{ __('db.Date') }}</label>
                             <div class="input-group">
                                 <input type="text" class="daterangepicker-field form-control" value="{{ $starting_date }} To {{ $ending_date }}" required />
                                 <input type="hidden" name="starting_date" value="{{ $starting_date }}" />
@@ -31,7 +33,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             <label>{{ __('db.Warehouse') }}</label>
                             <select id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true">
                                 <option value="0">{{ __('db.All Warehouse') }}</option>
@@ -42,7 +44,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             <label>{{ __('db.Delivery Man') }}</label>
                             <select id="delivery_man_id" name="delivery_man_id" class="selectpicker form-control" data-live-search="true">
                                 <option value="0">{{ __('db.All Delivery Man') }}</option>
@@ -52,42 +54,51 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary btn-block"><i class="ti ti-filter"></i> {{ __('db.Filter') }}</button>
+                    <div class="col-md-2">
+                        <div class="form-group mb-0">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block"><i class="ti ti-filter"></i> {{ __('db.Filter') }}</button>
+                        </div>
                     </div>
                 </div>
                 </form>
             </div>
         </div>
-    </div>
 
-    <div class="table-responsive">
-        <table id="return-table" class="table sale-list" style="width: 100%">
-            <thead>
-                <tr>
-                    <th class="not-exported"></th>
-                    <th>{{ __('db.date') }}</th>
-                    <th>{{ __('db.reference') }}</th>
-                    <th>{{ __('db.Sale Reference') }}</th>
-                    <th>{{ __('db.customer') }}</th>
-                    <th>{{ __('db.Warehouse') }}</th>
-                    <th>{{ __('db.Delivery Man') }}</th>
-                    <th>{{ __('db.grand total') }}</th>
-                    <th class="not-exported">{{ __('db.action') }}</th>
-                </tr>
-            </thead>
-            <tfoot class="tfoot active">
-                <th></th>
-                <th>{{ __('db.Total') }}</th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-            </tfoot>
-        </table>
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="return-table" class="table sale-list" style="width: 100%">
+                        <thead>
+                            <tr>
+                                <th class="not-exported"></th>
+                                <th>{{ __('db.date') }}</th>
+                                <th>{{ __('db.reference') }}</th>
+                                <th>{{ __('db.Sale Reference') }}</th>
+                                <th>{{ __('db.customer') }}</th>
+                                <th>{{ __('db.Warehouse') }}</th>
+                                <th>{{ __('db.Delivery Man') }}</th>
+                                <th>{{ __('db.grand total') }}</th>
+                                <th class="not-exported">{{ __('db.action') }}</th>
+                            </tr>
+                        </thead>
+                        <tfoot class="tfoot active">
+                            <tr>
+                                <th></th>
+                                <th>{{ __('db.Total') }}</th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 @endsection
@@ -118,6 +129,10 @@
             },
             dataType: "json",
             type: "post"
+        },
+        "createdRow": function(row, data, dataIndex) {
+            $(row).addClass('return-link');
+            $(row).attr('data-return', JSON.stringify(data['return']));
         },
         "columns": [
             { "data": "key" },
@@ -163,13 +178,48 @@
         'lengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
         dom: '<"row"lfB>rtip',
         buttons: [
-            { extend: 'pdf', text: '<i class="ti ti-file-type-pdf"></i>' },
-            { extend: 'excel', text: '<i class="ti ti-file-type-xls"></i>' },
-            { extend: 'csv', text: '<i class="ti ti-file-type-csv"></i>' },
-            { extend: 'print', text: '<i class="ti ti-printer"></i>' },
-            { extend: 'colvis', text: '<i class="ti ti-eye"></i>' }
+            {
+                extend: 'pdf',
+                text: '<i title="export to pdf" class="ti ti-file-type-pdf"></i>',
+                exportOptions: {
+                    columns: ':visible:Not(.not-exported)',
+                    rows: ':visible'
+                },
+                footer: true
+            },
+            {
+                extend: 'excel',
+                text: '<i title="export to excel" class="ti ti-file-type-xls"></i>',
+                exportOptions: {
+                    columns: ':visible:Not(.not-exported)',
+                    rows: ':visible'
+                },
+                footer: true
+            },
+            {
+                extend: 'csv',
+                text: '<i title="export to csv" class="ti ti-file-type-csv"></i>',
+                exportOptions: {
+                    columns: ':visible:Not(.not-exported)',
+                    rows: ':visible'
+                },
+                footer: true
+            },
+            {
+                extend: 'print',
+                text: '<i title="print" class="ti ti-printer"></i>',
+                exportOptions: {
+                    columns: ':visible:Not(.not-exported)',
+                    rows: ':visible'
+                },
+                footer: true
+            },
+            {
+                extend: 'colvis',
+                text: '<i title="column visibility" class="ti ti-eye"></i>'
+            }
         ],
-        drawCallback: function () {
+        drawCallback: function() {
             var api = this.api();
             datatable_sum(api, false);
         }
@@ -193,7 +243,148 @@
         $('input[name="ending_date"]').val(picker.endDate.format('YYYY-MM-DD'));
         table.ajax.reload();
     });
+
+    $(document).on("click", "tr.return-link td:not(:first-child, :last-child)", function() {
+        var returns = JSON.parse($(this).parent().attr('data-return'));
+        returnDetails(returns);
+    });
+
+    $(document).on("click", ".view", function() {
+        var returns = JSON.parse($(this).closest('tr').attr('data-return'));
+        returnDetails(returns);
+    });
+
+    $(document).on('click', '#print-btn', function() {
+        var printContent = document.getElementById("return-details").cloneNode(true);
+        var printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write('<!DOCTYPE html><html><head><title>Print</title>');
+        printWindow.document.write('<link rel="stylesheet" href="{{ asset("backend/css/app.css") }}">');
+        printWindow.document.write('<style>body{font-family: Arial, sans-serif; line-height: 1.5; padding: 20px;}');
+        printWindow.document.write('table{width:100%; border-collapse: collapse; margin-top: 20px;} ');
+        printWindow.document.write('th,td{border: 1px solid #ddd; padding: 8px; text-align: left;} ');
+        printWindow.document.write('th{background-color: #f4f4f4;} .text-center{text-align:center;} ');
+        printWindow.document.write('.d-print-none{display:none;}</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.body.innerHTML = printContent.innerHTML;
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(function() { printWindow.print(); }, 250);
+    });
+
+    function returnDetails(returns) {
+        $('input[name="return_id"]').val(returns[13]);
+        var htmltext = '<strong>{{__("db.date")}}: </strong>'+returns[0]+'<br><strong>{{__("db.reference")}}: </strong>'+returns[1]+'<br><strong>{{__("db.Sale Reference")}}: </strong>'+returns[24]+'<br><strong>{{__("db.Warehouse")}}: </strong>'+returns[2]+'<br><strong>{{__("db.Currency")}}: </strong>'+returns[26];
+        if(returns[27])
+            htmltext += '<br><strong>{{__("db.Exchange Rate")}}: </strong>'+returns[27]+'<br>';
+        else
+            htmltext += '<br><strong>{{__("db.Exchange Rate")}}: </strong>N/A<br>';
+        if(returns[25])
+            htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="documents/sale_return/'+returns[25]+'">Download</a><br>';
+        htmltext += '<br><div class="row"><div class="col-md-6"><strong>{{__("db.Biller")}}:</strong><br>'+returns[3]+'<br>'+returns[4]+'<br>'+returns[5]+'<br>'+returns[6]+'<br>'+returns[7]+'<br>'+returns[8]+'</div><div class="col-md-6"><div class="float-right"><strong>{{__("db.Customer")}}:</strong><br>'+returns[9]+'<br>'+returns[10]+'<br>'+returns[11]+'<br>'+returns[12]+'</div></div></div>';
+        
+        $('#return-content').html(htmltext);
+        var htmlfooter = '<p><strong>{{__("db.Return Note")}}:</strong> '+returns[20]+'</p><p><strong>{{__("db.Staff Note")}}:</strong> '+returns[21]+'</p><strong>{{__("db.Created By")}}:</strong><br>'+returns[22]+'<br>'+returns[23];
+        $('#return-footer').html(htmlfooter);
+        
+        $.get('/delivery-return/product_return/' + returns[13], function(data){
+            $(".product-return-list tbody").remove();
+            var name_code = data[0];
+            var qty = data[1];
+            var unit_code = data[2];
+            var tax = data[3];
+            var tax_rate = data[4];
+            var discount = data[5];
+            var subtotal = data[6];
+            var batch_no = data[7];
+            var newBody = $("<tbody>");
+            $.each(name_code, function(index){
+                var newRow = $("<tr>");
+                var cols = '';
+                cols += '<td><strong>' + (index+1) + '</strong></td>';
+                cols += '<td>' + name_code[index] + '</td>';
+                cols += '<td>' + (batch_no[index] || 'N/A') + '</td>';
+                cols += '<td>' + qty[index] + ' ' + (unit_code[index] || '') + '</td>';
+                cols += '<td>' + (parseFloat(subtotal[index]) / parseFloat(qty[index])).toFixed({{ config('decimal') }}) + '</td>';
+                cols += '<td>' + tax[index] + '(' + tax_rate[index] + '%)' + '</td>';
+                cols += '<td>' + discount[index] + '</td>';
+                cols += '<td>' + subtotal[index] + '</td>';
+                newRow.append(cols);
+                newBody.append(newRow);
+            });
+
+            var newRow = $("<tr>");
+            cols = '';
+            cols += '<td colspan=5><strong>{{__("db.Total")}}:</strong></td>';
+            cols += '<td>' + returns[14] + '</td>';
+            cols += '<td>' + returns[15] + '</td>';
+            cols += '<td>' + returns[16] + '</td>';
+            newRow.append(cols);
+            newBody.append(newRow);
+
+            var newRow = $("<tr>");
+            cols = '';
+            cols += '<td colspan=7><strong>{{__("db.Order Tax")}}:</strong></td>';
+            cols += '<td>' + returns[17] + '(' + returns[18] + '%)' + '</td>';
+            newRow.append(cols);
+            newBody.append(newRow);
+
+            var newRow = $("<tr>");
+            cols = '';
+            cols += '<td colspan=7><strong>{{__("db.grand total")}}:</strong></td>';
+            cols += '<td>' + returns[19] + '</td>';
+            newRow.append(cols);
+            newBody.append(newRow);
+
+            $("table.product-return-list").append(newBody);
+            $('#return-details').modal('show');
+        });
+    }
 </script>
+
+<div id="return-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="row" style="width:100%">
+                    <div class="col-md-6">
+                        <form action="{{ route('delivery-return.sendmail') }}" method="post" class="sendmail-form">
+                            @csrf
+                            <input type="hidden" name="return_id">
+                            <button class="btn btn-default btn-sm d-print-none" type="submit"><i class="ti ti-mail"></i> {{__('db.Email')}}</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6 d-print-none">
+                        <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="ti ti-x"></i></span></button>
+                        <button type="button" id="print-btn" class="btn btn-default btn-sm"><i class="ti ti-printer"></i> {{__('db.Print')}}</button>
+                    </div>
+                    <div class="col-md-12">
+                        <h3 id="exampleModalLabel" class="modal-title text-center container-fluid">{{gen_setting()->site_title}}</h3>
+                    </div>
+                    <div class="col-md-12 text-center">
+                        <i style="font-size: 15px;">{{__('db.Return Details')}}</i>
+                    </div>
+                </div>
+            </div>
+            <div id="return-content" class="modal-body"></div>
+            <br>
+            <table class="table table-bordered product-return-list">
+                <thead>
+                    <th>#</th>
+                    <th>{{__('db.product')}}</th>
+                    <th>{{__('db.Batch No')}}</th>
+                    <th>{{__('db.qty')}}</th>
+                    <th>{{__('db.Unit Price')}}</th>
+                    <th>{{__('db.Tax')}}</th>
+                    <th>{{__('db.Discount')}}</th>
+                    <th>{{__('db.Subtotal')}}</th>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div id="return-footer" class="modal-body"></div>
+        </div>
+    </div>
+</div>
 
 <div id="add-delivery-sale-return" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog modal-sm">

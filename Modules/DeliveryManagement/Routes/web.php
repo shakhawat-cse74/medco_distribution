@@ -209,6 +209,9 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::get('product_return/{id}', 'productReturnData')->name('productReturnData');
         Route::post('sendmail', 'sendMail')->name('sendmail');
         Route::get('{id}', 'show')->name('show');
+        Route::get('{id}/edit', 'edit')->name('edit');
+        Route::put('{id}', 'update')->name('update');
+        Route::delete('{id}', 'destroy')->name('destroy');
     });
 
     Route::controller(DeliveryExchangeController::class)->prefix('delivery-exchange')->name('delivery-exchange.')->group(function () {

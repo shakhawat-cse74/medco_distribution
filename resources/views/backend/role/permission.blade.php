@@ -2624,20 +2624,118 @@
 															</span>
 														<span class="delivery-sales-section">
 															<div>
-																	<div class="">
-																		@if(in_array("delivery-sales-index", $all_permission))
-																			<input type="checkbox" value="1" id="delivery-sales-index"
-																				name="delivery-sales-index" checked>
-																		@else
-																			<input type="checkbox" value="1" id="delivery-sales-index"
-																				name="delivery-sales-index">
-																		@endif
-																		<label for="delivery-sales-index"
-																			class="padding05">{{__('db.Delivery Sales')}}
-																			&nbsp;&nbsp;</label>
-																	</div>
+																<div class="">
+																	@if(in_array("delivery-sales-index", $all_permission))
+																		<input type="checkbox" value="1" id="delivery-sales-index"
+																			name="delivery-sales-index" checked>
+																	@else
+																		<input type="checkbox" value="1" id="delivery-sales-index"
+																			name="delivery-sales-index">
+																	@endif
+																	<label for="delivery-sales-index"
+																		class="padding05">{{__('db.Delivery Sales')}}
+																	&nbsp;&nbsp;</label>
 																</div>
-															</span>
+															</div>
+															<div>
+																<div class="">
+																	@if(in_array("delivery-sales-add", $all_permission))
+																		<input type="checkbox" value="1" id="delivery-sales-add"
+																			name="delivery-sales-add" checked>
+																	@else
+																		<input type="checkbox" value="1" id="delivery-sales-add"
+																			name="delivery-sales-add">
+																	@endif
+																	<label for="delivery-sales-add"
+																		class="padding05">{{__('db.Add Delivery Sale')}}
+																	&nbsp;&nbsp;</label>
+																</div>
+															</div>
+															<div>
+																<div class="">
+																	@if(in_array("delivery-sales-edit", $all_permission))
+																		<input type="checkbox" value="1" id="delivery-sales-edit"
+																			name="delivery-sales-edit" checked>
+																	@else
+																		<input type="checkbox" value="1" id="delivery-sales-edit"
+																			name="delivery-sales-edit">
+																	@endif
+																	<label for="delivery-sales-edit"
+																		class="padding05">{{__('db.Edit Delivery Sale')}}
+																	&nbsp;&nbsp;</label>
+																</div>
+															</div>
+															<div>
+																<div class="">
+																	@if(in_array("delivery-sales-delete", $all_permission))
+																		<input type="checkbox" value="1" id="delivery-sales-delete"
+																			name="delivery-sales-delete" checked>
+																	@else
+																		<input type="checkbox" value="1" id="delivery-sales-delete"
+																			name="delivery-sales-delete">
+																	@endif
+																	<label for="delivery-sales-delete"
+																		class="padding05">{{__('db.Delete Delivery Sale')}}
+																	&nbsp;&nbsp;</label>
+																</div>
+															</div>
+															<div>
+																<div class="">
+																	@if(in_array("delivery-sales-sale-return", $all_permission))
+																		<input type="checkbox" value="1" id="delivery-sales-sale-return"
+																			name="delivery-sales-sale-return" checked>
+																	@else
+																		<input type="checkbox" value="1" id="delivery-sales-sale-return"
+																			name="delivery-sales-sale-return">
+																	@endif
+																	<label for="delivery-sales-sale-return"
+																		class="padding05">{{__('db.Sale Return')}}
+																	&nbsp;&nbsp;</label>
+																</div>
+															</div>
+															<div>
+																<div class="">
+																	@if(in_array("delivery-sales-sale-return-edit", $all_permission))
+																		<input type="checkbox" value="1" id="delivery-sales-sale-return-edit"
+																			name="delivery-sales-sale-return-edit" checked>
+																	@else
+																		<input type="checkbox" value="1" id="delivery-sales-sale-return-edit"
+																			name="delivery-sales-sale-return-edit">
+																	@endif
+																	<label for="delivery-sales-sale-return-edit"
+																		class="padding05">{{__('db.Edit Sale Return')}}
+																	&nbsp;&nbsp;</label>
+																</div>
+															</div>
+															<div>
+																<div class="">
+																	@if(in_array("delivery-sales-sale-return-delete", $all_permission))
+																		<input type="checkbox" value="1" id="delivery-sales-sale-return-delete"
+																			name="delivery-sales-sale-return-delete" checked>
+																	@else
+																		<input type="checkbox" value="1" id="delivery-sales-sale-return-delete"
+																			name="delivery-sales-sale-return-delete">
+																	@endif
+																	<label for="delivery-sales-sale-return-delete"
+																		class="padding05">{{__('db.Delete Sale Return')}}
+																	&nbsp;&nbsp;</label>
+																</div>
+															</div>
+															<div>
+																<div class="">
+																	@if(in_array("delivery-sales-sale-exchange", $all_permission))
+																		<input type="checkbox" value="1" id="delivery-sales-sale-exchange"
+																			name="delivery-sales-sale-exchange" checked>
+																	@else
+																		<input type="checkbox" value="1" id="delivery-sales-sale-exchange"
+																			name="delivery-sales-sale-exchange">
+																	@endif
+																	<label for="delivery-sales-sale-exchange"
+																		class="padding05">{{__('db.Sale Exchange')}}
+																	&nbsp;&nbsp;</label>
+																</div>
+															</div>
+														</span>
 														<span class="delivery-installments-section">
 															<div>
 																	<div class="">
