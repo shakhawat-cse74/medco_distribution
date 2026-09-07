@@ -12,9 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sales', function (Blueprint $table) {
-            $table->unsignedBigInteger('route_id')->nullable()->after('delivery_man_id');
-            $table->foreign('route_id')->references('id')->on('delivery_areas')->onDelete('set null');
+            if (!Schema::hasColumn('sales', 'route_id')) {
+                $table->unsignedBigInteger('route_id')->nullable()->after('delivery_man_id');
+            }
         });
+
+        try {
+            Schema::table('sales', function (Blueprint $table) {
+                $table->foreign('route_id')->references('id')->on('delivery_areas')->onDelete('set null');
+            });
+        } catch (\Throwable $e) {
+            // Foreign key already exists or cannot be created
+        }
     }
 
     /**
@@ -23,8 +32,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('sales', function (Blueprint $table) {
-            $table->dropForeign(['route_id']);
-            $table->dropColumn('route_id');
+            try {
+                $table->dropForeign(['route_id']);
+            } catch (\Throwable $e) {}
+
+            if (Schema::hasColumn('sales', 'route_id')) {
+                $table->dropColumn('route_id');
+            }
         });
     }
 };
