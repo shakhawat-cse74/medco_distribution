@@ -735,11 +735,11 @@ class TenantDatabaseSeeder extends Seeder
 
         if (!DB::table('invoice_settings')->count()) {
             $baseData = [
-                'prefix' => !empty(self::$tenantData) ? mb_substr(str_replace(' ', '', self::$tenantData['site_title']), 0, 10) : 'salepro',
+                'prefix' => !empty(self::$tenantData) ? mb_substr(str_replace(' ', '', self::$tenantData['site_title']), 0, 10) : 'medco',
                 'number_of_digit' => 4,
                 'numbering_type' => 'datewise',
                 'start_number' => 1000,
-                'header_text' => !empty(self::$tenantData) ? self::$tenantData['site_title'] : 'SalePro',
+                'header_text' => !empty(self::$tenantData) ? self::$tenantData['site_title'] : 'Medco Distribution Wny Inc',
                 'footer_text' => 'Thank you for shopping with us',
                 'footer_title' => 'Thank you for shopping with us',
                 'size' => 'a4',
@@ -810,8 +810,8 @@ class TenantDatabaseSeeder extends Seeder
             DB::table('general_settings')->insert([
                 [
                     'id' => 1,
-                    'site_title' => !empty(self::$tenantData) ? self::$tenantData['site_title'] : 'SalePro',
-                    'site_logo' => !empty(self::$tenantData) ? self::$tenantData['site_logo'] : '20250123024505.png',
+                    'site_title' => !empty(self::$tenantData) ? self::$tenantData['site_title'] : 'Medco Distribution Wny Inc',
+                    'site_logo' => !empty(self::$tenantData) ? self::$tenantData['site_logo'] : 'banglasoft_logo.png',
                     'is_rtl' => 0,
                     'currency' => '1',
                     'package_id' => !empty(self::$tenantData) ? self::$tenantData['package_id'] : 0,
@@ -819,7 +819,7 @@ class TenantDatabaseSeeder extends Seeder
                     'staff_access' => 'own',
                     'without_stock' => 'no',
                     'date_format' => 'd/m/Y',
-                    'developed_by' => !empty(self::$tenantData) ? self::$tenantData['developed_by'] : 'Lioncoders',
+                    'developed_by' => !empty(self::$tenantData) ? self::$tenantData['developed_by'] : 'Bangla Soft Computer',
                     'invoice_format' => 'standard',
                     'decimal' => 2,
                     'state' => 1,

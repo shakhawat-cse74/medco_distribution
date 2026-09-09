@@ -21,9 +21,9 @@ $subTotal = session()->has('subTotal') ? session()->get('subTotal') : 0;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Document Title -->
-    <title>Checkout</title>
-    <meta name="description" content="" />
-    <meta name="author" content="LionCoders" />
+    <title>Checkout - {{ $ecommerce_setting->site_title ?? 'Medco Distribution' }}</title>
+    <meta name="description" content="Checkout" />
+    <meta name="author" content="Bangla Soft Computer" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Links -->
@@ -508,7 +508,7 @@ $subTotal = session()->has('subTotal') ? session()->get('subTotal') : 0;
             e.preventDefault();
             let handler = PaystackPop.setup({
                 key: "{{ $public_key }}",
-                email: "support@lion-coders.com",
+                email: "{{ $ecommerce_setting->store_email ?? ($general_setting->email ?? 'info@medcodistribution.com') }}",
                 amount: "{{$grand_total * 100}}",
 
                 onClose: function(){

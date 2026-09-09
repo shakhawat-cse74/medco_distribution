@@ -873,7 +873,7 @@
 
     <footer class="main-footer">
         <div class="container-fluid">
-            <p>&copy; {{$general_settings->site_title ?? "no title"}} | {{ __('Developed by')}} <a href="https://lion-coders.com" class="external">{{ __('LionCoders')}}</a></p>
+            <p>&copy; {{$general_settings->site_title ?? "Medco Distribution Wny Inc"}} | {{ __('Developed by')}} <span class="external">{{ __('Bangla Soft Computer')}}</span></p>
         </div>
     </footer>
 </div>

@@ -11,35 +11,41 @@
 .legend-label{font-size: 0.8em!important;color: #555;}
 
 .qi-product-table-wrapper {
-    max-height: 240px;
+    max-height: 225px !important;
     overflow-y: auto !important;
     overflow-x: auto !important;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #cbd5e1;
     border-radius: 6px;
+    background: #fff;
     scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 #f8fafc;
+    scrollbar-color: #7c5cc4 #f1f5f9;
 }
 .qi-product-table-wrapper::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 .qi-product-table-wrapper::-webkit-scrollbar-track {
-    background: #f8fafc;
+    background: #f1f5f9;
     border-radius: 4px;
 }
 .qi-product-table-wrapper::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: #7c5cc4;
     border-radius: 4px;
 }
 .qi-product-table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: #7c5cc4;
+    background: #5f42a1;
 }
 #qi-order-table thead th {
     position: sticky !important;
     top: 0 !important;
     background-color: #f8fafc !important;
-    z-index: 10 !important;
+    z-index: 20 !important;
     border-top: none !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.qi-desc-search-input:focus, .qi-code-search-input:focus {
+    border-color: #7c5cc4 !important;
+    box-shadow: 0 0 0 0.2rem rgba(124, 92, 196, 0.25) !important;
 }
 </style>
 @endpush
@@ -1146,14 +1152,16 @@
 
         });
 
-        // Quick Invoice Modal Logic (Sale / Purchase Search Style)
+        // Quick Invoice In-Table Live Search & Auto-Row Generation
         $(document).ready(function() {
             let typingTimer;
-            const doneTypingInterval = 200;
-            const $searchInput = $('#qi_product_search_input');
+            const doneTypingInterval = 80;
             const $resultsContainer = $('#qi_product_results_container');
-            const $noResults = $('#qi_no_results_message');
             const currencySymbol = '{{ config("currency") ?? "৳" }}';
+            let currentQiSearchXhr = null;
+            let activeSearchInput = null;
+            let activeSearchRow = null;
+            let currentQiEditRow = null;
 
             function formatCurrency(amount) {
                 let decimals = {{ gen_setting()->decimal ?? 2 }};
@@ -1162,7 +1170,6 @@
 
             function clearQiSearchResults() {
                 $resultsContainer.empty().hide();
-                $noResults.hide();
             }
 
             function updateQiCustomerAddress() {
@@ -1206,14 +1213,150 @@
             // Initial address load
             updateQiCustomerAddress();
 
-            let currentQiSearchXhr = null;
+            // Render empty search row
+            function renderEmptySearchRow(rowNum) {
+                return `
+                <tr class="qi-empty-search-row" style="background-color: #faf8ff;">
+                    <td class="align-middle px-1 py-1 text-center font-weight-bold text-muted qi-row-num">${rowNum}</td>
+                    <td class="align-middle px-1 py-1" style="width: 125px;">
+                        <input type="text" class="form-control form-control-sm qi-code-search-input font-weight-bold" placeholder="Code..." autocomplete="off">
+                    </td>
+                    <td class="align-middle px-1 py-1 position-relative">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control form-control-sm qi-desc-search-input font-weight-bold" placeholder="Search product name or code..." autocomplete="off" style="border: 1px solid #7c5cc4;">
+                            <div class="input-group-append">
+                                <span class="input-group-text bg-white" style="border-color: #7c5cc4; color: #7c5cc4;"><i class="ti ti-search"></i></span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="align-middle px-1 py-1" style="width: 95px;">
+                        <input type="number" class="form-control form-control-sm text-right bg-light" value="1" disabled>
+                    </td>
+                    <td class="align-middle px-1 py-1 text-center" style="width: 70px;">
+                        <span class="badge badge-light border text-muted px-2 py-1" style="font-size: 11px;">-</span>
+                    </td>
+                    <td class="align-middle px-1 py-1" style="width: 110px;">
+                        <input type="text" class="form-control form-control-sm text-right bg-light" value="0.00" disabled>
+                    </td>
+                    <td class="align-middle px-1 py-1" style="width: 90px;">
+                        <input type="text" class="form-control form-control-sm text-right bg-light" value="0.00" disabled>
+                    </td>
+                    <td class="align-middle px-1 py-1" style="width: 80px;">
+                        <input type="text" class="form-control form-control-sm text-right bg-light" value="0.00" readonly>
+                    </td>
+                    <td class="align-middle px-1 py-1" style="width: 115px;">
+                        <input type="text" class="form-control form-control-sm text-right bg-light" value="0.00" readonly>
+                    </td>
+                    <td class="align-middle px-1 py-1 text-center" style="width: 75px;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm qi-clear-search-row py-1 px-1" title="Clear Search"><i class="ti ti-rotate-clockwise"></i></button>
+                    </td>
+                </tr>`;
+            }
 
-            function searchQiProducts(searchTerm) {
+            // Render populated product row
+            function renderProductRow(product, rowNum) {
+                let priceVal = parseFloat(product.price) || 0;
+                return `
+                <tr class="qi-product-row" style="font-size: 0.9rem;" 
+                    data-name="${product.name}" 
+                    data-code="${product.code}" 
+                    data-product-type="${product.type || 'standard'}"
+                    data-cost-default="0" 
+                    data-cost-lowest="0" 
+                    data-cost-avg="0" 
+                    data-cost-highest="0"
+                    data-retail-price="${priceVal}"
+                    data-wholesale-price="0"
+                    data-units-name=""
+                    data-units-operator=""
+                    data-units-operation-value="">
+                    <td class="align-middle px-1 py-1 text-center font-weight-bold text-muted qi-row-num">${rowNum}</td>
+                    <td class="align-middle px-2 py-1" style="width: 125px;">
+                        <span class="badge badge-light border font-weight-bold text-dark px-2 py-1" style="font-size: 11px;">${product.code}</span>
+                        <input type="hidden" class="qi-product-id" name="product_id[]" value="${product.id}">
+                        <input type="hidden" class="qi-product-code" name="product_code[]" value="${product.code}">
+                        <input type="hidden" class="qi-product-batch-id" name="product_batch_id[]" value="${product.batch || ''}">
+                        <input type="hidden" class="qi-imei-number" name="imei_number[]" value="${product.imei || ''}">
+                        <input type="hidden" class="qi-tax-rate" name="tax_rate[]" value="0">
+                        <input type="hidden" name="sale_unit[]" class="qi-sale-unit-id" value="">
+                        <input type="hidden" name="net_unit_price[]" class="qi-net-unit-price" value="${priceVal.toFixed(2)}">
+                        <input type="hidden" name="total[]" class="qi-line-total" value="${priceVal.toFixed(2)}">
+                    </td>
+                    <td class="align-middle px-2 py-1">
+                        <div class="font-weight-bold text-dark qi-clickable-name" style="cursor: pointer;" title="Click to view purchase costs & edit product">
+                            ${product.name} <i class="ti ti-edit text-primary ml-1" style="font-size:11px;"></i>
+                        </div>
+                    </td>
+                    <td class="align-middle px-1 py-1" style="width: 95px;">
+                        <input type="number" class="form-control form-control-sm text-right qi-qty font-weight-bold" name="qty[]" value="1" min="0.01" step="any">
+                    </td>
+                    <td class="align-middle px-1 py-1 text-center" style="width: 70px;">
+                        <span class="badge badge-secondary px-2 py-1 qi-unit-display" style="font-size: 11px;">PC</span>
+                    </td>
+                    <td class="align-middle px-1 py-1" style="width: 110px;">
+                        <input type="number" class="form-control form-control-sm text-right qi-rate font-weight-bold" name="product_price[]" value="${priceVal.toFixed(2)}" step="any">
+                    </td>
+                    <td class="align-middle px-1 py-1" style="width: 90px;">
+                        <input type="number" class="form-control form-control-sm text-right qi-discount font-weight-bold" name="discount[]" value="0" min="0" step="any">
+                    </td>
+                    <td class="align-middle px-1 py-1" style="width: 80px;">
+                        <input type="text" class="form-control form-control-sm text-right qi-tax font-weight-bold bg-light" name="tax[]" value="0.00" readonly>
+                    </td>
+                    <td class="align-middle px-1 py-1" style="width: 115px;">
+                        <input type="text" class="form-control form-control-sm text-right qi-subtotal font-weight-bold bg-light" name="subtotal[]" value="${priceVal.toFixed(2)}" readonly>
+                    </td>
+                    <td class="align-middle px-1 py-1 text-center" style="width: 75px;">
+                        <button type="button" class="btn btn-outline-primary btn-sm qi-edit-row py-1 px-1 mr-1" title="View Purchase Costs & Edit Product"><i class="ti ti-edit"></i></button>
+                        <button type="button" class="btn btn-outline-danger btn-sm qi-remove-row py-1 px-1"><i class="ti ti-trash"></i></button>
+                    </td>
+                </tr>`;
+            }
+
+            function ensureTrailingEmptySearchRow() {
+                let $tbody = $('#qi-order-table tbody');
+                let $lastRow = $tbody.find('tr:last');
+                if ($lastRow.length && $lastRow.hasClass('qi-empty-search-row')) {
+                    return;
+                }
+                let nextNum = $tbody.find('tr').length + 1;
+                $tbody.append(renderEmptySearchRow(nextNum));
+            }
+
+            function focusTrailingSearchRow() {
+                setTimeout(function() {
+                    let $input = $('#qi-order-table tbody tr.qi-empty-search-row:last .qi-desc-search-input');
+                    if ($input.length) {
+                        $input.focus();
+                    }
+                }, 120);
+            }
+
+            function initQiTable() {
+                $('#qi-order-table tbody').empty();
+                ensureTrailingEmptySearchRow();
+                calculateQiTotals();
+                focusTrailingSearchRow();
+            }
+
+            function positionDropdown($input) {
+                if (!$input || !$input.length) return;
+                let offset = $input.offset();
+                let width = Math.max(380, $input.closest('td').outerWidth() + 100);
+                $resultsContainer.css({
+                    position: 'fixed',
+                    top: (offset.top - $(window).scrollTop() + $input.outerHeight() + 2) + 'px',
+                    left: (offset.left - $(window).scrollLeft()) + 'px',
+                    width: width + 'px',
+                    zIndex: 1075,
+                    maxHeight: '260px',
+                    overflowY: 'auto'
+                }).show();
+            }
+
+            function searchQiProducts(searchTerm, $input) {
                 searchTerm = (searchTerm || '').trim();
                 if (searchTerm.length === 0) {
-                    if (currentQiSearchXhr) {
-                        currentQiSearchXhr.abort();
-                    }
+                    if (currentQiSearchXhr) currentQiSearchXhr.abort();
                     clearQiSearchResults();
                     return;
                 }
@@ -1223,7 +1366,6 @@
                 }
 
                 let warehouse_id = $('#qi_warehouse_id').val() || 1;
-                $noResults.hide();
 
                 currentQiSearchXhr = $.ajax({
                     url: '{{ url("/sales/search") }}',
@@ -1235,7 +1377,6 @@
                     success: function(data) {
                         $resultsContainer.empty();
                         if (data && data.length > 0) {
-                            $noResults.hide();
                             data.forEach(function(product) {
                                 let stockVal = product.qty !== undefined ? product.qty : 0;
                                 let priceVal = product.price !== undefined ? parseFloat(product.price).toFixed(2) : '0.00';
@@ -1258,12 +1399,12 @@
                                                  data-imei="${imei_no}"
                                                  data-type="${product.type}">
                                                 <div>
-                                                    <div class="font-weight-bold text-dark" style="font-size: 14px;">${product.name}</div>
+                                                    <div class="font-weight-bold text-dark" style="font-size: 13px;">${product.name}</div>
                                                     <small class="text-muted"><i class="ti ti-barcode mr-1"></i>${product.code}</small>
                                                     <span class="badge badge-info ml-1">IMEI: ${imei_no}</span>
                                                 </div>
                                                 <div class="text-right ml-3">
-                                                    <div class="font-weight-bold text-primary" style="font-size: 14px;">${formatCurrency(priceVal)}</div>
+                                                    <div class="font-weight-bold text-primary" style="font-size: 13px;">${formatCurrency(priceVal)}</div>
                                                 </div>
                                             </div>`;
                                     }
@@ -1281,12 +1422,12 @@
                                              data-imei=""
                                              data-type="${product.type}">
                                             <div>
-                                                <div class="font-weight-bold text-dark" style="font-size: 14px;">${product.name}</div>
+                                                <div class="font-weight-bold text-dark" style="font-size: 13px;">${product.name}</div>
                                                 <small class="text-muted"><i class="ti ti-barcode mr-1"></i>${product.code}</small>
                                                 ${expired ? '<span class="badge badge-warning ml-1">'+expired+'</span>' : ''}
                                             </div>
                                             <div class="text-right ml-3">
-                                                <div class="font-weight-bold text-primary" style="font-size: 14px;">${formatCurrency(priceVal)}</div>
+                                                <div class="font-weight-bold text-primary" style="font-size: 13px;">${formatCurrency(priceVal)}</div>
                                             </div>
                                         </div>`;
                                 } else {
@@ -1302,11 +1443,11 @@
                                              data-imei=""
                                              data-type="${product.type}">
                                             <div>
-                                                <div class="font-weight-bold text-dark" style="font-size: 14px;">${product.name}</div>
+                                                <div class="font-weight-bold text-dark" style="font-size: 13px;">${product.name}</div>
                                                 <small class="text-muted"><i class="ti ti-barcode mr-1"></i>${product.code}</small>
                                             </div>
                                             <div class="text-right ml-3">
-                                                <div class="font-weight-bold text-primary" style="font-size: 14px;">${formatCurrency(priceVal)}</div>
+                                                <div class="font-weight-bold text-primary" style="font-size: 13px;">${formatCurrency(priceVal)}</div>
                                             </div>
                                         </div>`;
                                 }
@@ -1315,46 +1456,66 @@
                                     $resultsContainer.append(productHtml);
                                 }
                             });
-                            $resultsContainer.show();
+                            positionDropdown($input || activeSearchInput);
                         } else {
-                            $resultsContainer.hide();
-                            $noResults.show();
+                            $resultsContainer.html('<div class="p-2 text-muted text-center" style="font-size: 12px;">No products found</div>');
+                            positionDropdown($input || activeSearchInput);
                         }
                     },
                     error: function(xhr, status) {
                         if (status !== 'abort') {
-                            $resultsContainer.hide();
-                            $noResults.show();
+                            clearQiSearchResults();
                         }
                     }
                 });
             }
 
-            // Real-time instant search on input & paste (Same speed as Add Sale)
-            $searchInput.on('input', function() {
+            // Trigger search on typing in Description or Code cell of empty search row
+            $(document).on('input', '.qi-desc-search-input, .qi-code-search-input', function() {
+                activeSearchInput = $(this);
+                activeSearchRow = $(this).closest('tr');
                 let val = $(this).val().trim();
                 if (val.length >= 1) {
                     clearTimeout(typingTimer);
                     typingTimer = setTimeout(function() {
-                        searchQiProducts(val);
-                    }, 50);
+                        searchQiProducts(val, activeSearchInput);
+                    }, doneTypingInterval);
                 } else {
                     clearQiSearchResults();
                 }
             });
 
-            $searchInput.on('paste', function(e) {
+            $(document).on('paste', '.qi-desc-search-input, .qi-code-search-input', function(e) {
+                activeSearchInput = $(this);
+                activeSearchRow = $(this).closest('tr');
                 const pastedData = (e.originalEvent || e).clipboardData ? (e.originalEvent || e).clipboardData.getData('text') : '';
                 if (pastedData && pastedData.trim().length >= 1) {
-                    searchQiProducts(pastedData.trim());
+                    searchQiProducts(pastedData.trim(), activeSearchInput);
+                }
+            });
+
+            $(document).on('keydown', '.qi-desc-search-input, .qi-code-search-input', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    let $firstItem = $resultsContainer.find('.qi-product-item:first');
+                    if ($firstItem.length && $resultsContainer.is(':visible')) {
+                        $firstItem.trigger('click');
+                    }
+                } else if (e.key === 'Escape') {
+                    clearQiSearchResults();
                 }
             });
 
             // Close results dropdown on outside click
             $(document).on('click', function(e) {
-                if (!$(e.target).closest('#qi_product_results_container, #qi_product_search_input').length) {
+                if (!$(e.target).closest('#qi_product_results_container, .qi-desc-search-input, .qi-code-search-input').length) {
                     clearQiSearchResults();
                 }
+            });
+
+            // Close results on table wrapper scrolling
+            $('.qi-product-table-wrapper').on('scroll', function() {
+                clearQiSearchResults();
             });
 
             // Hover effect on product items
@@ -1364,9 +1525,7 @@
                 $(this).css('background-color', '#ffffff');
             });
 
-            let currentQiEditRow = null;
-
-            // When product item is clicked -> Add to invoice table!
+            // When product item is clicked -> Populate row, add next empty row & focus!
             $(document).on('click', '.qi-product-item', function() {
                 let id = $(this).data('id');
                 let code = $(this).data('code');
@@ -1377,9 +1536,14 @@
                 let imei = $(this).data('imei') || '';
                 let type = $(this).data('type') || 'standard';
 
-                // Check if product already exists in table
+                let targetRow = activeSearchRow;
+                if (!targetRow || !targetRow.length || !targetRow.hasClass('qi-empty-search-row')) {
+                    targetRow = $('#qi-order-table tbody tr.qi-empty-search-row:last');
+                }
+
+                // Check if product already exists in an existing populated row
                 let existingRow = null;
-                $('#qi-order-table tbody tr').each(function() {
+                $('#qi-order-table tbody tr.qi-product-row').each(function() {
                     if ($(this).find('.qi-product-id').val() == id) {
                         existingRow = $(this);
                         return false;
@@ -1395,115 +1559,93 @@
                             existingRow.find('.qi-imei-number').val(curImeis + ',' + imei);
                         }
                     }
-                } else {
-                    let rowCount = $('#qi-order-table tbody tr').length + 1;
-                    let newRow = `
-                    <tr style="font-size: 0.9rem;" 
-                        data-name="${name}" 
-                        data-code="${code}" 
-                        data-product-type="${type}"
-                        data-cost-default="0" 
-                        data-cost-lowest="0" 
-                        data-cost-avg="0" 
-                        data-cost-highest="0"
-                        data-retail-price="${price}"
-                        data-wholesale-price="0"
-                        data-units-name=""
-                        data-units-operator=""
-                        data-units-operation-value="">
-                        <td class="align-middle px-1 py-1 text-center font-weight-bold text-muted qi-row-num">${rowCount}</td>
-                        <td class="align-middle px-2 py-1" style="width: 115px;">
-                            <span class="badge badge-light border font-weight-bold text-dark px-2 py-1" style="font-size: 11px;">${code}</span>
-                            <input type="hidden" class="qi-product-id" name="product_id[]" value="${id}">
-                            <input type="hidden" class="qi-product-code" name="product_code[]" value="${code}">
-                            <input type="hidden" class="qi-product-batch-id" name="product_batch_id[]" value="${batch}">
-                            <input type="hidden" class="qi-imei-number" name="imei_number[]" value="${imei}">
-                            <input type="hidden" class="qi-tax-rate" name="tax_rate[]" value="0">
-                            <input type="hidden" name="sale_unit[]" class="qi-sale-unit-id" value="">
-                            <input type="hidden" name="net_unit_price[]" class="qi-net-unit-price" value="${price.toFixed(2)}">
-                            <input type="hidden" name="total[]" class="qi-line-total" value="${price.toFixed(2)}">
-                        </td>
-                        <td class="align-middle px-2 py-1">
-                            <div class="font-weight-bold text-dark qi-clickable-name" style="cursor: pointer;" title="Click to view purchase costs & edit product">
-                                ${name} <i class="ti ti-edit text-primary ml-1" style="font-size:11px;"></i>
-                            </div>
-                        </td>
-                        <td class="align-middle px-1 py-1" style="width: 95px;">
-                            <input type="number" class="form-control form-control-sm text-right qi-qty font-weight-bold" name="qty[]" value="1" min="0.01" step="any">
-                        </td>
-                        <td class="align-middle px-1 py-1 text-center" style="width: 70px;">
-                            <span class="badge badge-secondary px-2 py-1 qi-unit-display" style="font-size: 11px;">PC</span>
-                        </td>
-                        <td class="align-middle px-1 py-1" style="width: 110px;">
-                            <input type="number" class="form-control form-control-sm text-right qi-rate font-weight-bold" name="product_price[]" value="${price.toFixed(2)}" step="any">
-                        </td>
-                        <td class="align-middle px-1 py-1" style="width: 90px;">
-                            <input type="number" class="form-control form-control-sm text-right qi-discount font-weight-bold" name="discount[]" value="0" min="0" step="any">
-                        </td>
-                        <td class="align-middle px-1 py-1" style="width: 80px;">
-                            <input type="text" class="form-control form-control-sm text-right qi-tax font-weight-bold bg-light" name="tax[]" value="0.00" readonly>
-                        </td>
-                        <td class="align-middle px-1 py-1" style="width: 115px;">
-                            <input type="text" class="form-control form-control-sm text-right qi-subtotal font-weight-bold bg-light" name="subtotal[]" value="${price.toFixed(2)}" readonly>
-                        </td>
-                        <td class="align-middle px-1 py-1 text-center" style="width: 75px;">
-                            <button type="button" class="btn btn-outline-primary btn-sm qi-edit-row py-1 px-1 mr-1" title="View Purchase Costs & Edit Product"><i class="ti ti-edit"></i></button>
-                            <button type="button" class="btn btn-outline-danger btn-sm qi-remove-row py-1 px-1"><i class="ti ti-trash"></i></button>
-                        </td>
-                    </tr>`;
-                    $('#qi-order-table tbody').append(newRow);
-
-                    // Fetch sale unit, tax, discount & purchase cost insights in background
-                    let addedRow = $('#qi-order-table tbody tr:last');
-                    $.ajax({
-                        type: 'GET',
-                        url: '{{url("sales/lims_product_search")}}',
-                        data: {
-                            data: {
-                                code: code,
-                                customer_id: $('#qi_customer_id').val() || 1,
-                                qty: 1,
-                                embedded: 0,
-                                batch: batch,
-                                pre_qty: 0,
-                                price: price,
-                                imei: imei
-                            }
-                        },
-                        success: function(data) {
-                            if (data) {
-                                if (data.unit_name) {
-                                    let baseUnit = data.unit_name.split(',')[0];
-                                    addedRow.find('.qi-sale-unit-id').val(baseUnit);
-                                    addedRow.find('.qi-unit-display').text(baseUnit);
-                                    addedRow.attr('data-units-name', data.unit_name);
-                                    addedRow.attr('data-units-operator', data.unit_operator || '');
-                                    addedRow.attr('data-units-operation-value', data.unit_operation_value || '');
-                                }
-                                if (data.tax_rate) {
-                                    addedRow.find('.qi-tax-rate').val(data.tax_rate);
-                                }
-                                if (data.discount && data.discount > 0) {
-                                    addedRow.find('.qi-discount').val(parseFloat(data.discount).toFixed(2));
-                                }
-                                if (data.wholesale_price) {
-                                    addedRow.attr('data-wholesale-price', data.wholesale_price);
-                                }
-                                addedRow.attr('data-product-type', data.type || 'standard');
-                                addedRow.attr('data-retail-price', data.price || price);
-                                addedRow.attr('data-cost-default', data.cost || 0);
-                                addedRow.attr('data-cost-lowest', (data.cost_lowest !== undefined ? data.cost_lowest : data.cost) || 0);
-                                addedRow.attr('data-cost-avg', (data.cost_avg !== undefined ? data.cost_avg : data.cost) || 0);
-                                addedRow.attr('data-cost-highest', (data.cost_highest !== undefined ? data.cost_highest : data.cost) || 0);
-                                calculateQiTotals();
-                            }
-                        }
-                    });
+                    if (targetRow && targetRow.length) {
+                        targetRow.find('.qi-desc-search-input, .qi-code-search-input').val('');
+                        targetRow.find('.qi-desc-search-input').focus();
+                    }
+                    clearQiSearchResults();
+                    calculateQiTotals();
+                    return;
                 }
 
+                let rowNum = (targetRow && targetRow.find('.qi-row-num').length) ? targetRow.find('.qi-row-num').text() : ($('#qi-order-table tbody tr.qi-product-row').length + 1);
+
+                let populatedRowHtml = renderProductRow({
+                    id: id,
+                    code: code,
+                    name: name,
+                    price: price,
+                    batch: batch,
+                    imei: imei,
+                    type: type
+                }, rowNum);
+
+                let $populatedRow = $(populatedRowHtml);
+                if (targetRow && targetRow.length) {
+                    targetRow.replaceWith($populatedRow);
+                } else {
+                    $('#qi-order-table tbody').append($populatedRow);
+                }
+
+                // Fetch sale unit, tax, discount & purchase cost insights in background
+                $.ajax({
+                    type: 'GET',
+                    url: '{{url("sales/lims_product_search")}}',
+                    data: {
+                        data: {
+                            code: code,
+                            customer_id: $('#qi_customer_id').val() || 1,
+                            qty: 1,
+                            embedded: 0,
+                            batch: batch,
+                            pre_qty: 0,
+                            price: price,
+                            imei: imei
+                        }
+                    },
+                    success: function(data) {
+                        if (data) {
+                            if (data.unit_name) {
+                                let baseUnit = data.unit_name.split(',')[0];
+                                $populatedRow.find('.qi-sale-unit-id').val(baseUnit);
+                                $populatedRow.find('.qi-unit-display').text(baseUnit);
+                                $populatedRow.attr('data-units-name', data.unit_name);
+                                $populatedRow.attr('data-units-operator', data.unit_operator || '');
+                                $populatedRow.attr('data-units-operation-value', data.unit_operation_value || '');
+                            }
+                            if (data.tax_rate) {
+                                $populatedRow.find('.qi-tax-rate').val(data.tax_rate);
+                            }
+                            if (data.discount && data.discount > 0) {
+                                $populatedRow.find('.qi-discount').val(parseFloat(data.discount).toFixed(2));
+                            }
+                            if (data.wholesale_price) {
+                                $populatedRow.attr('data-wholesale-price', data.wholesale_price);
+                            }
+                            $populatedRow.attr('data-product-type', data.type || 'standard');
+                            $populatedRow.attr('data-retail-price', data.price || price);
+                            $populatedRow.attr('data-cost-default', data.cost || 0);
+                            $populatedRow.attr('data-cost-lowest', (data.cost_lowest !== undefined ? data.cost_lowest : data.cost) || 0);
+                            $populatedRow.attr('data-cost-avg', (data.cost_avg !== undefined ? data.cost_avg : data.cost) || 0);
+                            $populatedRow.attr('data-cost-highest', (data.cost_highest !== undefined ? data.cost_highest : data.cost) || 0);
+                            calculateQiTotals();
+                        }
+                    }
+                });
+
                 clearQiSearchResults();
-                $searchInput.val('').focus();
+                reindexQiRows();
                 calculateQiTotals();
+
+                // Automatically append next empty search row!
+                ensureTrailingEmptySearchRow();
+
+                // Smooth scroll table to the newly added row!
+                let $wrapper = $('.qi-product-table-wrapper');
+                $wrapper.animate({ scrollTop: $wrapper[0].scrollHeight }, 200);
+
+                // Automatically focus the search input in the next row!
+                focusTrailingSearchRow();
             });
 
             // When price option changes inside Edit Modal
@@ -1648,7 +1790,17 @@
             $(document).on('click', '.qi-remove-row', function() {
                 $(this).closest('tr').remove();
                 reindexQiRows();
+                ensureTrailingEmptySearchRow();
                 calculateQiTotals();
+                focusTrailingSearchRow();
+            });
+
+            // Clear empty search row
+            $(document).on('click', '.qi-clear-search-row', function() {
+                let $row = $(this).closest('tr');
+                $row.find('.qi-desc-search-input, .qi-code-search-input').val('');
+                $row.find('.qi-desc-search-input').focus();
+                clearQiSearchResults();
             });
 
             function reindexQiRows() {
@@ -1670,7 +1822,7 @@
                 let totalDiscount = 0;
                 let totalTax = 0;
 
-                $('#qi-order-table tbody tr').each(function() {
+                $('#qi-order-table tbody tr.qi-product-row').each(function() {
                     let pid = $(this).find('.qi-product-id').val();
                     let qty = parseFloat($(this).find('.qi-qty').val()) || 0;
                     let rate = parseFloat($(this).find('.qi-rate').val()) || 0;
@@ -1713,31 +1865,26 @@
                 $('#qi_paying_amount').val($(this).val());
             });
 
-            // Focus search input and load customer details when modal opens
+            // Initialize table and focus search input when modal opens
             $('#quickInvoiceModal').on('show.bs.modal shown.bs.modal', function() {
                 clearQiSearchResults();
                 updateQiCustomerAddress();
-                setTimeout(function() {
-                    $('#qi_product_search_input').focus();
-                }, 100);
+                if ($('#qi-order-table tbody tr').length === 0) {
+                    initQiTable();
+                } else {
+                    ensureTrailingEmptySearchRow();
+                    focusTrailingSearchRow();
+                }
             });
 
             // Submit Quick Invoice and instantly Print in the SAME tab
             $('#qi-submit-btn').on('click', function() {
                 let form = $('#quick-invoice-form');
 
-                let validRows = 0;
-                $('#qi-order-table tbody tr').each(function() {
-                    let pid = $(this).find('.qi-product-id').val();
-                    let qty = parseFloat($(this).find('.qi-qty').val()) || 0;
-                    if (pid && qty > 0) {
-                        validRows++;
-                    }
-                });
-
+                let validRows = $('#qi-order-table tbody tr.qi-product-row').length;
                 if (validRows === 0) {
                     alert("Please search and select at least one product with quantity > 0.");
-                    $searchInput.focus();
+                    focusTrailingSearchRow();
                     return;
                 }
 
@@ -1761,9 +1908,7 @@
                         $('#quickInvoiceModal').modal('hide');
 
                         // Reset form for next invoice
-                        $('#qi-order-table tbody').empty();
-                        calculateQiTotals();
-                        $searchInput.val('');
+                        initQiTable();
 
                         if (sale_id && !isNaN(sale_id)) {
                             // Print invoice in the SAME tab using hidden iframe
@@ -1911,18 +2056,8 @@
                             </div>
                         </div>
 
-                        <!-- Product Search Bar (Like Sale/Purchase Create) -->
-                        <div class="search-box form-group mb-3 position-relative">
-                            <label class="font-weight-bold">{{__('Select Product')}} *</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text" style="background-color: #7c5cc4; color: #fff; border-color: #7c5cc4;"><i class="ti ti-barcode"></i></span>
-                                </div>
-                                <input type="text" id="qi_product_search_input" placeholder="Please type product name or code and select..." class="form-control" autocomplete="off" style="border: 1px solid #7c5cc4;" />
-                            </div>
-                            <div id="qi_product_results_container" class="dropdown-menu w-100 shadow-lg border" style="display:none; max-height: 280px; overflow-y: auto; z-index: 1060; margin-top: 2px;"></div>
-                            <div id="qi_no_results_message" style="display:none; background-color: #f8fafc; color: #64748b; padding: 6px 12px; font-size: 13px; border: 1px solid #e2e8f0; border-radius: 4px; margin-top: 4px;">{{__('No in-stock products found matching your search.')}}</div>
-                        </div>
+                        <!-- Floating Dropdown for In-table Search (Fixed positioned over active row) -->
+                        <div id="qi_product_results_container" class="shadow-lg border rounded bg-white" style="display:none; position:fixed; max-height: 280px; overflow-y: auto; z-index: 1075; border-color: #7c5cc4 !important;"></div>
 
                         <!-- Hidden required fields -->
                         <input type="hidden" name="exchange_rate" value="1">
@@ -1943,13 +2078,13 @@
                         <input type="hidden" name="shipping_cost" value="0">
                         <input type="hidden" name="payment_status" value="4">
 
-                        <div class="table-responsive border rounded qi-product-table-wrapper" style="max-height: 240px; min-height: 120px; overflow-y: auto; overflow-x: auto; background: #fff;">
+                        <div class="table-responsive border rounded qi-product-table-wrapper" style="max-height: 225px; min-height: 140px; overflow-y: auto; overflow-x: auto; background: #fff;">
                             <table class="table table-bordered table-sm mb-0" id="qi-order-table" style="font-size: 0.9rem; width: 100%;">
-                                <thead style="position: sticky; top: 0; background-color: #f8fafc !important; z-index: 10;">
+                                <thead style="position: sticky; top: 0; background-color: #f8fafc !important; z-index: 20;">
                                     <tr>
                                         <th style="width: 35px;" class="text-center">#</th>
-                                        <th style="width: 115px;">{{__('Item Code')}}</th>
-                                        <th style="min-width: 200px;">{{__('Description')}} *</th>
+                                        <th style="width: 125px;">{{__('Item Code')}}</th>
+                                        <th style="min-width: 230px;">{{__('Description')}} *</th>
                                         <th style="width: 95px;">{{__('Quantity')}} *</th>
                                         <th style="width: 70px;" class="text-center">{{__('UM')}}</th>
                                         <th style="width: 110px;">{{__('Unit Price')}} *</th>
@@ -1960,7 +2095,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Rows added when product is selected from search -->
+                                    <!-- Dynamic rows: populated product rows + 1 empty search row -->
                                 </tbody>
                             </table>
                         </div>

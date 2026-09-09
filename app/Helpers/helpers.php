@@ -92,7 +92,8 @@ if (! function_exists('gen_setting')) {
         }
 
         // Ensure default properties always exist on the stdClass
-        if (!isset($setting->site_title)) $setting->site_title = 'BanglaSoft';
+        if (!isset($setting->site_title) || empty($setting->site_title) || $setting->site_title === 'SalePro') $setting->site_title = 'Medco Distribution Wny Inc';
+        if (!isset($setting->developed_by) || empty($setting->developed_by) || stripos($setting->developed_by, 'lion') !== false || stripos($setting->developed_by, 'salepro') !== false) $setting->developed_by = 'Bangla Soft Computer';
         if (!isset($setting->site_logo)) $setting->site_logo = 'banglasoft_logo.png';
         if (!isset($setting->favicon)) $setting->favicon = 'banglasoft_logo.png';
         if (!isset($setting->font_css)) $setting->font_css = null;

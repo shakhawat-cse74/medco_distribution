@@ -812,9 +812,6 @@
 
         @can('general_setting')
         <li id="general-setting-menu"><a class="{{ request()->is('setting/general_setting') ? 'active' : '' }}" href="{{route('setting.general')}}">{{__('db.General Setting')}}</a></li>
-        @if (in_array('api',explode(',',gen_setting()->modules)))
-        <li id="theme-settings-menu"><a class="{{ request()->is('setting/theme-settings') ? 'active' : '' }}" href="{{ route('setting.themeSettings.index') }}">{{__('db.app_theme_settings')}}</a></li>
-        @endif
         @endcan
 
         @can('language_setting')
@@ -933,21 +930,4 @@
     <li><a class="{{ request()->is('tickets') ? 'active' : '' }}" href="{{route('tickets.index')}}"><i class="ti ti-ticket"></i> {{__('db.support_ickets')}}</a></li>
     @endif
     @endif
-
-    @can ('addons')
-    @if(\Auth::user()->role_id != 5)
-    @if (in_array('api',explode(',',gen_setting()->modules)))
-    <li><a class="{{ request()->is('setting/app_setting') ? 'active' : '' }}" href="{{route('setting.app')}}"> <i class="ti ti-device-mobile"></i><span>{{__('db.App Setting')}}</span></a></li>
-    @endif
-    @endif
-    @endcan
-
-    @can ('addons')
-    @if(\Auth::user()->role_id != 5)
-
-    @if(!config('database.connections.saleprosaas_landlord'))
-    <li><a class="{{ request()->is('addon-list') ? 'active' : '' }}" href="{{url('addon-list')}}" id="addon-list"> <i class="ti ti-flag"></i><span>{{__('db.Addons')}}</span></a></li>
-    @endif
-    @endif
-    @endcan
     </ul>

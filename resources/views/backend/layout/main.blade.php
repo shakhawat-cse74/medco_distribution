@@ -9,17 +9,20 @@
     @endphp
     <link rel="icon" type="image/png"
         href="{{ url('logo', gen_setting()->favicon ?? gen_setting()->site_logo) }}" />
-    <title>{{ gen_setting()->site_title ?? '' }}</title>
+    @php
+        $backend_site_title = (gen_setting()->site_title && gen_setting()->site_title !== 'SalePro') ? gen_setting()->site_title : 'Medco Distribution Wny Inc';
+    @endphp
+    <title>{{ $backend_site_title }}</title>
     <!-- Open Graph / Social Media Link Preview -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ gen_setting()->site_title ?? 'BanglaSoft' }}">
-    <meta property="og:description" content="BanglaSoft POS & Inventory Management System">
+    <meta property="og:title" content="{{ $backend_site_title }}">
+    <meta property="og:description" content="{{ $backend_site_title }} POS & Inventory Management System">
     <meta property="og:image" content="{{ asset('logo/' . (gen_setting()->site_logo ?? 'banglasoft_logo.png')) }}">
     <meta property="og:image:width" content="600">
     <meta property="og:image:height" content="315">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ gen_setting()->site_title ?? 'BanglaSoft' }}">
+    <meta name="twitter:title" content="{{ $backend_site_title }}">
     <meta name="twitter:image" content="{{ asset('logo/' . (gen_setting()->site_logo ?? 'banglasoft_logo.png')) }}">
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -421,22 +424,11 @@
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-sm-12">
-                        <p>&copy; {{ gen_setting()->site_title ?? '' }} | {{ __('Developed') }} {{ __('By') }}
-                            <span class="external">{{ gen_setting()->developed_by ?? '' }}</span> | V
+                        <p>&copy; {{ (gen_setting()->site_title && gen_setting()->site_title !== 'SalePro') ? gen_setting()->site_title : 'Medco Distribution Wny Inc' }} | {{ __('Developed') }} {{ __('By') }}
+                            <span class="external">{{ (!empty(gen_setting()->developed_by) && stripos(gen_setting()->developed_by, 'lion') === false && stripos(gen_setting()->developed_by, 'salepro') === false) ? gen_setting()->developed_by : 'Bangla Soft Computer' }}</span> | V
                             {{ env('VERSION') }}</p>
                     </div>
                 </div>
-                @if (config('app.user_verified') != true)
-                <div class="contact-button-wrapper">
-                    <a href="https://wa.me/8801924756759" target="_blank" title="Contact Us on WhatsApp">
-                        <div class="contact-button" style="display: flex;justify-content: center;align-items: center;background-color: #25D366;border-radius: 50%;bottom: 20px;height: 52px;right: 20px;width: 52px;font-size: 26px;color: #fff;text-align: center;position: fixed;z-index: 999;box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#fff" class="bi bi-whatsapp" viewBox="0 0 16 16">
-                                <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"></path>
-                            </svg>
-                        </div>
-                    </a>
-                </div>
-                @endif
             </div>
         </footer>
 

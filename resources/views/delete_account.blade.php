@@ -82,7 +82,7 @@
 
           </div>
           <div class="copyrights text-center">
-            <p>{{__('db.Developed By')}} <span class="external">{{gen_setting()->developed_by}}</span></p>
+            <p>{{__('db.Developed By')}} <span class="external">{{ (!empty(gen_setting()->developed_by) && stripos(gen_setting()->developed_by, 'lion') === false && stripos(gen_setting()->developed_by, 'salepro') === false) ? gen_setting()->developed_by : 'Bangla Soft Computer' }}</span></p>
           </div>
         </div>
       </div>

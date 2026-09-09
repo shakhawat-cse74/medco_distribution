@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{gen_setting()?->site_title ?? ''}}</title>
+    @php
+        $login_site_title = (gen_setting()?->site_title && gen_setting()->site_title !== 'SalePro') ? gen_setting()->site_title : 'Medco Distribution Wny Inc';
+    @endphp
+    <title>{{ $login_site_title }}</title>
     <!-- Open Graph / Social Media Link Preview -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ gen_setting()->site_title ?? 'BanglaSoft' }}">
-    <meta property="og:description" content="BanglaSoft POS & Inventory Management System">
+    <meta property="og:title" content="{{ $login_site_title }}">
+    <meta property="og:description" content="{{ $login_site_title }} POS & Inventory Management System">
     <meta property="og:image" content="{{ asset('logo/' . (gen_setting()->site_logo ?? 'banglasoft_logo.png')) }}">
     <meta property="og:image:width" content="600">
     <meta property="og:image:height" content="315">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ gen_setting()->site_title ?? 'BanglaSoft' }}">
+    <meta name="twitter:title" content="{{ $login_site_title }}">
     <meta name="twitter:image" content="{{ asset('logo/' . (gen_setting()->site_logo ?? 'banglasoft_logo.png')) }}">
     @if(!config('database.connections.saleprosaas_landlord'))
     <link rel="icon" type="image/png" href="{{url('logo', gen_setting()->site_logo)}}" />
@@ -223,7 +226,7 @@
                 </form>
 
                 <div class="footer-text w-100 d-flex justify-content-center mt-5">
-                    <p>{{__('db.Developed By')}} <span class="external">{{gen_setting()->developed_by}}</span></p>
+                    <p>{{__('db.Developed By')}} <span class="external">{{ (!empty(gen_setting()->developed_by) && stripos(gen_setting()->developed_by, 'lion') === false && stripos(gen_setting()->developed_by, 'salepro') === false) ? gen_setting()->developed_by : 'Bangla Soft Computer' }}</span></p>
                 </div>
             </div>
         </div>

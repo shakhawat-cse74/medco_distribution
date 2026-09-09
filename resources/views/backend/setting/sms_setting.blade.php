@@ -115,7 +115,7 @@
                                         <textarea name="body_template" class="form-control custom_http-option" rows="5" placeholder='{
     "to": "{phone}",
     "message": "{message}",
-    "sender_id": "SALEPRO"
+    "sender_id": "MEDCO"
 }'>{{ $custom_http['body_template'] ?? '' }}</textarea>
                                         <small>Placeholders: {phone}, {message}</small>
                                     </div>

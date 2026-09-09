@@ -13,9 +13,18 @@ class Ecommerce
 {
     public function handle(Request $request, Closure $next)
     {
-        $general_setting =  Cache::remember('general_setting', 60*60*24*365, function () {
-            return DB::table('general_settings')->select('site_logo','expiry_date','developed_by', 'modules', 'currency_position', 'decimal')->latest()->first();
+        $general_setting = Cache::remember('general_setting', 60*60*24*365, function () {
+            return DB::table('general_settings')->latest()->first();
         });
+
+        if ($general_setting) {
+            if (empty($general_setting->developed_by) || stripos($general_setting->developed_by, 'lion') !== false || stripos($general_setting->developed_by, 'salepro') !== false) {
+                $general_setting->developed_by = 'Bangla Soft Computer';
+            }
+            if (empty($general_setting->site_title) || $general_setting->site_title === 'SalePro') {
+                $general_setting->site_title = 'Medco Distribution Wny Inc';
+            }
+        }
 
         if(in_array('ecommerce',explode(',',$general_setting->modules ?? '')) || file_exists(base_path('Modules/Ecommerce'))) {
             if(auth()->user() && auth()->user()->role_id == 5){

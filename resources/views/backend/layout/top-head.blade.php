@@ -2,18 +2,20 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>{{gen_setting()->site_title}}</title>
+    @php
+        $tophead_site_title = (gen_setting()->site_title && gen_setting()->site_title !== 'SalePro') ? gen_setting()->site_title : 'Medco Distribution Wny Inc';
+    @endphp
+    <title>{{ $tophead_site_title }}</title>
     <!-- Open Graph / Social Media Link Preview -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ gen_setting()->site_title ?? 'BanglaSoft' }}">
-    <meta property="og:description" content="BanglaSoft POS & Inventory Management System">
+    <meta property="og:title" content="{{ $tophead_site_title }}">
+    <meta property="og:description" content="{{ $tophead_site_title }} POS & Inventory Management System">
     <meta property="og:image" content="{{ asset('logo/' . (gen_setting()->site_logo ?? 'banglasoft_logo.png')) }}">
     <meta property="og:image:width" content="600">
     <meta property="og:image:height" content="315">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ gen_setting()->site_title ?? 'BanglaSoft' }}">
+    <meta name="twitter:title" content="{{ $tophead_site_title }}">
     <meta name="twitter:image" content="{{ asset('logo/' . (gen_setting()->site_logo ?? 'banglasoft_logo.png')) }}">
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">

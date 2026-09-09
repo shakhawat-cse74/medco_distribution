@@ -25,17 +25,22 @@ if (session()->get('currency_code')) {
     <!-- Metas -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @php
+        $resolved_site_title = (!empty($ecommerce_setting->site_title) && $ecommerce_setting->site_title !== 'SalePro' && $ecommerce_setting->site_title !== 'Ecommerce') ? $ecommerce_setting->site_title : ($general_setting->site_title ?? 'Medco Distribution Wny Inc');
+        $resolved_author = (!empty($general_setting->developed_by) && stripos($general_setting->developed_by, 'lion') === false && stripos($general_setting->developed_by, 'salepro') === false) ? $general_setting->developed_by : 'Bangla Soft Computer';
+    @endphp
     <!-- Document Title -->
-    <title>@yield('title')</title>
-    <meta name="description" content="@yield('description')" />
-    <meta name="author" content="LionCoders" />
+    <title>@yield('title', $resolved_site_title)</title>
+    <meta name="description" content="@yield('description', $resolved_site_title)" />
+    <meta name="author" content="{{ $resolved_author }}" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <meta name="google" content="notranslate">
 
+    <meta property="og:site_name" content="{{ $resolved_site_title }}" />
     <meta property="og:url" content="{{Request::url()}}" />
-    <meta property="og:title" content="@yield('title')" />
-    <meta property="og:description" content="@yield('description')" />
+    <meta property="og:title" content="@yield('title', $resolved_site_title)" />
+    <meta property="og:description" content="@yield('description', $resolved_site_title)" />
     @if(request()->is('product/*'))
     <meta property="og:image" content="@yield('image')" />
     <meta property="product:image_link" content="@yield('image')">
@@ -47,7 +52,13 @@ if (session()->get('currency_code')) {
     <meta property="product:retailer_item_id" content="@yield('id')">
     <meta property="product:item_group_id" content="@yield('category_id')">
     @else
-    <meta property="og:image" content="https://www.lion-coders.com/frontend/images/slider/slide-2.png" />
+        @if(!empty($ecommerce_setting->logo))
+        <meta property="og:image" content="{{ url('frontend/images/' . $ecommerce_setting->logo) }}" />
+        @elseif(!empty($general_setting->site_logo))
+        <meta property="og:image" content="{{ asset('logo/' . $general_setting->site_logo) }}" />
+        @else
+        <meta property="og:image" content="{{ asset('logo/banglasoft_logo.png') }}" />
+        @endif
     @endif
 
     <link rel="icon" type="image/ico" href="{{ url('frontend/images') }}/{{$ecommerce_setting->favicon ?? ''}}" />
@@ -618,7 +629,7 @@ if (session()->get('currency_code')) {
             @endif
             <div class="row footer-bottom">
                 <div class="col-md-6">
-                    <p>&copy; {{date('Y')}}. All rights reserved. Developed by {{$general_setting->developed_by}}</p>
+                    <p>&copy; {{date('Y')}}. All rights reserved. Developed by {{ (!empty($general_setting->developed_by) && stripos($general_setting->developed_by, 'lion') === false && stripos($general_setting->developed_by, 'salepro') === false) ? $general_setting->developed_by : 'Bangla Soft Computer' }}</p>
                 </div>
                 <div class="col-md-6 developed-by">
                     @if(isset($social_links))
